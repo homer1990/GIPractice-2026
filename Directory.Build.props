@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Disable IPv6 to force IPv4 usage -->
+    <DisableIPv6>true</DisableIPv6>
+  </PropertyGroup>
+</Project>
