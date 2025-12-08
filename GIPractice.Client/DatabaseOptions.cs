@@ -1,6 +1,6 @@
 using System;
 
-namespace GIPractice.ApiClient;
+namespace GIPractice.Client;
 
 public class DatabaseOptions
 {

@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using GIPractice.Client.Core;
+using GIPractice.Client;
 
 namespace GIPractice.Wpf;
 
