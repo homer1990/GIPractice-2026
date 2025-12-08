@@ -1,98 +1,66 @@
-﻿using GIPractice.Client;
+using System;
+using System.Windows;
+using GIPractice.ApiClient;
 using GIPractice.Client.Core;
-using GIPractice.Client.Localization;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Globalization;
-using System.Net.Http;
-using System.Windows;
 
 namespace GIPractice.Wpf;
 
 public partial class App : Application
 {
     private IHost? _host;
-    public static IServiceProvider Services =>
-        ((App)Current)._host?.Services ?? _emptyProvider;
-
-    private static readonly IServiceProvider _emptyProvider = new EmptyServiceProvider();
-
-    private class EmptyServiceProvider : IServiceProvider
-    {
-        public object? GetService(Type serviceType) => null;
-    }
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
         _host = Host.CreateDefaultBuilder()
+            .ConfigureAppConfiguration(config =>
+            {
+                config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+            })
             .ConfigureServices((context, services) =>
             {
-                services.AddSingleton<ISettingsStore, JsonSettingsStore>();
-                services.AddSingleton<ClientSettingsService>();
+                var apiSection = context.Configuration.GetSection("Api");
+                var clientSection = context.Configuration.GetSection("Client");
 
-                services.AddSingleton<ClientController>(_ =>
+                var options = new DatabaseOptions
                 {
-                    var client = new HttpClient
-                    {
-                        BaseAddress = new Uri("https://localhost:7028/") // match API
-                    };
-                    return new ClientController(client);
-                });
+                    BaseAddress = new Uri(apiSection.GetValue<string>("BaseAddress") ?? "https://localhost:5001/"),
+                    HealthEndpoint = apiSection.GetValue<string>("HealthEndpoint") ?? "health",
+                    ConnectivityCheckInterval = TimeSpan.FromSeconds(clientSection.GetValue<int>("ConnectivityIntervalSeconds", 10)),
+                    InactivityTimeout = TimeSpan.FromMinutes(clientSection.GetValue<int>("InactivityMinutes", 15))
+                };
 
-                services.AddSingleton<GiPracticeApiClient>();
-                services.AddSingleton<IStringLocalizer, LocalizationBindingService>();
-
-                services.AddSingleton<IPatientsModule, PatientsModule>();
+                services.AddSingleton(options);
+                services.AddSingleton<ITokenService, InMemoryTokenService>();
+                services.AddSingleton<ILocalizationCatalog, JsonLocalizationCatalog>();
+                services.AddHttpClient<Database>();
+                services.AddSingleton<IDatabaseController>(sp => sp.GetRequiredService<Database>());
 
                 services.AddSingleton<ViewController>();
+                services.AddSingleton(sp => new LocalizationManager(
+                    sp.GetRequiredService<ILocalizationCatalog>(),
+                    clientSection.GetValue<string>("Language") ?? "en"));
 
-                // UI services
-                services.AddSingleton<INavigationService, WpfNavigationService>();
-                services.AddTransient<IPatientPickerService, WpfPatientPickerService>();
-
-                // ViewModels
-                services.AddSingleton<HomeViewModel>();
                 services.AddSingleton<LoginViewModel>();
-                services.AddTransient<PatientSearchViewModel>();
+                services.AddSingleton<DashboardViewModel>();
                 services.AddSingleton<ShellViewModel>();
-                services.AddTransient<PatientDashboardViewModel>();
-                services.AddSingleton<SettingsViewModel>();
-                // Windows
-                services.AddSingleton<LoginWindow>();
+
                 services.AddSingleton<MainWindow>();
-                services.AddTransient<PatientDashboardWindow>();
-                services.AddTransient<PatientPickerWindow>();
-                services.AddTransient<SettingsWindow>();
             })
             .Build();
 
         _host.Start();
-
-        var settingsService = _host.Services.GetRequiredService<ClientSettingsService>();
-        settingsService.InitializeAsync().GetAwaiter().GetResult();
-
-        // Apply language based on settings
-        var cultureName = settingsService.Current.UICulture ?? "en";
-        var culture = new CultureInfo(cultureName);
-        CultureInfo.DefaultThreadCurrentCulture = culture;
-        CultureInfo.DefaultThreadCurrentUICulture = culture;
-        var localizationService = _host.Services.GetRequiredService<IStringLocalizer>();
-        localizationService.CurrentCulture = culture;
-
-        var viewController = _host.Services.GetRequiredService<ViewController>();
-        viewController.Load(this);
-        // Apply theme before showing any windows
-        ThemeManager.ApplyTheme(settingsService.Current.Theme);
-
-        var navigation = _host.Services.GetRequiredService<INavigationService>();
-        navigation.ShowLoginAsync().GetAwaiter().GetResult();
+        var mainWindow = _host.Services.GetRequiredService<MainWindow>();
+        mainWindow.Show();
     }
 
     protected override async void OnExit(ExitEventArgs e)
     {
-        if (_host != null)
+        if (_host is not null)
         {
             await _host.StopAsync();
             _host.Dispose();
