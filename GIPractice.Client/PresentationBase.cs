@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace GIPractice.ApiClient;
+namespace GIPractice.Client;
 
 public abstract class PresentationBase : INotifyPropertyChanged
 {

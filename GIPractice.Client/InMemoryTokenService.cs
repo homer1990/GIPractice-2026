@@ -1,9 +1,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using GIPractice.Client.Core;
+using GIPractice.Client;
 
-namespace GIPractice.ApiClient;
+namespace GIPractice.Client;
 
 public class InMemoryTokenService : ITokenService
 {
