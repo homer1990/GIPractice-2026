@@ -1,9 +1,9 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using GIPractice.Client.Core;
+using GIPractice.Client;
 
-namespace GIPractice.ApiClient;
+namespace GIPractice.Client;
 
 public abstract class SinglePresenter<TEntityDto, TQuery> : PresentationBase
 {

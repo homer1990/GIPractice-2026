@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
-using GIPractice.Client.Core;
+using GIPractice.Client;
 
-namespace GIPractice.ApiClient;
+namespace GIPractice.Client;
 
 public abstract class RemovePresenter<TEntityDto, TQuery> : PresentationBase
 {

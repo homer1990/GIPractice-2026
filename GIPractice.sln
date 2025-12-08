@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Core", "GIPracti
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Api", "GIPractice.Api\GIPractice.Api.csproj", "{93EB661B-1500-40F7-BB90-160205EFF8B1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Client", "GIPractice.ApiClient\GIPractice.Client.csproj", "{F981E85D-08BC-4769-A8A8-CB67BB1C57E6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Client", "GIPractice.Client\GIPractice.Client.csproj", "{F981E85D-08BC-4769-A8A8-CB67BB1C57E6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Wpf", "GIPractice.Wpf\GIPractice.Wpf.csproj", "{1965F8E5-17D6-4A4F-A9A2-55A74EC0CCC2}"
 EndProject

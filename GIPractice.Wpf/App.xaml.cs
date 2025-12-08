@@ -1,7 +1,6 @@
 using System;
 using System.Windows;
-using GIPractice.ApiClient;
-using GIPractice.Client.Core;
+using GIPractice.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
