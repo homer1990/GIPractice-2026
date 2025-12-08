@@ -1,3 +1,4 @@
+using GIPractice.Core.Abstractions;
 namespace GIPractice.Core.Entities;
 
 public class FieldName : BaseEntity

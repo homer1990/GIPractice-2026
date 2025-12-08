@@ -1,9 +1,6 @@
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Globalization;
-using System.Threading;
-using GIPractice.Client.Core;
-using GIPractice.Client;
 
 namespace GIPractice.Client.Localization;
 

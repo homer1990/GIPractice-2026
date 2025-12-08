@@ -20,7 +20,6 @@
     <ProjectReference Include="..\GIPractice.Api\GIPractice.Api.csproj" />
     <ProjectReference Include="..\GIPractice.Core\GIPractice.Core.csproj" />
     <ProjectReference Include="..\GIPractice.Infrastructure\GIPractice.Infrastructure.csproj" />
-    <ProjectReference Include="..\GIPractice.Client.Core\GIPractice.Client.Core.csproj" />
   </ItemGroup>
 
 </Project>
