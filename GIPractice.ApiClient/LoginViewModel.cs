@@ -1,13 +1,13 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using GIPractice.Api.Models; // for LoginResponseDto
 
 namespace GIPractice.Client;
 
 public class LoginViewModel : INotifyPropertyChanged
 {
     private readonly GiPracticeApiClient _api;
+    private readonly INavigationService _navigation;
 
     private string _userName = "admin";
     private string _password = "Admin123!";
@@ -17,12 +17,13 @@ public class LoginViewModel : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public event EventHandler<LoginResponseDto>? LoginSucceeded;
+    public event EventHandler? RequestClose;
 
-    public LoginViewModel(GiPracticeApiClient api, ClientSettingsService settings)
+    public LoginViewModel(GiPracticeApiClient api, ClientSettingsService settings, INavigationService navigation)
     {
         _api = api;
         _settings = settings;
+        _navigation = navigation;
 
         if (!string.IsNullOrWhiteSpace(settings.Current.LastUserName))
             _userName = settings.Current.LastUserName;
@@ -85,8 +86,8 @@ public class LoginViewModel : INotifyPropertyChanged
             _settings.Current.LastUserName = UserName;
             await _settings.SaveAsync();
 
-            // Fire event so the window can close / open main shell
-            LoginSucceeded?.Invoke(this, result);
+            await _navigation.ShowShellAsync();
+            RequestClose?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
         {

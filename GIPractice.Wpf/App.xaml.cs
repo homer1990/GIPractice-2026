@@ -47,6 +47,7 @@ public partial class App : Application
                 services.AddSingleton<ViewController>();
 
                 // UI services
+                services.AddSingleton<INavigationService, WpfNavigationService>();
                 services.AddTransient<IPatientPickerService, WpfPatientPickerService>();
 
                 // ViewModels
@@ -83,9 +84,8 @@ public partial class App : Application
         // Apply theme before showing any windows
         ThemeManager.ApplyTheme(settingsService.Current.Theme);
 
-        var loginWindow = _host.Services.GetRequiredService<LoginWindow>();
-
-        loginWindow.Show();
+        var navigation = _host.Services.GetRequiredService<INavigationService>();
+        navigation.ShowLoginAsync().GetAwaiter().GetResult();
     }
 
     protected override async void OnExit(ExitEventArgs e)

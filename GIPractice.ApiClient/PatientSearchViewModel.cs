@@ -1,4 +1,4 @@
-﻿// PatientSearchViewModel.cs
+// PatientSearchViewModel.cs
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -7,17 +7,32 @@ using GIPractice.Api.Models;   // for PatientSearchRequestDto, PatientListItemDt
 namespace GIPractice.Client;
 
 public sealed class PatientSearchViewModel
-    : PagedSearchViewModelBase<PatientListItemDto, PatientSearchRequestDto>
+    : SearchViewModelBase<PatientListItemDto, PatientSearchRequestDto>
 {
     private readonly IPatientsModule _patientsApi;
+    private readonly INavigationService _navigation;
 
-    public PatientSearchViewModel(IPatientsModule patientsApi)
+    private PatientListItemDto? _selectedPatient;
+
+    public PatientSearchViewModel(IPatientsModule patientsApi, INavigationService navigation)
+        : base(navigation)
     {
         _patientsApi = patientsApi;
+        _navigation = navigation;
 
         PageSize = 50;
         SortField = "LastVisit";
         SortDescending = true;
+    }
+
+    public PatientListItemDto? SelectedPatient
+    {
+        get => _selectedPatient;
+        set
+        {
+            if (SetProperty(ref _selectedPatient, value))
+                OnSelectedPatientChanged();
+        }
     }
 
     // Filters bound from XAML
@@ -77,8 +92,15 @@ public sealed class PatientSearchViewModel
         set => SetProperty(ref _email, value);
     }
 
-    // Keep compatibility with existing XAML: Patients => Items
     public ObservableCollection<PatientListItemDto> Patients => Items;
+
+    protected override void OnPropertyChanged(string? name = null)
+    {
+        base.OnPropertyChanged(name);
+
+        if (name == nameof(SelectedItem))
+            SelectedPatient = SelectedItem;
+    }
 
     protected override PatientSearchRequestDto BuildRequestCore()
     {
@@ -99,7 +121,16 @@ public sealed class PatientSearchViewModel
     protected override Task<PagedResultDto<PatientListItemDto>> ExecuteSearchAsync(
         PatientSearchRequestDto request)
     {
-        // Whatever your client looks like – adjust method name/signature
         return _patientsApi.SearchAsync(request);
+    }
+
+    protected override Task NavigateAsync(PatientListItemDto item)
+    {
+        return _navigation.ShowPatientDashboardAsync(item);
+    }
+
+    private void OnSelectedPatientChanged()
+    {
+        SelectedItem = SelectedPatient;
     }
 }
