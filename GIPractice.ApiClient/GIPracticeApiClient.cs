@@ -1,17 +1,10 @@
-﻿using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http;
-using System.Net.Http.Json;
-using GIPractice.Api.Models;
+﻿using GIPractice.Api.Models;
 
 namespace GIPractice.Client;
 
-public class GiPracticeApiClient(HttpClient http)
+public class GiPracticeApiClient(ClientController controller)
 {
-    private string? _accessToken;
-    public string? AccessToken => _accessToken;
-
-    private readonly HttpClient _http = http;
+    private readonly ClientController _controller = controller;
 
     // -----------------------
     // PATIENT SEARCH & DASHBOARD
@@ -52,8 +45,7 @@ public class GiPracticeApiClient(HttpClient http)
         if (qs.Count > 0)
             url += "?" + string.Join("&", qs);
 
-        var result = await _http.GetFromJsonAsync<PagedResultDto<PatientListItemDto>>(
-            url, cancellationToken);
+        var result = await _controller.GetAsync<PagedResultDto<PatientListItemDto>>(url, cancellationToken);
 
         return result ?? new PagedResultDto<PatientListItemDto>
         {
@@ -68,7 +60,7 @@ public class GiPracticeApiClient(HttpClient http)
         int patientId,
         CancellationToken cancellationToken = default)
     {
-        return await _http.GetFromJsonAsync<PatientDashboardDto>(
+        return await _controller.GetAsync<PatientDashboardDto>(
             $"api/patients/{patientId}/dashboard",
             cancellationToken);
     }
@@ -77,7 +69,7 @@ public class GiPracticeApiClient(HttpClient http)
         int patientId,
         CancellationToken cancellationToken = default)
     {
-        return await _http.GetFromJsonAsync<PatientSummaryDto>(
+        return await _controller.GetAsync<PatientSummaryDto>(
             $"api/patients/{patientId}/summary",
             cancellationToken);
     }
@@ -98,7 +90,7 @@ public class GiPracticeApiClient(HttpClient http)
         if (qs.Count > 0)
             url += "?" + string.Join("&", qs);
 
-        var result = await _http.GetFromJsonAsync<List<PatientTimelineItemDto>>(
+        var result = await _controller.GetAsync<List<PatientTimelineItemDto>>(
             url, cancellationToken);
 
         return result ?? [];
@@ -125,7 +117,7 @@ public class GiPracticeApiClient(HttpClient http)
 
         var url = "api/schedule?" + string.Join("&", qs);
 
-        return await _http.GetFromJsonAsync<ScheduleRangeDto>(url, cancellationToken);
+        return await _controller.GetAsync<ScheduleRangeDto>(url, cancellationToken);
     }
 
     // -----------------------
@@ -136,7 +128,7 @@ public class GiPracticeApiClient(HttpClient http)
         int visitId,
         CancellationToken cancellationToken = default)
     {
-        return await _http.GetFromJsonAsync<VisitDetailsDto>(
+        return await _controller.GetAsync<VisitDetailsDto>(
             $"api/visits/{visitId}/details",
             cancellationToken);
     }
@@ -145,7 +137,7 @@ public class GiPracticeApiClient(HttpClient http)
         int patientId,
         CancellationToken cancellationToken = default)
     {
-        var result = await _http.GetFromJsonAsync<List<VisitDto>>(
+        var result = await _controller.GetAsync<List<VisitDto>>(
             $"api/patients/{patientId}/visits",
             cancellationToken);
 
@@ -173,7 +165,7 @@ public class GiPracticeApiClient(HttpClient http)
         if (qs.Count > 0)
             url += "?" + string.Join("&", qs);
 
-        var result = await _http.GetFromJsonAsync<List<EndoscopyListItemDto>>(
+        var result = await _controller.GetAsync<List<EndoscopyListItemDto>>(
             url, cancellationToken);
 
         return result ?? [];
@@ -183,7 +175,7 @@ public class GiPracticeApiClient(HttpClient http)
         int patientId,
         CancellationToken cancellationToken = default)
     {
-        var result = await _http.GetFromJsonAsync<List<EndoscopyDto>>(
+        var result = await _controller.GetAsync<List<EndoscopyDto>>(
             $"api/patients/{patientId}/endoscopies",
             cancellationToken);
 
@@ -194,7 +186,7 @@ public class GiPracticeApiClient(HttpClient http)
         int id,
         CancellationToken cancellationToken = default)
     {
-        return await _http.GetFromJsonAsync<EndoscopyDto>(
+        return await _controller.GetAsync<EndoscopyDto>(
             $"api/endoscopies/{id}",
             cancellationToken);
     }
@@ -220,7 +212,7 @@ public class GiPracticeApiClient(HttpClient http)
         if (qs.Count > 0)
             url += "?" + string.Join("&", qs);
 
-        var result = await _http.GetFromJsonAsync<List<TestListItemDto>>(url, cancellationToken);
+        var result = await _controller.GetAsync<List<TestListItemDto>>(url, cancellationToken);
         return result ?? [];
     }
 
@@ -241,7 +233,7 @@ public class GiPracticeApiClient(HttpClient http)
         if (qs.Count > 0)
             url += "?" + string.Join("&", qs);
 
-        var result = await _http.GetFromJsonAsync<List<OperationListItemDto>>(url, cancellationToken);
+        var result = await _controller.GetAsync<List<OperationListItemDto>>(url, cancellationToken);
         return result ?? [];
     }
 
@@ -262,7 +254,7 @@ public class GiPracticeApiClient(HttpClient http)
         if (qs.Count > 0)
             url += "?" + string.Join("&", qs);
 
-        var result = await _http.GetFromJsonAsync<List<InfaiTestListItemDto>>(url, cancellationToken);
+        var result = await _controller.GetAsync<List<InfaiTestListItemDto>>(url, cancellationToken);
         return result ?? [];
     }
 
@@ -274,44 +266,10 @@ public class GiPracticeApiClient(HttpClient http)
         int patientId,
         CancellationToken cancellationToken = default)
     {
-        var result = await _http.GetFromJsonAsync<List<AppointmentDto>>(
+        var result = await _controller.GetAsync<List<AppointmentDto>>(
             $"api/patients/{patientId}/appointments",
             cancellationToken);
 
         return result ?? [];
-    }
-    public async Task<LoginResponseDto?> LoginAsync(
-    string userName,
-    string password,
-    CancellationToken cancellationToken = default)
-    {
-        var request = new LoginRequestDto
-        {
-            UserName = userName,
-            Password = password
-        };
-
-        var response = await _http.PostAsJsonAsync("api/auth/login", request, cancellationToken);
-
-        if (response.StatusCode == HttpStatusCode.Unauthorized)
-            return null;
-
-        response.EnsureSuccessStatusCode();
-
-        var login = await response.Content.ReadFromJsonAsync<LoginResponseDto>(cancellationToken: cancellationToken);
-        if (login?.AccessToken != null)
-        {
-            _accessToken = login.AccessToken;
-            _http.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", _accessToken);
-        }
-
-        return login;
-    }
-
-    public void Logout()
-    {
-        _accessToken = null;
-        _http.DefaultRequestHeaders.Authorization = null;
     }
 }

@@ -30,14 +30,16 @@ public partial class App : Application
                 services.AddSingleton<ISettingsStore, JsonSettingsStore>();
                 services.AddSingleton<ClientSettingsService>();
 
-                services.AddSingleton<GiPracticeApiClient>(_ =>
+                services.AddSingleton<ClientController>(_ =>
                 {
                     var client = new HttpClient
                     {
                         BaseAddress = new Uri("https://localhost:7028/") // match API
                     };
-                    return new GiPracticeApiClient(client);
+                    return new ClientController(client);
                 });
+
+                services.AddSingleton<GiPracticeApiClient>();
 
                 services.AddSingleton<IPatientsModule, PatientsModule>();
 

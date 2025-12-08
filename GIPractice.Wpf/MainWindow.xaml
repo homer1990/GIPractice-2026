@@ -10,56 +10,78 @@
         Background="{DynamicResource Brush.WindowBackground}"
         Foreground="{DynamicResource Brush.WindowForeground}">
 
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </Window.Resources>
+
     <Grid>
-        <Grid.ColumnDefinitions>
-            <!-- Navigation rail -->
-            <ColumnDefinition Width="220" />
-            <!-- Main content -->
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-        <!-- Left navigation -->
-        <DockPanel Grid.Column="0"
-                   Background="{DynamicResource Brush.PanelBackground}"
-                   Margin="0,0,8,0">
-            <StackPanel DockPanel.Dock="Top"
-            Margin="8">
-                <TextBlock Text="{loc:Loc Key=App_Title}"
-                FontWeight="Bold"
-                FontSize="16"
-                Margin="0,0,0,16" />
+        <Border Grid.Row="0"
+                Background="{DynamicResource Brush.AccentBackground}"
+                Visibility="{Binding HasBanner, Converter={StaticResource BoolToVisibility}}"
+                Padding="12"
+                BorderBrush="{DynamicResource Brush.AccentBorder}"
+                BorderThickness="0,0,0,1">
+            <TextBlock Text="{Binding BannerMessage}"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource Brush.WindowForeground}" />
+        </Border>
 
-                <!-- Home -->
-                <Button Content="{loc:Loc Key=Home_Title}"
-                    Margin="0,0,0,4"
-                    Padding="8,4"
-                    Command="{Binding NavigateHomeCommand}" />
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <!-- Navigation rail -->
+                <ColumnDefinition Width="220" />
+                <!-- Main content -->
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-                <!-- Patients -->
-                <Button Content="{loc:Loc Key=Main_Title}"
-                    Margin="0,0,0,4"
-                    Padding="8,4"
-                    Command="{Binding NavigatePatientsCommand}" />
+            <!-- Left navigation -->
+            <DockPanel Grid.Column="0"
+                       Background="{DynamicResource Brush.PanelBackground}"
+                       Margin="0,0,8,0">
+                <StackPanel DockPanel.Dock="Top"
+                Margin="8">
+                    <TextBlock Text="{loc:Loc Key=App_Title}"
+                    FontWeight="Bold"
+                    FontSize="16"
+                    Margin="0,0,0,16" />
 
-                <!-- future modules -->
-                <Button Content="Endoscopies"
-                    Margin="0,12,0,4"
-                    Padding="8,4" />
-                <Button Content="Appointments"
-                    Margin="0,0,0,4"
-                    Padding="8,4" />
-                <Button Content="Biopsies"
-                    Margin="0,0,0,4"
-                    Padding="8,4" />
-                <Button Content="{loc:Loc Key=Settings_Title}"
-                    Margin="0,0,0,4"
-                    Padding="8,4"
-                    Click="Settings_Click" />
-            </StackPanel>
-        </DockPanel>
+                    <!-- Home -->
+                    <Button Content="{loc:Loc Key=Home_Title}"
+                        Margin="0,0,0,4"
+                        Padding="8,4"
+                        Command="{Binding NavigateHomeCommand}" />
 
-        <ContentControl Grid.Column="1"
-                Content="{Binding CurrentContent}"
-                Background="{DynamicResource Brush.PanelBackground}" />
+                    <!-- Patients -->
+                    <Button Content="{loc:Loc Key=Main_Title}"
+                        Margin="0,0,0,4"
+                        Padding="8,4"
+                        Command="{Binding NavigatePatientsCommand}" />
+
+                    <!-- future modules -->
+                    <Button Content="Endoscopies"
+                        Margin="0,12,0,4"
+                        Padding="8,4" />
+                    <Button Content="Appointments"
+                        Margin="0,0,0,4"
+                        Padding="8,4" />
+                    <Button Content="Biopsies"
+                        Margin="0,0,0,4"
+                        Padding="8,4" />
+                    <Button Content="{loc:Loc Key=Settings_Title}"
+                        Margin="0,0,0,4"
+                        Padding="8,4"
+                        Click="Settings_Click" />
+                </StackPanel>
+            </DockPanel>
+
+            <ContentControl Grid.Column="1"
+                    Content="{Binding CurrentContent}"
+                    Background="{DynamicResource Brush.PanelBackground}" />
+        </Grid>
     </Grid>
 </Window>
