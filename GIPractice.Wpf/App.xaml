@@ -1,12 +1,12 @@
-﻿<Application x:Class="GIPractice.Wpf.App"
+<Application x:Class="GIPractice.Wpf.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- Controls (common styles) -->
-                <ResourceDictionary Source="Themes/Controls.xaml" />
-                <!-- Colors.* will be injected at runtime by ThemeManager -->
+                <ResourceDictionary Source="Resources/Styles.xaml" />
+                <ResourceDictionary Source="Resources/Templates.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
