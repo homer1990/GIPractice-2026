@@ -1,4 +1,5 @@
-﻿using System.Windows;
+using System.Threading.Tasks;
+using System.Windows;
 using GIPractice.Api.Models;
 using GIPractice.Client;
 
@@ -15,21 +16,19 @@ public partial class PatientPickerWindow : Window
         _viewModel = viewModel;
         DataContext = _viewModel;
 
-        _viewModel.OpenPatientDetailsRequested += OnPatientChosen;
+        _viewModel.SelectionHandler = patient =>
+        {
+            OnPatientChosen(patient);
+            return Task.CompletedTask;
+        };
     }
 
     public PatientListItemDto? SelectedPatient { get; private set; }
 
-    private void OnPatientChosen(object? sender, PatientListItemDto patient)
+    private void OnPatientChosen(PatientListItemDto patient)
     {
         SelectedPatient = patient;
         DialogResult = true;
         Close();
-    }
-
-    protected override void OnClosed(EventArgs e)
-    {
-        base.OnClosed(e);
-        _viewModel.OpenPatientDetailsRequested -= OnPatientChosen;
     }
 }

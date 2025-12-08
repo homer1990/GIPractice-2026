@@ -1,4 +1,6 @@
 ﻿using GIPractice.Client;
+using GIPractice.Client.Core;
+using GIPractice.Client.Localization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Globalization;
@@ -43,7 +45,10 @@ public partial class App : Application
 
                 services.AddSingleton<IPatientsModule, PatientsModule>();
 
+                services.AddSingleton<ViewController>();
+
                 // UI services
+                services.AddSingleton<INavigationService, WpfNavigationService>();
                 services.AddTransient<IPatientPickerService, WpfPatientPickerService>();
 
                 // ViewModels
@@ -72,14 +77,16 @@ public partial class App : Application
         var culture = new CultureInfo(cultureName);
         CultureInfo.DefaultThreadCurrentCulture = culture;
         CultureInfo.DefaultThreadCurrentUICulture = culture;
+        var localizationService = _host.Services.GetRequiredService<IStringLocalizer>();
+        localizationService.CurrentCulture = culture;
 
-        LanguageManager.ApplyLanguage(cultureName);
+        var viewController = _host.Services.GetRequiredService<ViewController>();
+        viewController.Load(this);
         // Apply theme before showing any windows
         ThemeManager.ApplyTheme(settingsService.Current.Theme);
 
-        var loginWindow = _host.Services.GetRequiredService<LoginWindow>();
-
-        loginWindow.Show();
+        var navigation = _host.Services.GetRequiredService<INavigationService>();
+        navigation.ShowLoginAsync().GetAwaiter().GetResult();
     }
 
     protected override async void OnExit(ExitEventArgs e)

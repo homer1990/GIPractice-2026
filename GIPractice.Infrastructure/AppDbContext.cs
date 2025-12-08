@@ -36,6 +36,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<Organ> Organs => Set<Organ>();
     public DbSet<OrganAreaOrgan> OrganAreaOrgans => Set<OrganAreaOrgan>();
     public DbSet<LocalizationString> LocalizationStrings => Set<LocalizationString>();
+    public DbSet<FieldName> FieldNames => Set<FieldName>();
+    public DbSet<Localization> Localizations => Set<Localization>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

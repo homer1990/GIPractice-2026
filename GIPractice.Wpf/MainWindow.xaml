@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:loc="clr-namespace:GIPractice.Wpf.Localization"
         xmlns:client="clr-namespace:GIPractice.Client;assembly=GIPractice.Client"
-        Title="{loc:Loc Key=Main_Title}"
+        Title="{loc:Loc Table=Main Field=Title}"
         Height="600"
         Width="1000"
         WindowStartupLocation="CenterScreen"

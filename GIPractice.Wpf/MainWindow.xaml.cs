@@ -1,8 +1,5 @@
-﻿using System;
 using System.Windows;
-using GIPractice.Api.Models;
 using GIPractice.Client;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace GIPractice.Wpf;
 

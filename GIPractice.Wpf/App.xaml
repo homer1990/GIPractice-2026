@@ -7,7 +7,6 @@
                 <!-- Controls (common styles) -->
                 <ResourceDictionary Source="Themes/Controls.xaml" />
                 <!-- Colors.* will be injected at runtime by ThemeManager -->
-                <ResourceDictionary Source="Views/ViewTemplates.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

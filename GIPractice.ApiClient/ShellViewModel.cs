@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 
@@ -17,6 +17,7 @@ public class ShellViewModel : INotifyPropertyChanged
         _controller = controller;
         Home = home;
         Patients = patients;
+        _navigation = navigation;
 
         // Start on Home
         _currentContent = Home;
@@ -62,6 +63,8 @@ public class ShellViewModel : INotifyPropertyChanged
     public ICommand NavigateHomeCommand { get; }
 
     public ICommand NavigatePatientsCommand { get; }
+
+    public ICommand OpenSettingsCommand { get; }
 
     protected void OnPropertyChanged([CallerMemberName] string? name = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

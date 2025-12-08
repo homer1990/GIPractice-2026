@@ -1,102 +1,60 @@
-﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using GIPractice.Api.Models;
 
 namespace GIPractice.Client;
 
-public class PatientDashboardViewModel(IPatientsModule patients) : INotifyPropertyChanged
+public class PatientDashboardViewModel : SingleViewModelBase<PatientListItemDto>
 {
-    private readonly IPatientsModule _patients = patients;
+    private readonly IPatientsModule _patients;
 
-    private PatientListItemDto? _patient;
     private PatientSummaryDto? _summary;
-    private bool _isBusy;
-    private string? _statusMessage;
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    public PatientListItemDto? Patient
+    public PatientDashboardViewModel(IPatientsModule patients)
     {
-        get => _patient;
-        private set { _patient = value; OnPropertyChanged(); OnPropertyChanged(nameof(Title)); }
+        _patients = patients;
     }
 
     public PatientSummaryDto? Summary
     {
         get => _summary;
-        private set { _summary = value; OnPropertyChanged(); }
+        private set => SetProperty(ref _summary, value);
     }
 
     public ObservableCollection<PatientTimelineItemDto> Timeline { get; } = [];
 
-    public bool IsBusy
-    {
-        get => _isBusy;
-        private set { _isBusy = value; OnPropertyChanged(); }
-    }
-
-    public string? StatusMessage
-    {
-        get => _statusMessage;
-        private set { _statusMessage = value; OnPropertyChanged(); }
-    }
-
     public string Title =>
-        Patient == null
+        Entity == null
             ? "Patient dashboard"
-            : $"{Patient.LastName} {Patient.FirstName} – Dashboard";
+            : $"{Entity.LastName} {Entity.FirstName} – Dashboard";
 
-    public async Task InitializeAsync(PatientListItemDto patient)
+    protected override async Task LoadEntityAsync(PatientListItemDto patient)
     {
-        Patient = patient;
-        await LoadAsync();
-    }
-
-    public async Task LoadAsync()
-    {
-        if (Patient == null) return;
-
-        IsBusy = true;
         StatusMessage = "Loading dashboard...";
 
-        try
+        var result = await _patients.GetDashboardAsync(patient.Id);
+
+        if (result == null)
         {
-            var result = await _patients.GetDashboardAsync(Patient.Id);
-
-            if (result == null)
-            {
-                StatusMessage = "No dashboard data.";
-                return;
-            }
-
-            Summary = result.Summary;
-
-            Timeline.Clear();
-            if (result.Timeline != null)
-            {
-                foreach (var item in result.Timeline)
-                    Timeline.Add(item);
-            }
-
-            StatusMessage = $"Loaded {Timeline.Count} timeline item(s).";
+            StatusMessage = "No dashboard data.";
+            return;
         }
-        catch (Exception ex)
+
+        Summary = result.Summary;
+
+        Timeline.Clear();
+        if (result.Timeline != null)
         {
-            StatusMessage = ex.InnerException?.Message ?? ex.Message;
+            foreach (var item in result.Timeline)
+                Timeline.Add(item);
         }
-        finally
-        {
-            IsBusy = false;
-        }
+
+        StatusMessage = $"Loaded {Timeline.Count} timeline item(s).";
     }
-    public Task LoadAsync(PatientListItemDto patient)
+
+    protected override void OnEntityChanged(PatientListItemDto? entity)
     {
-        Patient = patient;
-        // Reuse the existing logic
-        return LoadAsync();
+        base.OnEntityChanged(entity);
+        OnPropertyChanged(nameof(Title));
     }
-
-    private void OnPropertyChanged([CallerMemberName] string? name = null) =>
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }

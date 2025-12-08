@@ -6,6 +6,13 @@ public class GiPracticeApiClient(ClientController controller)
 {
     private readonly ClientController _controller = controller;
 
+    public async Task<LocalizationResponse?> GetLocalizationAsync(string table, string field, string culture,
+        CancellationToken cancellationToken = default)
+    {
+        var url = $"api/localization/{Uri.EscapeDataString(table)}/{Uri.EscapeDataString(field)}?culture={Uri.EscapeDataString(culture)}";
+        return await _http.GetFromJsonAsync<LocalizationResponse>(url, cancellationToken);
+    }
+
     // -----------------------
     // PATIENT SEARCH & DASHBOARD
     // -----------------------

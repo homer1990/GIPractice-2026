@@ -3,7 +3,9 @@ using GIPractice.Api.Middleware;
 using GIPractice.Api.Options;
 using GIPractice.Api.Services;
 using GIPractice.Core.Entities.Identity;
+using GIPractice.Core.Services;
 using GIPractice.Infrastructure;
+using GIPractice.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -71,6 +73,7 @@ builder.Services.Configure<MediaStorageOptions>(
     builder.Configuration.GetSection("MediaStorage"));
 
 builder.Services.AddSingleton<IMediaStorageService, FileSystemMediaStorageService>();
+builder.Services.AddScoped<ILocalizationService, LocalizationService>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));

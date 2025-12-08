@@ -1,17 +1,22 @@
-﻿// PagedSearchViewModelBase.cs
-using GIPractice.Api.Models;
 using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using GIPractice.Api.Models;
 
 namespace GIPractice.Client;
 
-public abstract class PagedSearchViewModelBase<TItem, TRequest> : ViewModelBase
+public interface ISearchViewModel
+{
+    Task ApplySortAsync(string sortField, bool descending);
+}
+
+public abstract class SearchViewModelBase<TItem, TRequest> : ViewModelBase, ISearchViewModel
     where TItem : class
     where TRequest : class
 {
+    private readonly INavigationService? _navigation;
+
     private int _page = 1;
     private int _pageSize = 50;
     private int _totalCount;
@@ -19,18 +24,21 @@ public abstract class PagedSearchViewModelBase<TItem, TRequest> : ViewModelBase
     private string? _statusMessage;
     private string? _sortField;
     private bool _sortDescending = true;
+    private TItem? _selectedItem;
 
     protected readonly AsyncRelayCommand _searchCommand;
     protected readonly AsyncRelayCommand _nextPageCommand;
     protected readonly AsyncRelayCommand _previousPageCommand;
+    protected readonly AsyncRelayCommand _openDetailsCommand;
 
-    protected PagedSearchViewModelBase()
+    protected SearchViewModelBase(INavigationService? navigation = null)
     {
+        _navigation = navigation;
         Items = new ObservableCollection<TItem>();
 
         _searchCommand = new AsyncRelayCommand(
             _ => SearchAsync(resetPage: true),
-            _ => !IsBusy);
+            _ => !IsBusy && Validate(out _));
 
         _nextPageCommand = new AsyncRelayCommand(
             _ => NextPageAsync(),
@@ -39,10 +47,13 @@ public abstract class PagedSearchViewModelBase<TItem, TRequest> : ViewModelBase
         _previousPageCommand = new AsyncRelayCommand(
             _ => PreviousPageAsync(),
             _ => !IsBusy && HasPreviousPage);
+
+        _openDetailsCommand = new AsyncRelayCommand(_ => ActivateSelectedItemAsync(), _ => SelectedItem != null);
     }
 
-    // The list the DataGrid binds to
     public ObservableCollection<TItem> Items { get; }
+
+    public Func<TItem, Task>? SelectionHandler { get; set; }
 
     public string? StatusMessage
     {
@@ -100,6 +111,8 @@ public abstract class PagedSearchViewModelBase<TItem, TRequest> : ViewModelBase
     public bool HasPreviousPage => Page > 1;
     public bool HasNextPage => Page < TotalPages;
 
+    public string PageInfo => $"Page {Page} / {TotalPages}";
+
     public string? SortField
     {
         get => _sortField;
@@ -112,9 +125,20 @@ public abstract class PagedSearchViewModelBase<TItem, TRequest> : ViewModelBase
         set => SetProperty(ref _sortDescending, value);
     }
 
+    public TItem? SelectedItem
+    {
+        get => _selectedItem;
+        set
+        {
+            if (SetProperty(ref _selectedItem, value))
+                _openDetailsCommand.RaiseCanExecuteChanged();
+        }
+    }
+
     public ICommand SearchCommand => _searchCommand;
     public ICommand NextPageCommand => _nextPageCommand;
     public ICommand PreviousPageCommand => _previousPageCommand;
+    public ICommand OpenDetailsCommand => _openDetailsCommand;
 
     protected void RaisePagingCanExecuteChanged()
     {
@@ -123,18 +147,38 @@ public abstract class PagedSearchViewModelBase<TItem, TRequest> : ViewModelBase
         _previousPageCommand.RaiseCanExecuteChanged();
     }
 
-    // Called from concrete VM to build the request object with filters
     protected abstract TRequest BuildRequestCore();
 
-    // Called from concrete VM to actually talk to the API
     protected abstract Task<PagedResultDto<TItem>> ExecuteSearchAsync(TRequest request);
 
-    /// <summary>
-    /// Public search API used by Search button and header-clicks.
-    /// </summary>
+    protected virtual bool Validate(out string? error)
+    {
+        error = null;
+        return true;
+    }
+
+    protected virtual Task OnItemActivatedAsync(TItem item)
+    {
+        if (SelectionHandler != null)
+            return SelectionHandler.Invoke(item);
+
+        if (_navigation != null)
+            return NavigateAsync(item);
+
+        return Task.CompletedTask;
+    }
+
+    protected virtual Task NavigateAsync(TItem item) => Task.CompletedTask;
+
     public async Task SearchAsync(bool resetPage)
     {
         if (IsBusy) return;
+
+        if (!Validate(out var validationError))
+        {
+            StatusMessage = validationError;
+            return;
+        }
 
         if (resetPage)
             Page = 1;
@@ -150,10 +194,6 @@ public abstract class PagedSearchViewModelBase<TItem, TRequest> : ViewModelBase
         try
         {
             var request = BuildRequestCore();
-
-            // It’s fine if TRequest doesn’t *derive* from PagedRequestDto;
-            // we just expect these members to exist. If you want, you
-            // can constrain TRequest : PagedRequestDto instead.
             dynamic r = request!;
             r.Page = Page;
             r.PageSize = PageSize;
@@ -196,14 +236,19 @@ public abstract class PagedSearchViewModelBase<TItem, TRequest> : ViewModelBase
         await RunSearchAsync();
     }
 
-    /// <summary>
-    /// Called from DataGrid header click to apply sorting & requery.
-    /// </summary>
     public async Task ApplySortAsync(string sortField, bool descending)
     {
         SortField = sortField;
         SortDescending = descending;
         Page = 1;
         await SearchAsync(resetPage: false);
+    }
+
+    private Task ActivateSelectedItemAsync()
+    {
+        if (SelectedItem is null)
+            return Task.CompletedTask;
+
+        return OnItemActivatedAsync(SelectedItem);
     }
 }
