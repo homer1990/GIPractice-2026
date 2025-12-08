@@ -13,8 +13,7 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\GIPractice.ApiClient\GIPractice.Client.csproj" />
-    <ProjectReference Include="..\GIPractice.Client.Core\GIPractice.Client.Core.csproj" />
+    <ProjectReference Include="..\\GIPractice.Client\\GIPractice.Client.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="appsettings.json">

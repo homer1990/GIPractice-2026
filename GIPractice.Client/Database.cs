@@ -5,10 +5,10 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using GIPractice.Client.Core;
+using GIPractice.Client;
 using Microsoft.Extensions.Logging;
 
-namespace GIPractice.ApiClient;
+namespace GIPractice.Client;
 
 public sealed class Database : IDatabaseController, IAsyncDisposable
 {

@@ -3,9 +3,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
-using GIPractice.Client.Core;
+using GIPractice.Client;
 
-namespace GIPractice.ApiClient;
+namespace GIPractice.Client;
 
 public class JsonLocalizationCatalog : ILocalizationCatalog
 {

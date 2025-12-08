@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace GIPractice.Client.Core;
+namespace GIPractice.Client;
 
 public record FieldNameDescriptor(string Table, string Field, string Key);
 

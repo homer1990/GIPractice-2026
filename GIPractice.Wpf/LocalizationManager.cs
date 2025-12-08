@@ -1,4 +1,4 @@
-using GIPractice.Client.Core;
+using GIPractice.Client;
 
 namespace GIPractice.Wpf;
 

@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using GIPractice.ApiClient;
-using GIPractice.Client.Core;
+using GIPractice.Client;
+using GIPractice.Client;
 
 namespace GIPractice.Wpf;
 
