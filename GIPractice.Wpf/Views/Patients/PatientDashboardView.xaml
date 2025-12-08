@@ -36,32 +36,32 @@
                             Orientation="Vertical"
                             Margin="8,0,0,0">
                     <TextBlock>
-                        <Run Text="{loc:Loc Key=Dashboard_TotalVisits}" />
+                        <Run Text="{loc:Loc Table=Dashboard Field=TotalVisits}" />
                         <Run Text=": " />
                         <Run Text="{Binding Summary.TotalVisits}" />
                     </TextBlock>
                     <TextBlock>
-                        <Run Text="{loc:Loc Key=Dashboard_TotalEndoscopies}" />
+                        <Run Text="{loc:Loc Table=Dashboard Field=TotalEndoscopies}" />
                         <Run Text=": " />
                         <Run Text="{Binding Summary.TotalEndoscopies}" />
                     </TextBlock>
                     <TextBlock>
-                        <Run Text="{loc:Loc Key=Dashboard_TotalTests}" />
+                        <Run Text="{loc:Loc Table=Dashboard Field=TotalTests}" />
                         <Run Text=": " />
                         <Run Text="{Binding Summary.TotalTests}" />
                     </TextBlock>
                     <TextBlock>
-                        <Run Text="{loc:Loc Key=Dashboard_TotalInfaiTests}" />
+                        <Run Text="{loc:Loc Table=Dashboard Field=TotalInfaiTests}" />
                         <Run Text=": " />
                         <Run Text="{Binding Summary.TotalInfaiTests}" />
                     </TextBlock>
                     <TextBlock>
-                        <Run Text="{loc:Loc Key=Dashboard_TotalOperations}" />
+                        <Run Text="{loc:Loc Table=Dashboard Field=TotalOperations}" />
                         <Run Text=": " />
                         <Run Text="{Binding Summary.TotalOperations}" />
                     </TextBlock>
                     <TextBlock>
-                        <Run Text="{loc:Loc Key=Dashboard_ActiveTreatments}" />
+                        <Run Text="{loc:Loc Table=Dashboard Field=ActiveTreatments}" />
                         <Run Text=": " />
                         <Run Text="{Binding Summary.ActiveTreatmentsCount}" />
                     </TextBlock>
@@ -74,16 +74,16 @@
                   AutoGenerateColumns="False"
                   IsReadOnly="True">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="{loc:Loc Key=Dashboard_Col_When}"
+                <DataGridTextColumn Header="{loc:Loc Table=Dashboard Field=ColumnWhen}"
                                     Width="160"
                                     Binding="{Binding WhenUtc, StringFormat='yyyy-MM-dd HH:mm'}" />
-                <DataGridTextColumn Header="{loc:Loc Key=Dashboard_Col_Kind}"
+                <DataGridTextColumn Header="{loc:Loc Table=Dashboard Field=ColumnKind}"
                                     Width="120"
                                     Binding="{Binding Kind}" />
-                <DataGridTextColumn Header="{loc:Loc Key=Dashboard_Col_Title}"
+                <DataGridTextColumn Header="{loc:Loc Table=Dashboard Field=ColumnTitle}"
                                     Width="*"
                                     Binding="{Binding Title}" />
-                <DataGridTextColumn Header="{loc:Loc Key=Dashboard_Col_Description}"
+                <DataGridTextColumn Header="{loc:Loc Table=Dashboard Field=ColumnDescription}"
                                     Width="2*"
                                     Binding="{Binding Description}" />
             </DataGrid.Columns>

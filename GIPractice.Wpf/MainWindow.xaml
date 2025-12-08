@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:loc="clr-namespace:GIPractice.Wpf.Localization"
         xmlns:client="clr-namespace:GIPractice.Client;assembly=GIPractice.Client"
-        Title="{loc:Loc Key=Main_Title}"
+        Title="{loc:Loc Table=Main Field=Title}"
         Height="600"
         Width="1000"
         WindowStartupLocation="CenterScreen"
@@ -24,19 +24,17 @@
                    Margin="0,0,8,0">
             <StackPanel DockPanel.Dock="Top"
             Margin="8">
-                <TextBlock Text="{loc:Loc Key=App_Title}"
-                FontWeight="Bold"
-                FontSize="16"
-                Margin="0,0,0,16" />
+                <TextBlock Text="{loc:Loc Table=App Field=Title}"
+                Style="{StaticResource SectionTitleText}" />
 
                 <!-- Home -->
-                <Button Content="{loc:Loc Key=Home_Title}"
+                <Button Content="{loc:Loc Table=Home Field=Title}"
                     Margin="0,0,0,4"
                     Padding="8,4"
                     Command="{Binding NavigateHomeCommand}" />
 
                 <!-- Patients -->
-                <Button Content="{loc:Loc Key=Main_Title}"
+                <Button Content="{loc:Loc Table=Main Field=Title}"
                     Margin="0,0,0,4"
                     Padding="8,4"
                     Command="{Binding NavigatePatientsCommand}" />
@@ -51,7 +49,7 @@
                 <Button Content="Biopsies"
                     Margin="0,0,0,4"
                     Padding="8,4" />
-                <Button Content="{loc:Loc Key=Settings_Title}"
+                <Button Content="{loc:Loc Table=Settings Field=Title}"
                     Margin="0,0,0,4"
                     Padding="8,4"
                     Click="Settings_Click" />

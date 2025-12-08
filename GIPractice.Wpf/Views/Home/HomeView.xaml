@@ -6,17 +6,14 @@
 
     <Grid Background="{DynamicResource Brush.PanelBackground}">
         <StackPanel Margin="16" MaxWidth="700">
-            <TextBlock Text="{loc:Loc Key=Home_Title}"
-                   FontSize="20"
-                   FontWeight="Bold"
-                   Margin="0,0,0,8" />
+            <TextBlock Text="{loc:Loc Table=Home Field=Title}"
+                   Style="{StaticResource PageTitleText}" />
 
-            <TextBlock Text="{loc:Loc Key=Home_Welcome}"
-                   FontSize="14"
+            <TextBlock Text="{loc:Loc Table=Home Field=Welcome}"
                    Margin="0,0,0,16" />
 
             <!-- Pick patient button -->
-            <Button Content="{loc:Loc Key=Home_SelectPatient}"
+            <Button Content="{loc:Loc Table=Home Field=SelectPatient}"
                 Width="150"
                 Padding="8,4"
                 Margin="0,0,0,12"
@@ -28,7 +25,7 @@
                 BorderBrush="{DynamicResource Brush.Border}"
                 BorderThickness="1">
                 <StackPanel>
-                    <TextBlock Text="{loc:Loc Key=Home_SelectedPatient}"
+                    <TextBlock Text="{loc:Loc Table=Home Field=SelectedPatient}"
                            FontWeight="Bold"
                            Margin="0,0,0,8" />
 

@@ -1,4 +1,6 @@
 ﻿using GIPractice.Client;
+using GIPractice.Client.Core;
+using GIPractice.Client.Localization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Globalization;
@@ -39,7 +41,10 @@ public partial class App : Application
                     return new GiPracticeApiClient(client);
                 });
 
+                services.AddSingleton<IStringLocalizer, LocalizationBindingService>();
                 services.AddSingleton<IPatientsModule, PatientsModule>();
+
+                services.AddSingleton<ViewController>();
 
                 // UI services
                 services.AddTransient<IPatientPickerService, WpfPatientPickerService>();
@@ -70,8 +75,11 @@ public partial class App : Application
         var culture = new CultureInfo(cultureName);
         CultureInfo.DefaultThreadCurrentCulture = culture;
         CultureInfo.DefaultThreadCurrentUICulture = culture;
+        var localizationService = _host.Services.GetRequiredService<IStringLocalizer>();
+        localizationService.CurrentCulture = culture;
 
-        LanguageManager.ApplyLanguage(cultureName);
+        var viewController = _host.Services.GetRequiredService<ViewController>();
+        viewController.Load(this);
         // Apply theme before showing any windows
         ThemeManager.ApplyTheme(settingsService.Current.Theme);
 
