@@ -3,11 +3,14 @@ using System.Text.Json;
 using GIPractice.Core.Abstractions;
 using GIPractice.Core.Entities;
 using Microsoft.EntityFrameworkCore;
+using GIPractice.Core.Entities.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace GIPractice.Infrastructure;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<ApplicationUser, ApplicationRole, string>(options)
 {
+    public bool DisableVersioning { get; set; }
     public DbSet<Patient> Patients => Set<Patient>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<Visit> Visits => Set<Visit>();
@@ -83,8 +86,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         bool acceptAllChangesOnSuccess,
         CancellationToken cancellationToken = default)
     {
+        // Always keep audit info (if you want seed rows to have CreatedAt/By)
         AddAuditInfo();
-        await AddVersionsAsync(cancellationToken);
+
+        // But allow seeder to turn OFF version history
+        if (!DisableVersioning)
+        {
+            await AddVersionsAsync(cancellationToken);
+        }
 
         return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }

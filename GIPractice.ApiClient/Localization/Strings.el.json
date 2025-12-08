@@ -1,0 +1,45 @@
+{
+  "App_Title": "GIPractice Client",
+
+  "Login_Title": "Σύνδεση",
+  "Login_Username": "Όνομα χρήστη",
+  "Login_Password": "Κωδικός",
+  "Login_Button": "Σύνδεση",
+  "Login_Error_InvalidCredentials": "Λάθος όνομα χρήστη ή κωδικός.",
+
+  "Main_Title": "Ασθενείς",
+  "Main_LastName": "Επώνυμο:",
+  "Main_FirstName": "Όνομα:",
+  "Main_Search": "Αναζήτηση",
+  "Main_OpenDetails": "Λεπτομέρειες",
+  "Main_Father": "Πατρώνυμο:",
+  "Main_PersonalNumber": "Αρ. Μητρώου:",
+  "Main_BirthFrom": "Γέννηση από:",
+  "Main_BirthTo": "Γέννηση έως:",
+  "Main_Phone": "dsffdsAdsdsdsdsfdsf",
+  "Main_Email": "Email:",
+
+  "Main_Col_Id": "ID",
+  "Main_Col_LastName": "Επώνυμο",
+  "Main_Col_FirstName": "Όνομα",
+  "Main_Col_Father": "Πατρώνυμο",
+  "Main_Col_PersonalNumber": "Αρ. Μητρώου",
+  "Main_Col_BirthDate": "Ημ. Γέννησης",
+  "Main_Col_Phone": "sfdghdfghjdghjdghj",
+  "Main_Col_Email": "Email",
+
+
+  "Dashboard_Title": "Ιστορικό ασθενούς",
+  "Dashboard_TotalVisits": "Επισκέψεις",
+  "Dashboard_TotalEndoscopies": "Ενδοσκοπήσεις",
+  "Dashboard_TotalTests": "Εξετάσεις",
+  "Dashboard_TotalInfaiTests": "Εξετάσεις Infai",
+  "Dashboard_TotalOperations": "Επεμβάσεις",
+  "Dashboard_ActiveTreatments": "Ενεργές θεραπείες",
+  "Dashboard_Col_When": "Πότε",
+  "Dashboard_Col_Kind": "Είδος",
+  "Dashboard_Col_Title": "Τίτλος",
+  "Dashboard_Col_Description": "Περιγραφή",
+  "Dashboard_PhotoPlaceholder": "Φωτογραφία"
+
+}

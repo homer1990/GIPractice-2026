@@ -1,0 +1,33 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Base colors -->
+    <Color x:Key="Color.WindowBackground">#FFF3F3F3</Color>
+    <Color x:Key="Color.WindowForeground">#FF202020</Color>
+    <Color x:Key="Color.PanelBackground">#FFFFFFFF</Color>
+    <Color x:Key="Color.Border">#FFCCCCCC</Color>
+    <Color x:Key="Color.Accent">#FF2D89EF</Color>
+    <Color x:Key="Color.AccentHover">#FF1E5FA8</Color>
+    <Color x:Key="Color.ErrorText">#FFB00020</Color>
+
+    <Color x:Key="Color.GridHeaderBackground">#FFE0E0E0</Color>
+    <Color x:Key="Color.GridHeaderForeground">#FF202020</Color>
+    <Color x:Key="Color.GridRowBackground">#FFFFFFFF</Color>
+    <Color x:Key="Color.GridRowAltBackground">#FFF8F8F8</Color>
+    <Color x:Key="Color.GridRowSelectedBackground">#FFD0E6FF</Color>
+
+    <!-- Brushes -->
+    <SolidColorBrush x:Key="Brush.WindowBackground" Color="{StaticResource Color.WindowBackground}" />
+    <SolidColorBrush x:Key="Brush.WindowForeground" Color="{StaticResource Color.WindowForeground}" />
+    <SolidColorBrush x:Key="Brush.PanelBackground" Color="{StaticResource Color.PanelBackground}" />
+    <SolidColorBrush x:Key="Brush.Border" Color="{StaticResource Color.Border}" />
+    <SolidColorBrush x:Key="Brush.Accent" Color="{StaticResource Color.Accent}" />
+    <SolidColorBrush x:Key="Brush.AccentHover" Color="{StaticResource Color.AccentHover}" />
+    <SolidColorBrush x:Key="Brush.ErrorText" Color="{StaticResource Color.ErrorText}" />
+
+    <SolidColorBrush x:Key="Brush.GridHeaderBackground" Color="{StaticResource Color.GridHeaderBackground}" />
+    <SolidColorBrush x:Key="Brush.GridHeaderForeground" Color="{StaticResource Color.GridHeaderForeground}" />
+    <SolidColorBrush x:Key="Brush.GridRowBackground" Color="{StaticResource Color.GridRowBackground}" />
+    <SolidColorBrush x:Key="Brush.GridRowAltBackground" Color="{StaticResource Color.GridRowAltBackground}" />
+    <SolidColorBrush x:Key="Brush.GridRowSelectedBackground" Color="{StaticResource Color.GridRowSelectedBackground}" />
+</ResourceDictionary>

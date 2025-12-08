@@ -1,0 +1,46 @@
+{
+  "App_Title": "GIPractice Client",
+
+  "Login_Title": "Login",
+  "Login_Username": "Username",
+  "Login_Password": "Password",
+  "Login_Button": "Login",
+  "Login_Error_InvalidCredentials": "Invalid username or password.",
+
+  "Main_Title": "Patients",
+  "Main_LastName": "Last name:",
+  "Main_FirstName": "First name:",
+  "Main_Search": "Search",
+  "Main_OpenDetails": "Open details",
+
+  "Main_Father": "Father:",
+  "Main_PersonalNumber": "Personal #:",
+  "Main_BirthFrom": "Birth from:",
+  "Main_BirthTo": "Birth to:",
+  "Main_Phone": "Phone:",
+  "Main_Email": "Email:",
+
+  "Main_Col_Id": "ID",
+  "Main_Col_LastName": "Last name",
+  "Main_Col_FirstName": "First name",
+  "Main_Col_Father": "Father",
+  "Main_Col_PersonalNumber": "Personal No",
+  "Main_Col_BirthDate": "Birth date",
+  "Main_Col_Phone": "Phone",
+  "Main_Col_Email": "Email",
+
+  "Dashboard_Title": "Patient dashboard",
+  "Dashboard_TotalVisits": "Visits",
+  "Dashboard_TotalEndoscopies": "Endoscopies",
+  "Dashboard_TotalTests": "Tests",
+  "Dashboard_TotalInfaiTests": "Infai tests",
+  "Dashboard_TotalOperations": "Operations",
+  "Dashboard_ActiveTreatments": "Active treatments",
+  "Dashboard_Col_When": "When",
+  "Dashboard_Col_Kind": "Kind",
+  "Dashboard_Col_Title": "Title",
+  "Dashboard_Col_Description": "Description",
+  "Dashboard_PhotoPlaceholder": "Photo"
+
+
+}

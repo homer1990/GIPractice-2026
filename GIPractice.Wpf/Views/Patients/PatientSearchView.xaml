@@ -1,0 +1,184 @@
+﻿<UserControl x:Class="GIPractice.Wpf.Views.Patients.PatientSearchView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:GIPractice.Wpf.Localization">
+
+    <DockPanel Background="{DynamicResource Brush.PanelBackground}">
+
+        <!-- Status + Paging -->
+        <DockPanel DockPanel.Dock="Bottom"
+                   Margin="0,4,0,0">
+
+            <!-- Left: status -->
+            <TextBlock Foreground="Gray"
+                       VerticalAlignment="Center"
+                       Text="{Binding StatusMessage}" />
+
+            <!-- Right: pagination -->
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+                <Button Content="◀"
+                        Margin="8,0,4,0"
+                        Padding="8,2"
+                        Command="{Binding PreviousPageCommand}"
+                        IsEnabled="{Binding HasPreviousPage}" />
+
+                <TextBlock VerticalAlignment="Center"
+                           Margin="4,0"
+                           Text="{Binding PageInfo}" />
+
+                <Button Content="▶"
+                        Margin="4,0,0,0"
+                        Padding="8,2"
+                        Command="{Binding NextPageCommand}"
+                        IsEnabled="{Binding HasNextPage}" />
+            </StackPanel>
+        </DockPanel>
+
+
+        <!-- Search filters -->
+        <StackPanel DockPanel.Dock="Top"
+                    Margin="0,0,0,8">
+            <UniformGrid Columns="4"
+                         Rows="2"
+                         Margin="0,0,0,4">
+
+                <!-- Row 1 -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                    <TextBlock Text="{loc:Loc Key=Main_LastName}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,4,0" />
+                    <TextBox Width="150"
+                             Text="{Binding LastName, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                    <TextBlock Text="{loc:Loc Key=Main_FirstName}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,4,0" />
+                    <TextBox Width="150"
+                             Text="{Binding FirstName, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                    <TextBlock Text="{loc:Loc Key=Main_Father}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,4,0" />
+                    <TextBox Width="150"
+                             Text="{Binding FathersName, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                    <TextBlock Text="{loc:Loc Key=Main_PersonalNumber}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,4,0" />
+                    <TextBox Width="150"
+                             Text="{Binding PersonalNumber, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+
+                <!-- Row 2 -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                    <TextBlock Text="{loc:Loc Key=Main_BirthFrom}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,4,0" />
+                    <DatePicker Width="140"
+                                SelectedDate="{Binding BirthDateFrom}" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                    <TextBlock Text="{loc:Loc Key=Main_BirthTo}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,4,0" />
+                    <DatePicker Width="140"
+                                SelectedDate="{Binding BirthDateTo}" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                    <TextBlock Text="{loc:Loc Key=Main_Phone}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,4,0" />
+                    <TextBox Width="140"
+                             Text="{Binding PhoneNumber, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                    <TextBlock Text="{loc:Loc Key=Main_Email}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,4,0" />
+                    <TextBox Width="160"
+                             Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+            </UniformGrid>
+
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+                <Button Content="{loc:Loc Key=Main_Search}"
+                        Padding="12,4"
+                        Command="{Binding SearchCommand}" />
+            </StackPanel>
+        </StackPanel>
+        <!-- Patients grid -->
+        <DataGrid x:Name="PatientsGrid"
+              ItemsSource="{Binding Patients}"
+              SelectedItem="{Binding SelectedPatient}"
+              AutoGenerateColumns="False"
+              IsReadOnly="True"
+              CanUserSortColumns="True"
+              Sorting="PatientsGrid_Sorting">
+
+            <DataGrid.InputBindings>
+                <MouseBinding MouseAction="LeftDoubleClick"
+                              Command="{Binding OpenDetailsCommand}" />
+            </DataGrid.InputBindings>
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_Id}"
+                                    Binding="{Binding Id}"
+                                    SortMemberPath="Id"
+                                    Width="60" />
+
+                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_LastName}"
+                                    Binding="{Binding LastName}"
+                                    SortMemberPath="LastName"
+                                    Width="*" />
+
+                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_FirstName}"
+                                    Binding="{Binding FirstName}"
+                                    SortMemberPath="FirstName"
+                                    Width="*" />
+
+                <!-- Father: not server-sorted for now -->
+                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_Father}"
+                                    Binding="{Binding FathersName}"
+                                    CanUserSort="False"
+                                    Width="*" />
+
+                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_PersonalNumber}"
+                                    Binding="{Binding PersonalNumber}"
+                                    SortMemberPath="PersonalNumber"
+                                    Width="140" />
+
+                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_BirthDate}"
+                                    Binding="{Binding BirthDay, StringFormat='yyyy-MM-dd'}"
+                                    SortMemberPath="BirthDay"
+                                    Width="120" />
+
+                <!-- Phone & Email: leave unsortable for now -->
+                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_Phone}"
+                                    Binding="{Binding PhoneNumber}"
+                                    CanUserSort="False"
+                                    Width="140" />
+                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_Email}"
+                                    Binding="{Binding Email}"
+                                    CanUserSort="False"
+                                    Width="180" />
+
+                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_LastVisit}"
+                                    Width="160"
+                                    Binding="{Binding LastVisitUtc, StringFormat='yyyy-MM-dd HH:mm'}"
+                                    SortMemberPath="LastVisit" />
+            </DataGrid.Columns>
+
+        </DataGrid>
+    </DockPanel>
+</UserControl>

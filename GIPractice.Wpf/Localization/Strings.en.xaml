@@ -1,0 +1,72 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- App -->
+    <sys:String x:Key="App_Title">GIPractice Client</sys:String>
+
+    <!-- Login -->
+    <sys:String x:Key="Login_Title">Login</sys:String>
+    <sys:String x:Key="Login_Username">Username</sys:String>
+    <sys:String x:Key="Login_Password">Password</sys:String>
+    <sys:String x:Key="Login_Button">Login</sys:String>
+
+    <!-- Patients / Main -->
+    <sys:String x:Key="Main_Title">Patients</sys:String>
+    <sys:String x:Key="Main_LastName">Last name:</sys:String>
+    <sys:String x:Key="Main_FirstName">First name:</sys:String>
+    <sys:String x:Key="Main_Search">Search</sys:String>
+    <sys:String x:Key="Main_OpenDetails">Open details</sys:String>
+
+    <sys:String x:Key="Main_Father">Father:</sys:String>
+    <sys:String x:Key="Main_PersonalNumber">Personal #:</sys:String>
+    <sys:String x:Key="Main_BirthFrom">Birth from:</sys:String>
+    <sys:String x:Key="Main_BirthTo">Birth to:</sys:String>
+    <sys:String x:Key="Main_Phone">Phone:</sys:String>
+    <sys:String x:Key="Main_Email">Email:</sys:String>
+
+    <sys:String x:Key="Main_Col_Id">ID</sys:String>
+    <sys:String x:Key="Main_Col_LastName">Last name</sys:String>
+    <sys:String x:Key="Main_Col_FirstName">First name</sys:String>
+    <sys:String x:Key="Main_Col_Father">Father</sys:String>
+    <sys:String x:Key="Main_Col_PersonalNumber">Personal No</sys:String>
+    <sys:String x:Key="Main_Col_BirthDate">Birth date</sys:String>
+    <sys:String x:Key="Main_Col_Phone">Phone</sys:String>
+    <sys:String x:Key="Main_Col_Email">Email</sys:String>
+
+    <!-- Dashboard -->
+    <sys:String x:Key="Dashboard_Title">Patient history</sys:String>
+    <sys:String x:Key="Dashboard_TotalVisits">Visits</sys:String>
+    <sys:String x:Key="Dashboard_TotalEndoscopies">Endoscopies</sys:String>
+    <sys:String x:Key="Dashboard_TotalTests">Tests</sys:String>
+    <sys:String x:Key="Dashboard_TotalInfaiTests">Infai tests</sys:String>
+    <sys:String x:Key="Dashboard_TotalOperations">Operations</sys:String>
+    <sys:String x:Key="Dashboard_ActiveTreatments">Active treatments</sys:String>
+    <sys:String x:Key="Dashboard_Col_When">When</sys:String>
+    <sys:String x:Key="Dashboard_Col_Kind">Kind</sys:String>
+    <sys:String x:Key="Dashboard_Col_Title">Title</sys:String>
+    <sys:String x:Key="Dashboard_Col_Description">Description</sys:String>
+    <sys:String x:Key="Dashboard_PhotoPlaceholder">Photo</sys:String>
+
+    <sys:String x:Key="Home_Title">Home</sys:String>
+    <sys:String x:Key="Home_Welcome">Welcome to GIPractice</sys:String>
+    <sys:String x:Key="Settings_Title">Settings</sys:String>
+    <sys:String x:Key="Settings_ApiBaseUrl">API base URL</sys:String>
+    <sys:String x:Key="Settings_UICulture">UI language (code)</sys:String>
+    <sys:String x:Key="Settings_RestartHint">Changes will take effect after restarting the application.</sys:String>
+
+    <sys:String x:Key="Home_SelectPatient">Select patient...</sys:String>
+    <sys:String x:Key="Home_SelectedPatient">Selected patient</sys:String>
+    
+    <sys:String x:Key="Main_SortBy">Sort by</sys:String>
+    <sys:String x:Key="Main_Sort_LastVisit">Last visit</sys:String>
+    <sys:String x:Key="Main_Sort_LastName">Last name</sys:String>
+    <sys:String x:Key="Main_Sort_FirstName">First name</sys:String>
+    <sys:String x:Key="Main_Sort_AMKA">Personal number</sys:String>
+    <sys:String x:Key="Main_Sort_BirthDate">Birth date</sys:String>
+    <sys:String x:Key="Main_Sort_Id">ID</sys:String>
+    <sys:String x:Key="Main_Sort_Desc">Desc</sys:String>
+
+    <sys:String x:Key="Main_Col_LastVisit">Last visit</sys:String>
+
+</ResourceDictionary>

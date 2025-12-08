@@ -11,6 +11,14 @@ namespace GIPractice.Api.Controllers;
 public class PatientSearchController(AppDbContext db) : ControllerBase
 {
     private readonly AppDbContext _db = db;
+    static int CalcAge(DateTime birthDay)
+    {
+        var today = DateTime.UtcNow.Date;
+        var b = birthDay.Date;
+        var age = today.Year - b.Year;
+        if (b > today.AddYears(-age)) age--;
+        return age < 0 ? 0 : age;
+    }
 
     [HttpGet]
     public async Task<ActionResult<PagedResultDto<PatientListItemDto>>> Search(
@@ -85,16 +93,71 @@ public class PatientSearchController(AppDbContext db) : ControllerBase
             query = query.Where(p => p.Email != null && p.Email.Contains(email));
         }
 
-        // Paging safety
         var page = request.Page <= 0 ? 1 : request.Page;
         var pageSize = request.PageSize <= 0 ? 20 : request.PageSize;
-        if (pageSize > 200) pageSize = 200; // arbitrary upper bound
+        if (pageSize > 200) pageSize = 200;
 
         var totalCount = await query.CountAsync();
 
-        var patients = await query
-            .OrderBy(p => p.LastName)
-            .ThenBy(p => p.FirstName)
+        // Project patients with LastVisitUtc (for sorting + display)
+        var projected = query
+            .Select(p => new
+            {
+                Patient = p,
+                LastVisitUtc = _db.Visits
+                    .Where(v => v.PatientId == p.Id)
+                    .OrderByDescending(v => v.DateOfVisitUtc)
+                    .Select(v => (DateTime?)v.DateOfVisitUtc)
+                    .FirstOrDefault()
+            });
+
+        // Normalize sort params
+        var sortField = (request.SortField ?? "LastVisit").Trim();
+        var sortDescending = request.SortDescending;
+        var key = sortField.ToLowerInvariant();
+
+        var ordered = key switch
+        {
+            "lastname" => sortDescending
+                ? projected
+                    .OrderByDescending(x => x.Patient.LastName)
+                    .ThenByDescending(x => x.Patient.FirstName)
+                : projected
+                    .OrderBy(x => x.Patient.LastName)
+                    .ThenBy(x => x.Patient.FirstName),
+
+            "firstname" => sortDescending
+                ? projected
+                    .OrderByDescending(x => x.Patient.FirstName)
+                    .ThenByDescending(x => x.Patient.LastName)
+                : projected
+                    .OrderBy(x => x.Patient.FirstName)
+                    .ThenBy(x => x.Patient.LastName),
+
+            "birthday" => sortDescending
+                ? projected.OrderByDescending(x => x.Patient.BirthDay)
+                : projected.OrderBy(x => x.Patient.BirthDay),
+
+            "personalnumber" => sortDescending
+                ? projected.OrderByDescending(x => x.Patient.PersonalNumber.Value)
+                : projected.OrderBy(x => x.Patient.PersonalNumber.Value),
+
+            "id" => sortDescending
+                ? projected.OrderByDescending(x => x.Patient.Id)
+                : projected.OrderBy(x => x.Patient.Id),
+
+            // explicit "lastvisit"
+            "lastvisit" => sortDescending
+                ? projected.OrderByDescending(x => x.LastVisitUtc ?? DateTime.MinValue)
+                : projected.OrderBy(x => x.LastVisitUtc ?? DateTime.MaxValue),
+
+            // fallback for any unknown sort field
+            _ => sortDescending
+                ? projected.OrderByDescending(x => x.LastVisitUtc ?? DateTime.MinValue)
+                : projected.OrderBy(x => x.LastVisitUtc ?? DateTime.MaxValue)
+        };
+
+        var pageItems = await ordered
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -108,18 +171,19 @@ public class PatientSearchController(AppDbContext db) : ControllerBase
             return age < 0 ? 0 : age;
         }
 
-        var items = patients
-            .Select(p => new PatientListItemDto
+        var items = pageItems
+            .Select(x => new PatientListItemDto
             {
-                Id = p.Id,
-                FirstName = p.FirstName,
-                LastName = p.LastName,
-                FathersName = p.FathersName,
-                PersonalNumber = p.PersonalNumber.Value,
-                BirthDay = p.BirthDay,
-                AgeYears = CalcAge(p.BirthDay),
-                PhoneNumber = p.PhoneNumber,
-                Email = p.Email
+                Id = x.Patient.Id,
+                FirstName = x.Patient.FirstName,
+                LastName = x.Patient.LastName,
+                FathersName = x.Patient.FathersName,
+                PersonalNumber = x.Patient.PersonalNumber.Value,
+                BirthDay = x.Patient.BirthDay,
+                AgeYears = CalcAge(x.Patient.BirthDay),
+                PhoneNumber = x.Patient.PhoneNumber,
+                Email = x.Patient.Email,
+                LastVisitUtc = x.LastVisitUtc
             })
             .ToList();
 
@@ -130,7 +194,7 @@ public class PatientSearchController(AppDbContext db) : ControllerBase
             TotalCount = totalCount,
             Items = items
         };
-
         return Ok(result);
+
     }
 }

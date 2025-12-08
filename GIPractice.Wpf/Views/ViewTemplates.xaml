@@ -1,0 +1,23 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:client="clr-namespace:GIPractice.Client;assembly=GIPractice.Client"
+                    xmlns:patients="clr-namespace:GIPractice.Wpf.Views.Patients"
+                    xmlns:home="clr-namespace:GIPractice.Wpf.Views.Home"
+                    xmlns:settings="clr-namespace:GIPractice.Wpf.Views.Settings">
+    <!-- Home -->
+    <DataTemplate DataType="{x:Type client:HomeViewModel}">
+        <home:HomeView />
+    </DataTemplate>
+    <!-- Map PatientSearchViewModel to PatientSearchView -->
+    <DataTemplate DataType="{x:Type client:PatientSearchViewModel}">
+        <patients:PatientSearchView />
+    </DataTemplate>
+    <!-- Patient dashboard -->
+    <DataTemplate DataType="{x:Type client:PatientDashboardViewModel}">
+        <patients:PatientDashboardView />
+    </DataTemplate>
+    <!-- Settings -->
+    <DataTemplate DataType="{x:Type client:SettingsViewModel}">
+        <settings:SettingsView />
+    </DataTemplate>
+</ResourceDictionary>
