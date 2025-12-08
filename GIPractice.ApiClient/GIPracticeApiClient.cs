@@ -1,4 +1,5 @@
 ﻿using GIPractice.Api.Models;
+using GIPractice.Client.Localization;
 
 namespace GIPractice.Client;
 
@@ -10,7 +11,7 @@ public class GiPracticeApiClient(ClientController controller)
         CancellationToken cancellationToken = default)
     {
         var url = $"api/localization/{Uri.EscapeDataString(table)}/{Uri.EscapeDataString(field)}?culture={Uri.EscapeDataString(culture)}";
-        return await _http.GetFromJsonAsync<LocalizationResponse>(url, cancellationToken);
+        return await _controller.GetAsync<LocalizationResponse>(url, cancellationToken);
     }
 
     // -----------------------
