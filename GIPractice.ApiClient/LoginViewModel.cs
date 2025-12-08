@@ -6,8 +6,7 @@ namespace GIPractice.Client;
 
 public class LoginViewModel : INotifyPropertyChanged
 {
-    private readonly GiPracticeApiClient _api;
-    private readonly INavigationService _navigation;
+    private readonly ClientController _controller;
 
     private string _userName = "admin";
     private string _password = "Admin123!";
@@ -19,9 +18,9 @@ public class LoginViewModel : INotifyPropertyChanged
 
     public event EventHandler? RequestClose;
 
-    public LoginViewModel(GiPracticeApiClient api, ClientSettingsService settings, INavigationService navigation)
+    public LoginViewModel(ClientController controller, ClientSettingsService settings)
     {
-        _api = api;
+        _controller = controller;
         _settings = settings;
         _navigation = navigation;
 
@@ -75,7 +74,7 @@ public class LoginViewModel : INotifyPropertyChanged
 
         try
         {
-            var result = await _api.LoginAsync(UserName, Password);
+            var result = await _controller.LoginAsync(UserName, Password);
             if (result == null)
             {
                 ErrorMessage = "Login_Error_InvalidCredentials";

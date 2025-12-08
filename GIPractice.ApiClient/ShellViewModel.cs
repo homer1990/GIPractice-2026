@@ -6,13 +6,15 @@ namespace GIPractice.Client;
 
 public class ShellViewModel : INotifyPropertyChanged
 {
+    private readonly ClientController _controller;
     private object? _currentContent;
-    private readonly INavigationService _navigation;
+    private string? _bannerMessage;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public ShellViewModel(HomeViewModel home, PatientSearchViewModel patients, INavigationService navigation)
+    public ShellViewModel(ClientController controller, HomeViewModel home, PatientSearchViewModel patients)
     {
+        _controller = controller;
         Home = home;
         Patients = patients;
         _navigation = navigation;
@@ -22,7 +24,11 @@ public class ShellViewModel : INotifyPropertyChanged
 
         NavigateHomeCommand = new RelayCommand(_ => CurrentContent = Home);
         NavigatePatientsCommand = new RelayCommand(_ => CurrentContent = Patients);
-        OpenSettingsCommand = new RelayCommand(async _ => await _navigation.ShowSettingsAsync());
+
+        _controller.ConnectivityLost += (_, _) => BannerMessage = "Connection lost. Trying to reconnect...";
+        _controller.ConnectivityRestored += (_, _) => BannerMessage = null;
+        _controller.TokenExpiring += (_, _) => BannerMessage = "Session will expire soon. Refreshing...";
+        _controller.TokenRefreshed += (_, _) => BannerMessage = null;
     }
 
     public HomeViewModel Home { get; }
@@ -39,6 +45,20 @@ public class ShellViewModel : INotifyPropertyChanged
             OnPropertyChanged();
         }
     }
+
+    public string? BannerMessage
+    {
+        get => _bannerMessage;
+        private set
+        {
+            if (_bannerMessage == value) return;
+            _bannerMessage = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasBanner));
+        }
+    }
+
+    public bool HasBanner => !string.IsNullOrWhiteSpace(BannerMessage);
 
     public ICommand NavigateHomeCommand { get; }
 
