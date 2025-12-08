@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GIPractice.ApiClient\GIPractice.Client.csproj" />
+    <ProjectReference Include="..\GIPractice.Client.Core\GIPractice.Client.Core.csproj" />
   </ItemGroup>
 
 </Project>
