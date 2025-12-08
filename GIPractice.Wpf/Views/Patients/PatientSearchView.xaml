@@ -45,66 +45,58 @@
 
                 <!-- Row 1 -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
-                    <TextBlock Text="{loc:Loc Key=Main_LastName}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,4,0" />
+                    <TextBlock Text="{loc:Loc Table=Patients Field=LastName}"
+                               Style="{StaticResource FormLabel}" />
                     <TextBox Width="150"
                              Text="{Binding LastName, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
-                    <TextBlock Text="{loc:Loc Key=Main_FirstName}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,4,0" />
+                    <TextBlock Text="{loc:Loc Table=Patients Field=FirstName}"
+                               Style="{StaticResource FormLabel}" />
                     <TextBox Width="150"
                              Text="{Binding FirstName, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
-                    <TextBlock Text="{loc:Loc Key=Main_Father}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,4,0" />
+                    <TextBlock Text="{loc:Loc Table=Patients Field=Father}"
+                               Style="{StaticResource FormLabel}" />
                     <TextBox Width="150"
                              Text="{Binding FathersName, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
-                    <TextBlock Text="{loc:Loc Key=Main_PersonalNumber}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,4,0" />
+                    <TextBlock Text="{loc:Loc Table=Patients Field=PersonalNumber}"
+                               Style="{StaticResource FormLabel}" />
                     <TextBox Width="150"
                              Text="{Binding PersonalNumber, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
 
                 <!-- Row 2 -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
-                    <TextBlock Text="{loc:Loc Key=Main_BirthFrom}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,4,0" />
+                    <TextBlock Text="{loc:Loc Table=Patients Field=BirthFrom}"
+                               Style="{StaticResource FormLabel}" />
                     <DatePicker Width="140"
                                 SelectedDate="{Binding BirthDateFrom}" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
-                    <TextBlock Text="{loc:Loc Key=Main_BirthTo}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,4,0" />
+                    <TextBlock Text="{loc:Loc Table=Patients Field=BirthTo}"
+                               Style="{StaticResource FormLabel}" />
                     <DatePicker Width="140"
                                 SelectedDate="{Binding BirthDateTo}" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
-                    <TextBlock Text="{loc:Loc Key=Main_Phone}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,4,0" />
+                    <TextBlock Text="{loc:Loc Table=Patients Field=Phone}"
+                               Style="{StaticResource FormLabel}" />
                     <TextBox Width="140"
                              Text="{Binding PhoneNumber, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
-                    <TextBlock Text="{loc:Loc Key=Main_Email}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,4,0" />
+                    <TextBlock Text="{loc:Loc Table=Patients Field=Email}"
+                               Style="{StaticResource FormLabel}" />
                     <TextBox Width="160"
                              Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
@@ -112,7 +104,7 @@
 
             <StackPanel Orientation="Horizontal"
                         HorizontalAlignment="Right">
-                <Button Content="{loc:Loc Key=Main_Search}"
+                <Button Content="{loc:Loc Table=Patients Field=Search}"
                         Padding="12,4"
                         Command="{Binding SearchCommand}" />
             </StackPanel>
@@ -132,48 +124,48 @@
             </DataGrid.InputBindings>
 
             <DataGrid.Columns>
-                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_Id}"
+                <DataGridTextColumn Header="{loc:Loc Table=Patients Field=ColumnId}"
                                     Binding="{Binding Id}"
                                     SortMemberPath="Id"
                                     Width="60" />
 
-                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_LastName}"
+                <DataGridTextColumn Header="{loc:Loc Table=Patients Field=ColumnLastName}"
                                     Binding="{Binding LastName}"
                                     SortMemberPath="LastName"
                                     Width="*" />
 
-                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_FirstName}"
+                <DataGridTextColumn Header="{loc:Loc Table=Patients Field=ColumnFirstName}"
                                     Binding="{Binding FirstName}"
                                     SortMemberPath="FirstName"
                                     Width="*" />
 
                 <!-- Father: not server-sorted for now -->
-                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_Father}"
+                <DataGridTextColumn Header="{loc:Loc Table=Patients Field=ColumnFather}"
                                     Binding="{Binding FathersName}"
                                     CanUserSort="False"
                                     Width="*" />
 
-                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_PersonalNumber}"
+                <DataGridTextColumn Header="{loc:Loc Table=Patients Field=ColumnPersonalNumber}"
                                     Binding="{Binding PersonalNumber}"
                                     SortMemberPath="PersonalNumber"
                                     Width="140" />
 
-                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_BirthDate}"
+                <DataGridTextColumn Header="{loc:Loc Table=Patients Field=ColumnBirthDate}"
                                     Binding="{Binding BirthDay, StringFormat='yyyy-MM-dd'}"
                                     SortMemberPath="BirthDay"
                                     Width="120" />
 
                 <!-- Phone & Email: leave unsortable for now -->
-                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_Phone}"
+                <DataGridTextColumn Header="{loc:Loc Table=Patients Field=ColumnPhone}"
                                     Binding="{Binding PhoneNumber}"
                                     CanUserSort="False"
                                     Width="140" />
-                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_Email}"
+                <DataGridTextColumn Header="{loc:Loc Table=Patients Field=ColumnEmail}"
                                     Binding="{Binding Email}"
                                     CanUserSort="False"
                                     Width="180" />
 
-                <DataGridTextColumn Header="{loc:Loc Key=Main_Col_LastVisit}"
+                <DataGridTextColumn Header="{loc:Loc Table=Patients Field=ColumnLastVisit}"
                                     Width="160"
                                     Binding="{Binding LastVisitUtc, StringFormat='yyyy-MM-dd HH:mm'}"
                                     SortMemberPath="LastVisit" />

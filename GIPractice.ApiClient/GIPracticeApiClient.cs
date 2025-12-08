@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http;
 using System.Net.Http.Json;
 using GIPractice.Api.Models;
+using GIPractice.Client.Localization;
 
 namespace GIPractice.Client;
 
@@ -12,6 +13,13 @@ public class GiPracticeApiClient(HttpClient http)
     public string? AccessToken => _accessToken;
 
     private readonly HttpClient _http = http;
+
+    public async Task<LocalizationResponse?> GetLocalizationAsync(string table, string field, string culture,
+        CancellationToken cancellationToken = default)
+    {
+        var url = $"api/localization/{Uri.EscapeDataString(table)}/{Uri.EscapeDataString(field)}?culture={Uri.EscapeDataString(culture)}";
+        return await _http.GetFromJsonAsync<LocalizationResponse>(url, cancellationToken);
+    }
 
     // -----------------------
     // PATIENT SEARCH & DASHBOARD

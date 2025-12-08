@@ -23,7 +23,7 @@
                 BorderBrush="{DynamicResource Brush.Border}"
                 BorderThickness="1"
                 Background="{DynamicResource Brush.WindowBackground}">
-            <TextBlock Text="{loc:Loc Key=Dashboard_PhotoPlaceholder}"
+            <TextBlock Text="{loc:Loc Table=Dashboard Field=PhotoPlaceholder}"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"
                        Opacity="0.6" />

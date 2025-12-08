@@ -766,6 +766,96 @@ namespace GIPractice.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("GIPractice.Core.Entities.FieldName", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DefaultText")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Field")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TableName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TableName", "Field")
+                        .IsUnique();
+
+                    b.ToTable("FieldNames");
+                });
+
+            modelBuilder.Entity("GIPractice.Core.Entities.Localization", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CultureName")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("FieldNameId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FieldNameId", "CultureName")
+                        .IsUnique();
+
+                    b.ToTable("Localizations");
+                });
+
             modelBuilder.Entity("GIPractice.Core.Entities.MediaFile", b =>
                 {
                     b.Property<int>("Id")
@@ -2560,6 +2650,16 @@ namespace GIPractice.Infrastructure.Migrations
                     b.Navigation("Treatments");
 
                     b.Navigation("Visits");
+                });
+
+            modelBuilder.Entity("GIPractice.Core.Entities.FieldName", b =>
+                {
+                    b.Navigation("Localizations");
+                });
+
+            modelBuilder.Entity("GIPractice.Core.Entities.Localization", b =>
+                {
+                    b.Navigation("FieldName");
                 });
 
             modelBuilder.Entity("Visit", b =>
