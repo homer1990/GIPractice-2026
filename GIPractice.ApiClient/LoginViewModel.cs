@@ -7,6 +7,7 @@ namespace GIPractice.Client;
 public class LoginViewModel : INotifyPropertyChanged
 {
     private readonly ClientController _controller;
+    private readonly INavigationService _navigation;
 
     private string _userName = "admin";
     private string _password = "Admin123!";
@@ -18,7 +19,7 @@ public class LoginViewModel : INotifyPropertyChanged
 
     public event EventHandler? RequestClose;
 
-    public LoginViewModel(ClientController controller, ClientSettingsService settings)
+    public LoginViewModel(ClientController controller, ClientSettingsService settings, INavigationService navigation)
     {
         _controller = controller;
         _settings = settings;

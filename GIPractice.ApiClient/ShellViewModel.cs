@@ -17,7 +17,6 @@ public class ShellViewModel : INotifyPropertyChanged
         _controller = controller;
         Home = home;
         Patients = patients;
-        _navigation = navigation;
 
         // Start on Home
         _currentContent = Home;

@@ -42,6 +42,7 @@ public partial class App : Application
                 });
 
                 services.AddSingleton<GiPracticeApiClient>();
+                services.AddSingleton<IStringLocalizer, LocalizationBindingService>();
 
                 services.AddSingleton<IPatientsModule, PatientsModule>();
 
