@@ -1,8 +1,9 @@
-using System;
-using System.Windows;
-using Microsoft.Extensions.DependencyInjection;
 using GIPractice.Wpf.Backend;
 using GIPractice.Wpf.ViewModels;
+using GIPractice.Wpf.ViewModels.Patients;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Windows;
 
 namespace GIPractice.Wpf;
 
@@ -30,6 +31,10 @@ public partial class App : Application
 
         // ViewModels
         services.AddTransient<MainWindowViewModel>();
+        services.AddTransient<PatientSearchViewModel>();
+
+        // Views
+        services.AddTransient<Views.Patients.PatientsSearchView>();
 
         // Windows
         services.AddTransient<MainWindow>();

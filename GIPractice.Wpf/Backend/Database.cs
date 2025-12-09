@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -6,11 +7,24 @@ namespace GIPractice.Wpf.Backend;
 
 /// <summary>
 /// Single controller / gateway between UI and backend.
-/// Will later hold HttpClient, JWT, inactivity timers, etc.
+/// Holds HttpClient, connection state, inactivity, etc.
 /// </summary>
 public sealed class Database : IDatabase
 {
+    private readonly HttpClient _httpClient;
+    private readonly BackendContext _context;
     private ConnectionState _connectionState = ConnectionState.Disconnected;
+
+    public Database()
+    {
+        // TODO: move base address + default headers to config.
+        _httpClient = new HttpClient
+        {
+            BaseAddress = new Uri("https://localhost:5001") // <-- adjust to your API
+        };
+
+        _context = new BackendContext(_httpClient);
+    }
 
     public ConnectionState ConnectionState
     {
@@ -33,25 +47,22 @@ public sealed class Database : IDatabase
         IBackendQuery<TResult> query,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(query);
-
-        // Later:
-        //  - EnsureConnectedAsync()
-        //  - central exception handling
-        //  - token renewal / connectivity checks
-        //  - map HTTP errors to SessionEnded, etc.
+        if (query is null) throw new ArgumentNullException(nameof(query));
 
         await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
 
-        // For now, this will throw until we implement real queries.
-        throw new NotImplementedException(
-            "QueryAsync is not wired to the HTTP API yet. " +
-            "We will implement this once the API endpoints are finalised.");
+        // Later:
+        //  - central exception handling
+        //  - JWT renewal / 401 handling -> SessionEnded
+        //  - connectivity retry logic
+
+        return await query.ExecuteAsync(_context, cancellationToken)
+                          .ConfigureAwait(false);
     }
 
     public Task<bool> EnsureConnectedAsync(CancellationToken cancellationToken = default)
     {
-        // For now we just flip state; later we will ping the API / login.
+        // Stub for now. Later: ping /health, ensure token, etc.
         if (ConnectionState == ConnectionState.Disconnected)
         {
             ConnectionState = ConnectionState.Connecting;

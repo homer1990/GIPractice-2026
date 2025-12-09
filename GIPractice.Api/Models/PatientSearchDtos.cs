@@ -14,7 +14,7 @@ public class PatientSearchRequestDto
     public string? Email { get; set; }
 
     // paging
-    public int Page { get; set; } = 1;
+    public int PageIndex { get; set; } = 1;
     public int PageSize { get; set; } = 20;
 
     // sorting

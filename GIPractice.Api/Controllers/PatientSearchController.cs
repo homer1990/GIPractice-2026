@@ -40,7 +40,7 @@ public class PatientSearchController(AppDbContext db) : ControllerBase
                 // If it's not a valid 12-digit number, we can just return empty result.
                 return Ok(new PagedResultDto<PatientListItemDto>
                 {
-                    Page = request.Page <= 0 ? 1 : request.Page,
+                    Page = request.PageIndex <= 0 ? 1 : request.PageIndex,
                     PageSize = request.PageSize <= 0 ? 20 : request.PageSize,
                     TotalCount = 0,
                     Items = []
@@ -93,7 +93,7 @@ public class PatientSearchController(AppDbContext db) : ControllerBase
             query = query.Where(p => p.Email != null && p.Email.Contains(email));
         }
 
-        var page = request.Page <= 0 ? 1 : request.Page;
+        var page = request.PageIndex <= 0 ? 1 : request.PageIndex;
         var pageSize = request.PageSize <= 0 ? 20 : request.PageSize;
         if (pageSize > 200) pageSize = 200;
 

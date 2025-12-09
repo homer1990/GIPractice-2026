@@ -5,10 +5,9 @@ namespace GIPractice.Wpf.Backend;
 
 /// <summary>
 /// Represents a single backend query/command.
-/// Database will call ExecuteAsync on this.
-/// Later it will get an HttpClient or typed API client injected here.
+/// Database will call ExecuteAsync on this with a BackendContext.
 /// </summary>
 public interface IBackendQuery<TResult>
 {
-    Task<TResult> ExecuteAsync(CancellationToken cancellationToken);
+    Task<TResult> ExecuteAsync(BackendContext context, CancellationToken cancellationToken);
 }

@@ -13,6 +13,12 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\GIPractice.Api\GIPractice.Api.csproj" />
+    <ProjectReference Include="..\GIPractice.Core\GIPractice.Core.csproj" />
+    <ProjectReference Include="..\GIPractice.Infrastructure\GIPractice.Infrastructure.csproj" />
+    <ProjectReference Include="..\GIPractice.Wpf.UserControls\GIPractice.Wpf.UserControls.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

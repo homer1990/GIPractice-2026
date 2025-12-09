@@ -40,4 +40,14 @@ public sealed class AsyncRelayCommand(
 
     public void RaiseCanExecuteChanged()
         => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+    // in AsyncRelayCommand.cs
+    public Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        if (!CanExecute(null))
+            return Task.CompletedTask;
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        return _execute(cts.Token);
+    }
+
 }
