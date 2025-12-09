@@ -13,9 +13,9 @@
             </StatusBarItem>
 
             <StatusBarItem HorizontalAlignment="Right">
-                <Button Content="Connect"
-                        Command="{Binding ConnectCommand}"
-                        Padding="8,2" />
+                <Button Content="Login"
+                        Padding="8,2"
+                        Click="OnLoginClick" />
             </StatusBarItem>
         </StatusBar>
 

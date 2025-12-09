@@ -3,17 +3,12 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using GIPractice.Api.Models;
-
+#pragma warning disable IDE0130
 namespace GIPractice.Wpf.Backend.Queries;
-
-public sealed class SearchPatientsQuery : IBackendQuery<PagedResultDto<PatientSummaryDto>>
+#pragma warning restore IDE0130
+public sealed class SearchPatientsQuery(PatientSearchRequestDto request) : IBackendQuery<PagedResultDto<PatientSummaryDto>>
 {
-    private readonly PatientSearchRequestDto _request;
-
-    public SearchPatientsQuery(PatientSearchRequestDto request)
-    {
-        _request = request ?? throw new ArgumentNullException(nameof(request));
-    }
+    private readonly PatientSearchRequestDto _request = request ?? throw new ArgumentNullException(nameof(request));
 
     public async Task<PagedResultDto<PatientSummaryDto>> ExecuteAsync(
         BackendContext context,
@@ -30,9 +25,6 @@ public sealed class SearchPatientsQuery : IBackendQuery<PagedResultDto<PatientSu
         var result = await response.Content.ReadFromJsonAsync<PagedResultDto<PatientSummaryDto>>(
             cancellationToken: cancellationToken);
 
-        if (result is null)
-            throw new InvalidOperationException("Patients search returned an empty body.");
-
-        return result;
+        return result is null ? throw new InvalidOperationException("Patients search returned an empty body.") : result;
     }
 }

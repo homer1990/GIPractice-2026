@@ -5,22 +5,19 @@ using GIPractice.Wpf.ViewModels.Search;
 
 namespace GIPractice.Wpf.ViewModels.Patients;
 
-public sealed class PatientSearchViewModel
-    : PagedSearchViewModel<PatientSearchRequestDto, PagedResultDto<PatientSummaryDto>, PatientSummaryDto>
+public sealed class PatientSearchViewModel(IDatabase database)
+        : PagedSearchViewModel<PatientSearchRequestDto, PagedResultDto<PatientSummaryDto>, PatientSummaryDto>(database, new PatientSearchRequestDto())
 {
-    public PatientSearchViewModel(IDatabase database)
-        : base(database, new PatientSearchRequestDto())
-    {
-    }
-
     protected override IBackendQuery<PagedResultDto<PatientSummaryDto>> CreateSearchQuery(PatientSearchRequestDto criteria)
-        => new SearchPatientsQuery(criteria);
+    {
+        return new SearchPatientsQuery(criteria);
+    }
 
     protected override ReadOnlyMemory<PatientSummaryDto> GetItemsFromResult(PagedResultDto<PatientSummaryDto> result)
     {
         // Adjust property name if your PagedResultDto uses a different one
         var items = result.Items ?? [];
-        return new ReadOnlyMemory<PatientSummaryDto>(items.ToArray());
+        return new ReadOnlyMemory<PatientSummaryDto>([.. items]);
     }
 
     protected override int GetTotalCount(PagedResultDto<PatientSummaryDto> result)

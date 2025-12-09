@@ -5,14 +5,9 @@ namespace GIPractice.Wpf.Backend;
 /// <summary>
 /// Shared context for backend queries (HttpClient, config, etc.).
 /// </summary>
-public sealed class BackendContext
+public sealed class BackendContext(HttpClient httpClient)
 {
-    public BackendContext(HttpClient httpClient)
-    {
-        HttpClient = httpClient;
-    }
-
-    public HttpClient HttpClient { get; }
+    public HttpClient HttpClient { get; } = httpClient;
 
     // Later: JWT/token provider, Json options, base path config, etc.
 }

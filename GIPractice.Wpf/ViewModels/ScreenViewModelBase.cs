@@ -28,7 +28,7 @@ public abstract class ScreenViewModelBase(IDatabase database) : ViewModelBase
     public string? ErrorMessage
     {
         get => _errorMessage;
-        protected set => SetProperty(ref _errorMessage, value);
+        set => SetProperty(ref _errorMessage, value);
     }
 
     /// <summary>
@@ -39,7 +39,7 @@ public abstract class ScreenViewModelBase(IDatabase database) : ViewModelBase
     string? busyText = null,
     CancellationToken externalToken = default)
     {
-        if (operation is null) throw new ArgumentNullException(nameof(operation));
+        ArgumentNullException.ThrowIfNull(operation);
 
         IsBusy = true;
         BusyText = busyText;

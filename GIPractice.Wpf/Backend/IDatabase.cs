@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using GIPractice.Api.Models;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace GIPractice.Wpf.Backend;
@@ -28,4 +29,14 @@ public interface IDatabase
     /// Called by UI whenever user interacts, for inactivity timer.
     /// </summary>
     void RegisterUserInteraction();
+    CurrentUserDto? CurrentUser { get; }   // from AuthDtos.cs
+    bool IsAuthenticated { get; }
+    string ServerUrl { get; }
+    void SetServerUrl(string serverUrl);
+    Task<bool> LoginAsync(
+        string userName,
+        string password,
+        CancellationToken cancellationToken = default);
+
+    Task LogoutAsync();
 }

@@ -12,7 +12,7 @@ public sealed class GetPatientQuery : IBackendQuery<PatientDto>
 
     public GetPatientQuery(int id)
     {
-        if (id <= 0) throw new ArgumentOutOfRangeException(nameof(id));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(id);
         _id = id;
     }
 
@@ -25,9 +25,6 @@ public sealed class GetPatientQuery : IBackendQuery<PatientDto>
             $"api/patients/{_id}",
             cancellationToken);
 
-        if (dto is null)
-            throw new InvalidOperationException($"Patient {_id} not found.");
-
-        return dto;
+        return dto is null ? throw new InvalidOperationException($"Patient {_id} not found.") : dto;
     }
 }

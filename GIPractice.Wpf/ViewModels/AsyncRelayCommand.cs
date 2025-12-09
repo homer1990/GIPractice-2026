@@ -6,19 +6,13 @@ using System.Windows.Input;
 
 namespace GIPractice.Wpf.ViewModels;
 
-public sealed class AsyncRelayCommand : ICommand
+public sealed class AsyncRelayCommand(
+    Func<CancellationToken, Task> execute,
+    Func<bool>? canExecute = null) : ICommand
 {
-    private readonly Func<CancellationToken, Task> _execute;
-    private readonly Func<bool>? _canExecute;
+    private readonly Func<CancellationToken, Task> _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+    private readonly Func<bool>? _canExecute = canExecute;
     private bool _isExecuting;
-
-    public AsyncRelayCommand(
-        Func<CancellationToken, Task> execute,
-        Func<bool>? canExecute = null)
-    {
-        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-        _canExecute = canExecute;
-    }
 
     public event EventHandler? CanExecuteChanged;
 

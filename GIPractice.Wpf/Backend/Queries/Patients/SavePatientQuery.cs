@@ -7,14 +7,9 @@ using GIPractice.Api.Models;
 
 namespace GIPractice.Wpf.Backend.Queries.Patients;
 
-public sealed class SavePatientQuery : IBackendQuery<PatientDto>
+public sealed class SavePatientQuery(PatientDto patient) : IBackendQuery<PatientDto>
 {
-    private readonly PatientDto _patient;
-
-    public SavePatientQuery(PatientDto patient)
-    {
-        _patient = patient ?? throw new ArgumentNullException(nameof(patient));
-    }
+    private readonly PatientDto _patient = patient ?? throw new ArgumentNullException(nameof(patient));
 
     public async Task<PatientDto> ExecuteAsync(
         BackendContext context,
@@ -47,9 +42,6 @@ public sealed class SavePatientQuery : IBackendQuery<PatientDto>
         var result = await response.Content.ReadFromJsonAsync<PatientDto>(
             cancellationToken: cancellationToken);
 
-        if (result is null)
-            throw new InvalidOperationException("Patient save returned an empty body.");
-
-        return result;
+        return result is null ? throw new InvalidOperationException("Patient save returned an empty body.") : result;
     }
 }
