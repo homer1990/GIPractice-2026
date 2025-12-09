@@ -4,14 +4,14 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d">
-    <Grid Padding="20">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Dashboard" FontSize="20" FontWeight="Bold" />
+        <TextBlock Text="Dashboard" FontSize="20" FontWeight="Bold" Padding="20"/>
         <ListBox Grid.Row="1" ItemsSource="{Binding ActivityLog}" />
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Record activity" Command="{Binding RefreshCommand}" />

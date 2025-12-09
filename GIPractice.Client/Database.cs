@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure;
 using GIPractice.Client;
 using Microsoft.Extensions.Logging;
 
@@ -56,20 +57,20 @@ public sealed class Database : IDatabaseController, IAsyncDisposable
             await _tokenService.SignOutAsync().ConfigureAwait(false);
             RaiseInterrupt(new InterruptSignal(InterruptReason.TokenExpired, "Session expired. Please sign in again."));
             UpdateStatus(ConnectionStatus.Unauthorized, "Unauthorized");
-            return Array.Empty<TDto>();
+            return [];
         }
 
         if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
         {
             UpdateStatus(ConnectionStatus.Disconnected, "API unavailable");
             RaiseInterrupt(new InterruptSignal(InterruptReason.ConnectivityLost, "Connection interrupted while executing query."));
-            return Array.Empty<TDto>();
+            return [];
         }
 
         response.EnsureSuccessStatusCode();
         var payload = await response.Content.ReadFromJsonAsync<IReadOnlyList<TDto>>(cancellationToken: cancellationToken).ConfigureAwait(false);
         UpdateStatus(ConnectionStatus.Connected, "Data received");
-        return payload ?? Array.Empty<TDto>();
+        return payload ?? [];
     }
 
     private async Task EnsureConnectedAsync(CancellationToken cancellationToken)
@@ -139,6 +140,11 @@ public sealed class Database : IDatabaseController, IAsyncDisposable
             _logger.LogWarning(ex, "Health probe failed");
             return false;
         }
+        catch (Exception e)
+        {
+            _logger.LogWarning(e, "undefined error.");
+        }
+        return new Task<bool>(() => false).Result;
     }
 
     private void RaiseInterrupt(InterruptSignal signal)

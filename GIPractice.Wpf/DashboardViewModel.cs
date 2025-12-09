@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using GIPractice.Client;
-using GIPractice.Client;
 
 namespace GIPractice.Wpf;
 
@@ -27,7 +26,7 @@ public class DashboardViewModel : PresentationBase
 
     public string Title => "Workspace";
 
-    public ObservableCollection<string> ActivityLog { get; } = new();
+    public ObservableCollection<string> ActivityLog { get; } = [];
 
     public string Status
     {

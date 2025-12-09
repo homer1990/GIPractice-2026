@@ -5,16 +5,10 @@ namespace GIPractice.Client;
 /// <summary>
 /// Provides localized strings by delegating to the configured catalog.
 /// </summary>
-public sealed class LocalizationBindingService : IStringLocalizer
+public sealed class LocalizationBindingService(ILocalizationCatalog catalog, string language = "en") : IStringLocalizer
 {
-    private readonly ILocalizationCatalog _catalog;
-    private readonly string _language;
-
-    public LocalizationBindingService(ILocalizationCatalog catalog, string language = "en")
-    {
-        _catalog = catalog;
-        _language = string.IsNullOrWhiteSpace(language) ? "en" : language;
-    }
+    private readonly ILocalizationCatalog _catalog = catalog;
+    private readonly string _language = string.IsNullOrWhiteSpace(language) ? "en" : language;
 
     public string this[string key] => GetString(key);
 

@@ -27,7 +27,7 @@ public partial class App : Application
 
                 var options = new DatabaseOptions
                 {
-                    BaseAddress = new Uri(apiSection.GetValue<string>("BaseAddress") ?? "https://localhost:5001/"),
+                    BaseAddress = new Uri(apiSection.GetValue<string>("BaseAddress") ?? "https://localhost:7028/"),
                     HealthEndpoint = apiSection.GetValue<string>("HealthEndpoint") ?? "health",
                     ConnectivityCheckInterval = TimeSpan.FromSeconds(clientSection.GetValue<int>("ConnectivityIntervalSeconds", 10)),
                     InactivityTimeout = TimeSpan.FromMinutes(clientSection.GetValue<int>("InactivityMinutes", 15))

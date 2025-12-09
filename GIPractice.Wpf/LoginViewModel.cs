@@ -1,7 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using GIPractice.Client;
-using GIPractice.Client;
 
 namespace GIPractice.Wpf;
 
