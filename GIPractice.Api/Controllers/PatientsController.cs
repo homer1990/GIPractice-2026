@@ -5,6 +5,7 @@ using GIPractice.Core.ValueObjects;
 using GIPractice.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace GIPractice.Api.Controllers;
 
@@ -528,5 +529,154 @@ public class PatientsController(AppDbContext db) : ControllerBase
         };
 
         return Ok(dashboard);
+    }
+    [HttpPost("search")]
+    public async Task<ActionResult<PagedResultDto<PatientListItemDto>>> SearchPatients(
+    [FromBody] PatientSearchRequestDto request)
+    {
+        if (request is null)
+            return BadRequest();
+
+        // Normalise paging
+        var page = request.PageIndex <= 0 ? 1 : request.PageIndex;
+        var pageSize = request.PageSize <= 0 ? 20 : request.PageSize;
+        if (pageSize > 200) pageSize = 200;
+
+        // Base query: not deleted
+        var query = _db.Patients
+            .AsNoTracking()
+            .Where(p => !p.IsDeleted);
+
+        // Filters (all optional, AND-ed together)
+        if (!string.IsNullOrWhiteSpace(request.PersonalNumber))
+        {
+            var term = request.PersonalNumber.Trim();
+            query = query.Where(p => p.PersonalNumber.Value.Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.LastName))
+        {
+            var term = request.LastName.Trim();
+            query = query.Where(p => p.LastName.Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.FirstName))
+        {
+            var term = request.FirstName.Trim();
+            query = query.Where(p => p.FirstName.Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.FathersName))
+        {
+            var term = request.FathersName.Trim();
+            query = query.Where(p => p.FathersName.Contains(term));
+        }
+
+        if (request.BirthDateFrom.HasValue)
+        {
+            var from = request.BirthDateFrom.Value.Date;
+            query = query.Where(p => p.BirthDay >= from);
+        }
+
+        if (request.BirthDateTo.HasValue)
+        {
+            var to = request.BirthDateTo.Value.Date;
+            query = query.Where(p => p.BirthDay <= to);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
+        {
+            var term = request.PhoneNumber.Trim();
+            query = query.Where(p => p.PhoneNumber != null && p.PhoneNumber.Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Email))
+        {
+            var term = request.Email.Trim();
+            query = query.Where(p => p.Email != null && p.Email.Contains(term));
+        }
+
+        // Sorting
+        var sortField = request.SortField?.Trim().ToLowerInvariant();
+        var desc = request.SortDescending;
+
+        query = sortField switch
+        {
+            "lastname" => desc
+                ? query.OrderByDescending(p => p.LastName).ThenBy(p => p.FirstName)
+                : query.OrderBy(p => p.LastName).ThenBy(p => p.FirstName),
+
+            "firstname" => desc
+                ? query.OrderByDescending(p => p.FirstName).ThenBy(p => p.LastName)
+                : query.OrderBy(p => p.FirstName).ThenBy(p => p.LastName),
+
+            "birthday" => desc
+                ? query.OrderByDescending(p => p.BirthDay)
+                : query.OrderBy(p => p.BirthDay),
+
+            "personalnumber" => desc
+                ? query.OrderByDescending(p => p.PersonalNumber.Value)
+                : query.OrderBy(p => p.PersonalNumber.Value),
+
+            "id" or _ => desc
+                ? query.OrderByDescending(p => p.Id)
+                : query.OrderBy(p => p.Id),
+        };
+
+        var totalCount = await query.CountAsync();
+
+        var skip = (page - 1) * pageSize;
+
+        // Project to lightweight list item DTO
+        var raw = await query
+            .Skip(skip)
+            .Take(pageSize)
+            .Select(p => new
+            {
+                p.Id,
+                p.FirstName,
+                p.LastName,
+                p.FathersName,
+                PersonalNumber = p.PersonalNumber.Value,
+                p.BirthDay,
+                p.PhoneNumber,
+                p.Email
+            })
+            .ToListAsync();
+
+        static int CalcAgeYears(DateTime birthDay)
+        {
+            var today = DateTime.UtcNow.Date;
+            var b = birthDay.Date;
+            var age = today.Year - b.Year;
+            if (b > today.AddYears(-age)) age--;
+            return age < 0 ? 0 : age;
+        }
+
+        var items = raw
+            .Select(p => new PatientListItemDto
+            {
+                Id = p.Id,
+                FirstName = p.FirstName,
+                LastName = p.LastName,
+                FathersName = p.FathersName,
+                PersonalNumber = p.PersonalNumber,
+                BirthDay = p.BirthDay,
+                AgeYears = CalcAgeYears(p.BirthDay),
+                PhoneNumber = p.PhoneNumber,
+                Email = p.Email,
+                LastVisitUtc = null // we can extend this later with a view/subquery
+            })
+            .ToList();
+
+        var result = new PagedResultDto<PatientListItemDto>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            Items = items
+        };
+
+        return Ok(result);
     }
 }

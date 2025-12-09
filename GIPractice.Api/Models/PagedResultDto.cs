@@ -6,5 +6,10 @@ public class PagedResultDto<T>
     public int PageSize { get; set; }
     public int TotalCount { get; set; }
 
-    public IReadOnlyList<T> Items { get; set; } = [];
+    public IReadOnlyList<T> Items { get; set; } = Array.Empty<T>();
+}
+
+// Non-generic alias if you ever need it dynamically
+public class PagedResultDto : PagedResultDto<object>
+{
 }

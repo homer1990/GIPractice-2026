@@ -43,8 +43,13 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
+                <!-- DataGrid -->
                 <RowDefinition Height="Auto" />
+                <!-- Paging -->
+                <RowDefinition Height="Auto" />
+                <!-- Error -->
             </Grid.RowDefinitions>
+
 
             <DataGrid Grid.Row="0"
                 ItemsSource="{Binding Items}"
@@ -76,6 +81,11 @@
                            VerticalAlignment="Center"
                            Text="{Binding TotalCount, StringFormat='Total: {0}'}" />
             </StackPanel>
+            <TextBlock Grid.Row="2"
+                       Margin="0,5,0,0"
+                       Foreground="Red"
+                       TextWrapping="Wrap"
+                       Text="{Binding ErrorMessage}" />
         </Grid>
     </DockPanel>
 </UserControl>
