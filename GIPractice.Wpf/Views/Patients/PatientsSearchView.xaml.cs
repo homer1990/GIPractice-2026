@@ -39,6 +39,18 @@ public partial class PatientsSearchView : UserControl
         {
             window.DialogResult = true;
             window.Close();
+            detailsVm.Saved += (_, _) =>
+            {
+                window.DialogResult = true;
+                window.Close();
+
+                // optional refresh:
+                if (DataContext is PatientSearchViewModel searchVm &&
+                    searchVm.SearchCommand is AsyncRelayCommand cmd)
+                {
+                    _ = cmd.ExecuteAsync();
+                }
+            };
         };
 
         window.Show();
