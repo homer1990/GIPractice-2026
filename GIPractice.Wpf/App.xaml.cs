@@ -1,42 +1,37 @@
+using System;
 using System.Windows;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using GIPractice.Wpf.Backend;
+using GIPractice.Wpf.ViewModels;
 
 namespace GIPractice.Wpf;
 
 public partial class App : Application
 {
-    private IHost? _host;
+    private IServiceProvider? _serviceProvider;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
-        _host = Host.CreateDefaultBuilder()
-            .ConfigureAppConfiguration(config =>
-            {
-                config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-            })
-            .ConfigureServices((context, services) =>
-            {                
-                services.AddSingleton<MainWindow>();
-            })
-            .Build();
+        var services = new ServiceCollection();
+        ConfigureServices(services);
+        _serviceProvider = services.BuildServiceProvider();
 
-        _host.Start();
-        var mainWindow = _host.Services.GetRequiredService<MainWindow>();
+        var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
+        MainWindow = mainWindow;
         mainWindow.Show();
     }
 
-    protected override async void OnExit(ExitEventArgs e)
+    private void ConfigureServices(IServiceCollection services)
     {
-        if (_host is not null)
-        {
-            await _host.StopAsync();
-            _host.Dispose();
-        }
+        // Backend "controller"
+        services.AddSingleton<IDatabase, Database>();
 
-        base.OnExit(e);
+        // ViewModels
+        services.AddTransient<MainWindowViewModel>();
+
+        // Windows
+        services.AddTransient<MainWindow>();
     }
 }
