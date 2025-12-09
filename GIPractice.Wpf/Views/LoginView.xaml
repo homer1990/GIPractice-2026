@@ -10,15 +10,20 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <TextBlock Text="{Binding Title}" FontSize="20" FontWeight="Bold" />
         <StackPanel Grid.Row="1" Margin="0,12,0,0">
+            <TextBlock Text="{Binding ServerUrlLabel}" />
+            <TextBox Text="{Binding ServerUrl, UpdateSourceTrigger=PropertyChanged}" />
+        </StackPanel>
+        <StackPanel Grid.Row="2" Margin="0,12,0,0">
             <TextBlock Text="{Binding UserNameLabel}" />
             <TextBox Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}" />
             <TextBlock Text="{Binding PasswordLabel}" />
             <PasswordBox x:Name="PasswordBox" PasswordChanged="OnPasswordChanged" />
         </StackPanel>
-        <Button Grid.Row="2" Content="{Binding SubmitLabel}" Command="{Binding SignInCommand}" />
-        <TextBlock Grid.Row="3" Text="{Binding Status}" Margin="0,8,0,0" />
+        <Button Grid.Row="3" Content="{Binding SubmitLabel}" Command="{Binding SignInCommand}" />
+        <TextBlock Grid.Row="4" Text="{Binding Status}" Margin="0,8,0,0" />
     </Grid>
 </UserControl>

@@ -12,6 +12,7 @@ public class ViewController : INotifyPropertyChanged
     private string _statusMessage = string.Empty;
     private bool _isDimmed;
     private string? _overlay;
+    private bool _allowDimming;
 
     public ViewController(IDatabaseController database)
     {
@@ -50,17 +51,25 @@ public class ViewController : INotifyPropertyChanged
     {
         CurrentViewModel = viewModel;
         Overlay = null;
+        _allowDimming = viewModel is not LoginViewModel;
         IsDimmed = false;
     }
 
     private void OnStatusChanged(object? sender, ConnectionStateChange e)
     {
         StatusMessage = e.Message ?? e.Status.ToString();
-        IsDimmed = e.Status == ConnectionStatus.Disconnected;
+        IsDimmed = _allowDimming && e.Status == ConnectionStatus.Disconnected;
     }
 
     private void OnInterruptRaised(object? sender, InterruptSignal e)
     {
+        if (!_allowDimming)
+        {
+            Overlay = null;
+            IsDimmed = false;
+            return;
+        }
+
         Overlay = e.Message;
         IsDimmed = true;
     }

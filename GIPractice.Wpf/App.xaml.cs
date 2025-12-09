@@ -24,25 +24,30 @@ public partial class App : Application
             {
                 var apiSection = context.Configuration.GetSection("Api");
                 var clientSection = context.Configuration.GetSection("Client");
-
-                var options = new DatabaseOptions
+                var defaultSettings = new ClientSettings
                 {
-                    BaseAddress = new Uri(apiSection.GetValue<string>("BaseAddress") ?? "https://localhost:5001/"),
+                    ApiBaseAddress = apiSection.GetValue<string>("BaseAddress") ?? "https://localhost:7028/",
                     HealthEndpoint = apiSection.GetValue<string>("HealthEndpoint") ?? "health",
-                    ConnectivityCheckInterval = TimeSpan.FromSeconds(clientSection.GetValue<int>("ConnectivityIntervalSeconds", 10)),
-                    InactivityTimeout = TimeSpan.FromMinutes(clientSection.GetValue<int>("InactivityMinutes", 15))
+                    InactivityMinutes = clientSection.GetValue("InactivityMinutes", 15),
+                    ConnectivityIntervalSeconds = clientSection.GetValue("ConnectivityIntervalSeconds", 10),
+                    Language = clientSection.GetValue<string>("Language") ?? "en"
                 };
 
-                services.AddSingleton(options);
+                services.AddSingleton(defaultSettings);
+                services.AddSingleton<IClientSettingsStore, RegistrySettingsStore>();
+                services.AddSingleton<ClientSettingsManager>();
+
+                services.AddSingleton(sp => sp.GetRequiredService<ClientSettingsManager>().CreateDatabaseOptions());
                 services.AddSingleton<ITokenService, InMemoryTokenService>();
                 services.AddSingleton<ILocalizationCatalog, JsonLocalizationCatalog>();
                 services.AddHttpClient<Database>();
+                services.AddSingleton(sp => sp.GetRequiredService<Database>());
                 services.AddSingleton<IDatabaseController>(sp => sp.GetRequiredService<Database>());
 
                 services.AddSingleton<ViewController>();
                 services.AddSingleton(sp => new LocalizationManager(
                     sp.GetRequiredService<ILocalizationCatalog>(),
-                    clientSection.GetValue<string>("Language") ?? "en"));
+                    sp.GetRequiredService<ClientSettingsManager>().Settings.Language));
 
                 services.AddSingleton<LoginViewModel>();
                 services.AddSingleton<DashboardViewModel>();

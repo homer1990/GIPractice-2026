@@ -29,7 +29,7 @@ public sealed class Database : IDatabaseController, IAsyncDisposable
         _logger = logger;
         _lastActivity = DateTimeOffset.UtcNow;
 
-        _httpClient.BaseAddress = options.BaseAddress;
+        _httpClient.BaseAddress = NormalizeBaseAddress(options.BaseAddress);
         _monitorTimer = new PeriodicTimer(_options.ConnectivityCheckInterval);
         _ = MonitorConnectivityAsync();
     }
@@ -167,5 +167,37 @@ public sealed class Database : IDatabaseController, IAsyncDisposable
         {
             await asyncDisposable.DisposeAsync().ConfigureAwait(false);
         }
+    }
+
+    public void ApplyClientSettings(ClientSettings settings)
+    {
+        var baseAddress = NormalizeBaseAddress(settings.ApiBaseAddress);
+        _options.BaseAddress = baseAddress;
+        _options.HealthEndpoint = settings.HealthEndpoint;
+        _httpClient.BaseAddress = baseAddress;
+
+        UpdateStatus(ConnectionStatus.Connecting, "Connecting to API");
+    }
+
+    private static Uri NormalizeBaseAddress(string baseAddress)
+    {
+        var uri = new Uri(baseAddress, UriKind.Absolute);
+        if (!uri.AbsoluteUri.EndsWith("/", StringComparison.Ordinal))
+        {
+            uri = new Uri(uri.AbsoluteUri + "/");
+        }
+
+        return uri;
+    }
+
+    private static Uri NormalizeBaseAddress(Uri baseAddress)
+    {
+        var uri = baseAddress;
+        if (!uri.AbsoluteUri.EndsWith("/", StringComparison.Ordinal))
+        {
+            uri = new Uri(uri.AbsoluteUri + "/");
+        }
+
+        return uri;
     }
 }
