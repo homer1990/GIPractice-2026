@@ -13,21 +13,23 @@ namespace GIPractice.Client;
 
 public sealed class Database : IDatabaseController, IAsyncDisposable
 {
-    private readonly HttpClient _httpClient;
     private readonly DatabaseOptions _options;
     private readonly ITokenService _tokenService;
     private readonly ILogger<Database> _logger;
     private readonly CancellationTokenSource _cts = new();
     private readonly PeriodicTimer _monitorTimer;
+    private readonly SemaphoreSlim _clientLock = new(1, 1);
+    
+    private HttpClient _httpClient;
     private ConnectionStatus _status = ConnectionStatus.Connecting;
     private DateTimeOffset _lastActivity;
 
     public Database(HttpClient httpClient, DatabaseOptions options, ITokenService tokenService, ILogger<Database> logger)
     {
-        _httpClient = httpClient;
-        _options = options;
-        _tokenService = tokenService;
-        _logger = logger;
+        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _lastActivity = DateTimeOffset.UtcNow;
 
         _httpClient.BaseAddress = NormalizeBaseAddress(options.BaseAddress);
@@ -48,53 +50,58 @@ public sealed class Database : IDatabaseController, IAsyncDisposable
         cancellationToken.ThrowIfCancellationRequested();
         RecordActivity();
 
-        await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
-
-        using var response = await _httpClient.PostAsJsonAsync(route, query, cancellationToken).ConfigureAwait(false);
-        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        if (!await EnsureAuthorizedAsync(cancellationToken).ConfigureAwait(false))
         {
-            _logger.LogWarning("Unauthorized response received from {Route}", route);
-            await _tokenService.SignOutAsync().ConfigureAwait(false);
-            RaiseInterrupt(new InterruptSignal(InterruptReason.TokenExpired, "Session expired. Please sign in again."));
-            UpdateStatus(ConnectionStatus.Unauthorized, "Unauthorized");
             return [];
         }
 
-        if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
+        await _clientLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            UpdateStatus(ConnectionStatus.Disconnected, "API unavailable");
-            RaiseInterrupt(new InterruptSignal(InterruptReason.ConnectivityLost, "Connection interrupted while executing query."));
-            return [];
-        }
+            using var response = await _httpClient.PostAsJsonAsync(route, query, cancellationToken).ConfigureAwait(false);
 
-        response.EnsureSuccessStatusCode();
-        var payload = await response.Content.ReadFromJsonAsync<IReadOnlyList<TDto>>(cancellationToken: cancellationToken).ConfigureAwait(false);
-        UpdateStatus(ConnectionStatus.Connected, "Data received");
-        return payload ?? [];
+            return response.StatusCode switch
+            {
+                HttpStatusCode.Unauthorized => HandleUnauthorized<TDto>(route),
+                HttpStatusCode.ServiceUnavailable => HandleServiceUnavailable<TDto>(),
+                _ => await HandleSuccessResponse<TDto>(response, cancellationToken).ConfigureAwait(false)
+            };
+        }
+        finally
+        {
+            _clientLock.Release();
+        }
     }
 
-    private async Task EnsureConnectedAsync(CancellationToken cancellationToken)
+    private async Task<bool> EnsureAuthorizedAsync(CancellationToken cancellationToken)
     {
         if (!await _tokenService.EnsureValidTokenAsync(cancellationToken).ConfigureAwait(false))
         {
             RaiseInterrupt(new InterruptSignal(InterruptReason.Unauthorized, "Cannot refresh token. Please sign in again."));
             UpdateStatus(ConnectionStatus.Unauthorized, "Authorization required");
-            return;
+            return false;
         }
 
+        ApplyAuthorizationHeader();
+
+        if (_status != ConnectionStatus.Connected)
+        {
+            UpdateStatus(ConnectionStatus.Connecting, "Connecting to API");
+            var isHealthy = await ProbeHealthAsync(cancellationToken).ConfigureAwait(false);
+            UpdateStatus(isHealthy ? ConnectionStatus.Connected : ConnectionStatus.Disconnected,
+                isHealthy ? "Connected" : "Disconnected");
+        }
+
+        return true;
+    }
+
+    private void ApplyAuthorizationHeader()
+    {
         if (!string.IsNullOrWhiteSpace(_tokenService.AccessToken))
         {
-            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _tokenService.AccessToken);
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _tokenService.AccessToken);
         }
-
-        if (_status == ConnectionStatus.Connected)
-        {
-            return;
-        }
-
-        UpdateStatus(ConnectionStatus.Connecting, "Connecting to API");
-        var isHealthy = await ProbeHealthAsync(cancellationToken).ConfigureAwait(false);
-        UpdateStatus(isHealthy ? ConnectionStatus.Connected : ConnectionStatus.Disconnected, isHealthy ? "Connected" : "Disconnected");
     }
 
     private async Task MonitorConnectivityAsync()
@@ -104,6 +111,7 @@ public sealed class Database : IDatabaseController, IAsyncDisposable
             while (await _monitorTimer.WaitForNextTickAsync(_cts.Token).ConfigureAwait(false))
             {
                 var now = DateTimeOffset.UtcNow;
+
                 if (now - _lastActivity > _options.InactivityTimeout)
                 {
                     RaiseInterrupt(new InterruptSignal(InterruptReason.Inactivity, "Session inactive"));
@@ -112,8 +120,32 @@ public sealed class Database : IDatabaseController, IAsyncDisposable
                     continue;
                 }
 
-                var healthy = await ProbeHealthAsync(_cts.Token).ConfigureAwait(false);
-                var newStatus = healthy ? ConnectionStatus.Connected : ConnectionStatus.Disconnected;
+                await CheckConnectivityAsync(_cts.Token).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected on disposal
+        }
+    }
+
+    private async Task CheckConnectivityAsync(CancellationToken cancellationToken)
+    {
+        await _clientLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (!await _tokenService.EnsureValidTokenAsync(cancellationToken).ConfigureAwait(false))
+            {
+                UpdateStatus(ConnectionStatus.Unauthorized, "Token refresh failed");
+                return;
+            }
+
+            ApplyAuthorizationHeader();
+            var healthy = await ProbeHealthAsync(cancellationToken).ConfigureAwait(false);
+            var newStatus = healthy ? ConnectionStatus.Connected : ConnectionStatus.Disconnected;
+
+            if (_status != newStatus)
+            {
                 UpdateStatus(newStatus, healthy ? "Connected" : "Connection lost");
 
                 if (!healthy)
@@ -122,9 +154,9 @@ public sealed class Database : IDatabaseController, IAsyncDisposable
                 }
             }
         }
-        catch (OperationCanceledException)
+        finally
         {
-            // expected on disposal
+            _clientLock.Release();
         }
     }
 
@@ -140,11 +172,35 @@ public sealed class Database : IDatabaseController, IAsyncDisposable
             _logger.LogWarning(ex, "Health probe failed");
             return false;
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogWarning(e, "undefined error.");
+            _logger.LogWarning(ex, "Unexpected error during health probe");
+            return false;
         }
-        return new Task<bool>(() => false).Result;
+    }
+
+    private IReadOnlyList<TDto> HandleUnauthorized<TDto>(string route)
+    {
+        _logger.LogWarning("Unauthorized response received from {Route}", route);
+        _ = _tokenService.SignOutAsync();
+        RaiseInterrupt(new InterruptSignal(InterruptReason.TokenExpired, "Session expired. Please sign in again."));
+        UpdateStatus(ConnectionStatus.Unauthorized, "Unauthorized");
+        return [];
+    }
+
+    private IReadOnlyList<TDto> HandleServiceUnavailable<TDto>()
+    {
+        UpdateStatus(ConnectionStatus.Disconnected, "API unavailable");
+        RaiseInterrupt(new InterruptSignal(InterruptReason.ConnectivityLost, "Connection interrupted while executing query."));
+        return [];
+    }
+
+    private async Task<IReadOnlyList<TDto>> HandleSuccessResponse<TDto>(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadFromJsonAsync<IReadOnlyList<TDto>>(cancellationToken: cancellationToken).ConfigureAwait(false);
+        UpdateStatus(ConnectionStatus.Connected, "Data received");
+        return payload ?? [];
     }
 
     private void RaiseInterrupt(InterruptSignal signal)
@@ -168,6 +224,7 @@ public sealed class Database : IDatabaseController, IAsyncDisposable
         _cts.Cancel();
         _monitorTimer.Dispose();
         _cts.Dispose();
+        _clientLock.Dispose();
         _httpClient.Dispose();
         if (_tokenService is IAsyncDisposable asyncDisposable)
         {
@@ -175,14 +232,25 @@ public sealed class Database : IDatabaseController, IAsyncDisposable
         }
     }
 
-    public void ApplyClientSettings(ClientSettings settings)
+    public async Task ApplyClientSettingsAsync(ClientSettings settings)
     {
-        var baseAddress = NormalizeBaseAddress(settings.ApiBaseAddress);
-        _options.BaseAddress = baseAddress;
-        _options.HealthEndpoint = settings.HealthEndpoint;
-        _httpClient.BaseAddress = baseAddress;
+        await _clientLock.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var baseAddress = NormalizeBaseAddress(settings.ApiBaseAddress);
+            _options.BaseAddress = baseAddress;
+            _options.HealthEndpoint = settings.HealthEndpoint;
 
-        UpdateStatus(ConnectionStatus.Connecting, "Connecting to API");
+            var oldClient = _httpClient;
+            _httpClient = new HttpClient { BaseAddress = baseAddress };
+            oldClient.Dispose();
+
+            UpdateStatus(ConnectionStatus.Connecting, "Connecting to API");
+        }
+        finally
+        {
+            _clientLock.Release();
+        }
     }
 
     private static Uri NormalizeBaseAddress(string baseAddress)
@@ -192,7 +260,6 @@ public sealed class Database : IDatabaseController, IAsyncDisposable
         {
             uri = new Uri(uri.AbsoluteUri + "/");
         }
-
         return uri;
     }
 
@@ -203,7 +270,6 @@ public sealed class Database : IDatabaseController, IAsyncDisposable
         {
             uri = new Uri(uri.AbsoluteUri + "/");
         }
-
         return uri;
     }
 }

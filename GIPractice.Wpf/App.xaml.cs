@@ -37,11 +37,14 @@ public partial class App : Application
                 services.AddSingleton<IClientSettingsStore, RegistrySettingsStore>();
                 services.AddSingleton<ClientSettingsManager>();
 
-                services.AddSingleton(sp => sp.GetRequiredService<ClientSettingsManager>().CreateDatabaseOptions());
+                services.AddSingleton(sp => 
+                {
+                    var settingsManager = sp.GetRequiredService<ClientSettingsManager>();
+                    return settingsManager.CreateDatabaseOptions();
+                });
                 services.AddSingleton<ITokenService, InMemoryTokenService>();
                 services.AddSingleton<ILocalizationCatalog, JsonLocalizationCatalog>();
                 services.AddHttpClient<Database>();
-                services.AddSingleton(sp => sp.GetRequiredService<Database>());
                 services.AddSingleton<IDatabaseController>(sp => sp.GetRequiredService<Database>());
 
                 services.AddSingleton<ViewController>();

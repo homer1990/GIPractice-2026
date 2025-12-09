@@ -79,9 +79,22 @@ public class LoginViewModel : PresentationBase
 
         IsBusy = true;
         Status = _localization["Status.Connecting"];
-
-        if (!TryApplyServerUrl(out var error))
+        var error = string.Empty;
+        try
         {
+            _settingsManager.UpdateServerAddress(ServerUrl);
+            await _database.ApplyClientSettingsAsync(_settingsManager.Settings);
+        }
+        catch (ArgumentException ex)
+        {
+            error = ex.Message;
+            Status = error;
+            IsBusy = false;
+            return;
+        }
+        catch (UriFormatException)
+        {
+            error = "Server URL is not valid.";
             Status = error;
             IsBusy = false;
             return;
@@ -98,26 +111,5 @@ public class LoginViewModel : PresentationBase
         Status = _localization["Status.Connected"];
         IsBusy = false;
         SignedIn?.Invoke(this, EventArgs.Empty);
-    }
-
-    private bool TryApplyServerUrl(out string? error)
-    {
-        try
-        {
-            _settingsManager.UpdateServerAddress(ServerUrl);
-            _database.ApplyClientSettings(_settingsManager.Settings);
-            error = null;
-            return true;
-        }
-        catch (ArgumentException ex)
-        {
-            error = ex.Message;
-            return false;
-        }
-        catch (UriFormatException)
-        {
-            error = "Server URL is not valid.";
-            return false;
-        }
     }
 }
