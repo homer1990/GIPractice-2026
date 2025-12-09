@@ -3,24 +3,6 @@ using System.Collections.Generic;
 namespace GIPractice.Client;
 
 /// <summary>
-/// Simple localizer interface used by the client for binding UI strings.
-/// </summary>
-public interface IStringLocalizer
-{
-    /// <summary>Returns a localized string for the given key.</summary>
-    string this[string key] { get; }
-
-    /// <summary>Gets a localized string for the given key.</summary>
-    string GetString(string key);
-
-    /// <summary>Gets a localized field label for the specified table/field pair.</summary>
-    string GetFieldLabel(string table, string field);
-
-    /// <summary>Gets all field labels for a table.</summary>
-    IReadOnlyDictionary<string, string> GetFieldsForTable(string table);
-}
-
-/// <summary>
 /// Provides localized strings by delegating to the configured catalog.
 /// </summary>
 public sealed class LocalizationBindingService : IStringLocalizer
