@@ -55,7 +55,7 @@ public abstract class RemoveViewModel<TDto> : ScreenViewModelBase
 
                 var item = SelectedItem;
                 var query = CreateRemoveQuery(item);
-                var success = await Database.QueryAsync(query, ct).ConfigureAwait(false);
+                var success = await Database.QueryAsync(query, ct);
 
                 if (success)
                     OnRemoved(item);

@@ -1,13 +1,11 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using GIPractice.Wpf.Backend;
 
 namespace GIPractice.Wpf.ViewModels;
 
-/// <summary>
-/// Base for "single entity" screens (details / edit forms).
-/// </summary>
 public abstract class SingleViewModel<TDto> : ScreenViewModelBase
 {
     private TDto? _item;
@@ -20,15 +18,14 @@ public abstract class SingleViewModel<TDto> : ScreenViewModelBase
         SaveCommand = new AsyncRelayCommand(SaveAsync);
     }
 
+    public event EventHandler? Saved;            // <-- NEW
+
     public TDto? Item
     {
         get => _item;
         protected set => SetProperty(ref _item, value);
     }
 
-    /// <summary>
-    /// True if this is a new entity (no ID yet).
-    /// </summary>
     public bool IsNew
     {
         get => _isNew;
@@ -38,29 +35,19 @@ public abstract class SingleViewModel<TDto> : ScreenViewModelBase
     public ICommand LoadCommand { get; }
     public ICommand SaveCommand { get; }
 
-    /// <summary>
-    /// Provide the query that loads the entity for the current context.
-    /// For example: by Id, or new default DTO.
-    /// </summary>
     protected abstract IBackendQuery<TDto> CreateLoadQuery();
-
-    /// <summary>
-    /// Provide the query that saves the entity (insert/update).
-    /// </summary>
     protected abstract IBackendQuery<TDto> CreateSaveQuery(TDto item);
 
-    protected virtual void OnLoaded(TDto item)
-    {
-        // Hook for derived classes (e.g. compute state from item).
-    }
+    protected virtual void OnLoaded(TDto item) { }
 
-    private Task LoadAsync(CancellationToken cancellationToken)
+    protected virtual bool DetermineIsNew(TDto item) => false;
+
+    public Task LoadAsync(CancellationToken cancellationToken = default)
         => RunBusyAsync(
             async ct =>
             {
                 var query = CreateLoadQuery();
-                var dto = await Database.QueryAsync(query, ct).ConfigureAwait(false);
-
+                var dto = await Database.QueryAsync(query, ct);
                 Item = dto;
                 IsNew = DetermineIsNew(dto);
                 OnLoaded(dto);
@@ -68,7 +55,7 @@ public abstract class SingleViewModel<TDto> : ScreenViewModelBase
             busyText: "Loading…",
             externalToken: cancellationToken);
 
-    private Task SaveAsync(CancellationToken cancellationToken)
+    public Task SaveAsync(CancellationToken cancellationToken = default)
         => RunBusyAsync(
             async ct =>
             {
@@ -76,15 +63,11 @@ public abstract class SingleViewModel<TDto> : ScreenViewModelBase
                     return;
 
                 var query = CreateSaveQuery(Item);
-                Item = await Database.QueryAsync(query, ct).ConfigureAwait(false);
+                Item = await Database.QueryAsync(query, ct);
                 IsNew = DetermineIsNew(Item);
+
+                Saved?.Invoke(this, EventArgs.Empty);   // <-- raise event
             },
             busyText: "Saving…",
             externalToken: cancellationToken);
-
-    /// <summary>
-    /// How do we know if the DTO is "new"? By default always false;
-    /// concrete VM can override and inspect an Id property.
-    /// </summary>
-    protected virtual bool DetermineIsNew(TDto item) => false;
 }

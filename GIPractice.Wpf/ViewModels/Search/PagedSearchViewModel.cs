@@ -121,7 +121,7 @@ public abstract class PagedSearchViewModel<TSearch, TResult, TItem> : ScreenView
                 ApplyPagingToCriteria(ref criteria, PageIndex, PageSize);
 
                 var query = CreateSearchQuery(criteria);
-                var result = await Database.QueryAsync(query, ct).ConfigureAwait(false);
+                var result = await Database.QueryAsync(query, ct);
 
                 var items = GetItemsFromResult(result);
                 TotalCount = GetTotalCount(result);

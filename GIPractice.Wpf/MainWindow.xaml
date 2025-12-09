@@ -19,7 +19,7 @@
             </StatusBarItem>
         </StatusBar>
 
-        <!-- Main content: Patients search screen for now -->
-        <patients:PatientsSearchView x:Name="PatientsSearchViewControl" />
+        <!-- Main content -->
+        <patients:PatientsSearchView x:Name="PatientSearchViewControl" />
     </DockPanel>
 </Window>

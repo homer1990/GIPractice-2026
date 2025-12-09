@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,7 +6,7 @@ using GIPractice.Api.Models;
 
 namespace GIPractice.Wpf.Backend.Queries;
 
-public sealed class SearchPatientsQuery : IBackendQuery<PagedResultDto<PatientListItemDto>>
+public sealed class SearchPatientsQuery : IBackendQuery<PagedResultDto<PatientSummaryDto>>
 {
     private readonly PatientSearchRequestDto _request;
 
@@ -16,15 +15,11 @@ public sealed class SearchPatientsQuery : IBackendQuery<PagedResultDto<PatientLi
         _request = request ?? throw new ArgumentNullException(nameof(request));
     }
 
-    public async Task<PagedResultDto<PatientListItemDto>> ExecuteAsync(
+    public async Task<PagedResultDto<PatientSummaryDto>> ExecuteAsync(
         BackendContext context,
         CancellationToken cancellationToken)
     {
-        // NOTE:
-        // I don't have direct visibility of your API routes here.
-        // I'm assuming a POST endpoint at: POST /api/patients/search
-        // Adjust the path if your controller uses something else.
-
+        // Adjust the URI if your endpoint is different
         using var response = await context.HttpClient.PostAsJsonAsync(
             "api/patients/search",
             _request,
@@ -32,7 +27,7 @@ public sealed class SearchPatientsQuery : IBackendQuery<PagedResultDto<PatientLi
 
         response.EnsureSuccessStatusCode();
 
-        var result = await response.Content.ReadFromJsonAsync<PagedResultDto<PatientListItemDto>>(
+        var result = await response.Content.ReadFromJsonAsync<PagedResultDto<PatientSummaryDto>>(
             cancellationToken: cancellationToken);
 
         if (result is null)

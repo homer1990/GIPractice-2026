@@ -35,11 +35,11 @@ public abstract class ScreenViewModelBase(IDatabase database) : ViewModelBase
     /// Helper to run an async operation with IsBusy/ErrorMessage handling.
     /// </summary>
     protected async Task RunBusyAsync(
-        Func<CancellationToken, Task> operation,
-        string? busyText = null,
-        CancellationToken externalToken = default)
+    Func<CancellationToken, Task> operation,
+    string? busyText = null,
+    CancellationToken externalToken = default)
     {
-        ArgumentNullException.ThrowIfNull(operation);
+        if (operation is null) throw new ArgumentNullException(nameof(operation));
 
         IsBusy = true;
         BusyText = busyText;
@@ -48,7 +48,7 @@ public abstract class ScreenViewModelBase(IDatabase database) : ViewModelBase
         try
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(externalToken);
-            await operation(cts.Token).ConfigureAwait(false);
+            await operation(cts.Token);  // <= no ConfigureAwait(false)
         }
         catch (OperationCanceledException)
         {
@@ -56,7 +56,6 @@ public abstract class ScreenViewModelBase(IDatabase database) : ViewModelBase
         }
         catch (Exception ex)
         {
-            // later: centralise logging
             ErrorMessage = ex.Message;
         }
         finally

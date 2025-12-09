@@ -5,10 +5,6 @@ using System.Threading.Tasks;
 
 namespace GIPractice.Wpf.Backend;
 
-/// <summary>
-/// Single controller / gateway between UI and backend.
-/// Holds HttpClient, connection state, inactivity, etc.
-/// </summary>
 public sealed class Database : IDatabase
 {
     private readonly HttpClient _httpClient;
@@ -17,10 +13,10 @@ public sealed class Database : IDatabase
 
     public Database()
     {
-        // TODO: move base address + default headers to config.
+        // TODO: adjust base address to your API
         _httpClient = new HttpClient
         {
-            BaseAddress = new Uri("https://localhost:5001") // <-- adjust to your API
+            BaseAddress = new Uri("https://localhost:5001") // <- change if needed
         };
 
         _context = new BackendContext(_httpClient);
@@ -49,23 +45,18 @@ public sealed class Database : IDatabase
     {
         if (query is null) throw new ArgumentNullException(nameof(query));
 
-        await EnsureConnectedAsync(cancellationToken).ConfigureAwait(false);
+        await EnsureConnectedAsync(cancellationToken);
 
-        // Later:
-        //  - central exception handling
-        //  - JWT renewal / 401 handling -> SessionEnded
-        //  - connectivity retry logic
-
-        return await query.ExecuteAsync(_context, cancellationToken)
-                          .ConfigureAwait(false);
+        // later: error handling, JWT, 401 → SessionEnded, etc.
+        return await query.ExecuteAsync(_context, cancellationToken);
     }
 
     public Task<bool> EnsureConnectedAsync(CancellationToken cancellationToken = default)
     {
-        // Stub for now. Later: ping /health, ensure token, etc.
         if (ConnectionState == ConnectionState.Disconnected)
         {
             ConnectionState = ConnectionState.Connecting;
+            // TODO: ping /health, login/token, etc.
             ConnectionState = ConnectionState.Connected;
         }
 
@@ -74,9 +65,7 @@ public sealed class Database : IDatabase
 
     public void RegisterUserInteraction()
     {
-        // Later:
-        //  - reset inactivity timer
-        //  - if timer fires -> OnSessionEnded(SessionEndedReason.Inactivity, ...)
+        // later: inactivity timer
     }
 
     private void OnSessionEnded(SessionEndedReason reason, string? message = null)

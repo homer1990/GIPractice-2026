@@ -1,17 +1,24 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 
 namespace GIPractice.Wpf.ViewModels;
 
-public sealed class AsyncRelayCommand(
-    Func<CancellationToken, Task> execute,
-    Func<bool>? canExecute = null) : ICommand
+public sealed class AsyncRelayCommand : ICommand
 {
-    private readonly Func<CancellationToken, Task> _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-    private readonly Func<bool>? _canExecute = canExecute;
+    private readonly Func<CancellationToken, Task> _execute;
+    private readonly Func<bool>? _canExecute;
     private bool _isExecuting;
+
+    public AsyncRelayCommand(
+        Func<CancellationToken, Task> execute,
+        Func<bool>? canExecute = null)
+    {
+        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+        _canExecute = canExecute;
+    }
 
     public event EventHandler? CanExecuteChanged;
 
@@ -23,13 +30,13 @@ public sealed class AsyncRelayCommand(
         if (!CanExecute(parameter))
             return;
 
+        _isExecuting = true;
+        RaiseCanExecuteChanged();
+
         try
         {
-            _isExecuting = true;
-            RaiseCanExecuteChanged();
-
             using var cts = new CancellationTokenSource();
-            await _execute(cts.Token).ConfigureAwait(false);
+            await _execute(cts.Token); // IMPORTANT: no ConfigureAwait(false) here
         }
         finally
         {
@@ -38,16 +45,29 @@ public sealed class AsyncRelayCommand(
         }
     }
 
-    public void RaiseCanExecuteChanged()
-        => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-    // in AsyncRelayCommand.cs
-    public Task ExecuteAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// Optional helper if you want to trigger it from code.
+    /// </summary>
+    public Task ExecuteAsync(CancellationToken cancellationToken = default)
     {
-        if (!CanExecute(null))
-            return Task.CompletedTask;
-
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         return _execute(cts.Token);
     }
 
+    public void RaiseCanExecuteChanged()
+    {
+        var handler = CanExecuteChanged;
+        if (handler is null)
+            return;
+
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+        {
+            handler(this, EventArgs.Empty);
+        }
+        else
+        {
+            dispatcher.Invoke(() => handler(this, EventArgs.Empty));
+        }
+    }
 }

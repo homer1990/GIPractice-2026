@@ -33,7 +33,7 @@ public sealed class MainWindowViewModel : ScreenViewModelBase
         await RunBusyAsync(
             async ct =>
             {
-                await Database.EnsureConnectedAsync(ct).ConfigureAwait(false);
+                await Database.EnsureConnectedAsync(ct);
                 Database.RegisterUserInteraction();
             },
             busyText: "Connecting…",

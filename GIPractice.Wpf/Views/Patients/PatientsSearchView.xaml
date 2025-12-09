@@ -6,13 +6,10 @@
              mc:Ignorable="d">
     <DockPanel Margin="10">
 
-        <!-- Top: search form -->
+        <!-- Search filters -->
         <StackPanel DockPanel.Dock="Top"
                     Orientation="Horizontal"
-                    Margin="0,0,0,10"
-                    VerticalAlignment="Top"
-                    HorizontalAlignment="Stretch"
-                    >
+                    Margin="0,0,0,10">
 
             <StackPanel Orientation="Vertical" Margin="0,0,10,0">
                 <TextBlock Text="Last name" />
@@ -36,9 +33,13 @@
                     Margin="10,20,0,0"
                     Padding="12,4"
                     Command="{Binding SearchCommand}" />
+            <Button Content="New patient"
+                    Margin="10,20,0,0"
+                    Padding="12,4"
+                    Click="OnNewPatientClick" />
         </StackPanel>
 
-        <!-- Center: results grid -->
+        <!-- Results -->
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
@@ -46,10 +47,11 @@
             </Grid.RowDefinitions>
 
             <DataGrid Grid.Row="0"
-                      ItemsSource="{Binding Items}"
-                      SelectedItem="{Binding SelectedItem}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True">
+                ItemsSource="{Binding Items}"
+                SelectedItem="{Binding SelectedItem}"
+                AutoGenerateColumns="False"
+                IsReadOnly="True"
+                MouseDoubleClick="OnDataGridMouseDoubleClick">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="60" />
                     <DataGridTextColumn Header="Last name" Binding="{Binding LastName}" Width="*" />
@@ -60,7 +62,7 @@
                 </DataGrid.Columns>
             </DataGrid>
 
-            <!-- Bottom-right: paging info -->
+            <!-- Paging -->
             <StackPanel Grid.Row="1"
                         Orientation="Horizontal"
                         HorizontalAlignment="Right"
