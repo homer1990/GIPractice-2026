@@ -1,0 +1,232 @@
+﻿<UserControl x:Class="GIPractice.Wpf.Views.NewAppointmentView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:GIPractice.Wpf.Views"
+      xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+      mc:Ignorable="d">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="3*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="400"/>
+        </Grid.RowDefinitions>
+        <GroupBox Margin="10,10,0,10" Grid.Column="0" Grid.Row="0">
+            <GroupBox.Header>ΣΤΟΙΧΕΙΑ ΕΠΙΛΕΓΜΕΝΟΥ ΑΣΘΕΝΟΥΣ</GroupBox.Header>
+            <StackPanel Orientation="Vertical">
+                <Canvas
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Width="230"
+                    Height="230"
+                    x:Name="PhotoCanvas"
+                    Background="Black"
+                    Margin="15"></Canvas>
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Margin="10,10,0,0" Grid.Row="0" Grid.Column="0" VerticalAlignment="Bottom">Σ/Α</TextBlock>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Name="ID" Margin="10,10,0,0" Text="TESTESTESTES" VerticalAlignment="Bottom"/>
+                    <TextBlock Margin="10,10,0,0" Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom">Όνομα</TextBlock>
+                    <TextBlock Grid.Row="1" Grid.Column="1" Name="FirstName" Margin="10,10,0,0" Text="TESTESTESTES" VerticalAlignment="Bottom"/>
+                    <TextBlock Margin="10,10,0,0" Grid.Row="2" Grid.Column="0" VerticalAlignment="Bottom">Επίθετο</TextBlock>
+                    <TextBlock Grid.Row="2" Grid.Column="1" Name="LastName" Margin="10,10,0,0" Text="TESTESTESTES" VerticalAlignment="Bottom"/>
+                    <TextBlock Margin="10,10,0,0" Grid.Row="3" Grid.Column="0" VerticalAlignment="Bottom">Πατρώνυμο</TextBlock>
+                    <TextBlock Grid.Row="3" Grid.Column="1" Name="FathersName" Margin="10,10,0,0" Text="TESTESTESTES" VerticalAlignment="Bottom"/>
+                    <TextBlock Margin="10,10,0,0" Grid.Row="4" Grid.Column="0" VerticalAlignment="Bottom">ΠΑ</TextBlock>
+                    <TextBlock Grid.Row="4" Grid.Column="1" Name="PersonalNumber" Margin="10,10,0,0" Text="TESTESTESTES" VerticalAlignment="Bottom"/>
+                    <TextBlock Margin="10,10,0,0" Grid.Row="5" Grid.Column="0" VerticalAlignment="Bottom">Ημ. Γεννήσεως</TextBlock>
+                    <TextBlock Grid.Row="5" Grid.Column="1" Name="BirthDay" Margin="10,10,0,0" Text="TESTESTESTES" VerticalAlignment="Bottom"/>
+                    <TextBlock Margin="10,10,0,0" Grid.Row="6" Grid.Column="0" VerticalAlignment="Bottom">Φύλο</TextBlock>
+                    <TextBlock Grid.Row="6" Grid.Column="1" Name="Gender" Margin="10,10,0,0" Text="TESTESTESTES" VerticalAlignment="Bottom"/>
+                    <TextBlock Margin="10,10,0,0" Grid.Row="7" Grid.Column="0" VerticalAlignment="Bottom">Email</TextBlock>
+                    <TextBlock Grid.Row="7" Grid.Column="1" Name="Email" Margin="10,10,0,0" Text="TESTESTESTES" VerticalAlignment="Bottom"/>
+                    <TextBlock Margin="10,10,0,0" Grid.Row="8" Grid.Column="0" VerticalAlignment="Bottom">Τηλέφωνο</TextBlock>
+                    <TextBlock Grid.Row="8" Grid.Column="1" Name="PhoneNumber" Margin="10,10,0,0" Text="TESTESTESTES" VerticalAlignment="Bottom"/>
+                    <TextBlock Margin="10,10,0,0" Grid.Row="9" Grid.Column="0" VerticalAlignment="Bottom">Διεύθυνση</TextBlock>
+                    <TextBlock Grid.Row="9" Grid.Column="1" Name="Address" Margin="10,10,0,0" Text="TESTESTESTES" VerticalAlignment="Bottom"/>
+                </Grid>
+                <Button
+                    x:Name="SearchToggle"
+                    Width="Auto" Height="Auto"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Padding="10"
+                    Margin="10,10,10,10"
+                    Tag="Search"
+                    ToolTipService.InitialShowDelay="2000"
+                    ToolTipService.ShowDuration="60000"
+                    ToolTip="ΑΝΑΖΗΤΗΣΗ ΑΣΘΕΝΟΥΣ">
+                    <TextBlock
+                        FontFamily="Segoe Fluent Icons"
+                        FontSize="24"
+                        VerticalAlignment="Center">
+                        &#xE721;
+                    </TextBlock>
+                </Button>
+            </StackPanel>
+        </GroupBox>
+        <GroupBox Grid.Column="0" Grid.Row="1" Grid.RowSpan="1" Margin="10,0,0,10">
+            <GroupBox.Header>
+                ΗΜΕΡΟΛΟΓΙΟ
+            </GroupBox.Header>
+        </GroupBox>
+        <StackPanel Margin="10" Grid.Column="1" Grid.Row="0" Grid.RowSpan="2">
+            <GroupBox>
+                <GroupBox.Header>
+                    <TextBlock Text="ΠΡΟΓΡΑΜΜΑ" VerticalAlignment="Center"/>
+                </GroupBox.Header>
+                <Canvas Margin="10" Width="600" Height="900">
+                    <Canvas.Resources>
+                        <Style x:Key="Page" TargetType="StackPanel" >
+                            <Style.Resources>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Margin" Value="0,7,0,0"/>
+                                    <Setter Property="FontSize" Value="16"/>
+                                </Style>
+                            </Style.Resources>
+                        </Style>
+                        <Style x:Key="Borders" TargetType="StackPanel">
+                            <Setter Property="Canvas.Top" Value="101"/>
+                            <Style.Resources>
+                                <Style TargetType="Rectangle">
+                                    <Setter Property="Margin" Value="0,0,0,26.3"/>
+                                    <Setter Property="Width" Value="600"/>
+                                    <Setter Property="Height" Value="2"/>
+                                    <Setter Property="Fill" Value="{DynamicResource MahApps.Brushes.Accent}"/>
+                                </Style>
+                            </Style.Resources>
+                        </Style>
+                        <Style x:Key="TextBoxes" TargetType="StackPanel">
+                            <Setter Property="Canvas.Top" Value="85"/>
+                            <Style.Resources>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Margin" Value="50,0,0,12.3"/>
+                                    <Setter Property="Width" Value="550"/>
+                                    <Setter Property="Height" Value="16"/>
+                                    <Setter Property="Text" Value="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"/>
+                                </Style>
+                            </Style.Resources>
+                        </Style>
+                    </Canvas.Resources>
+                    <TextBlock x:Name="DayName" Canvas.Top="8" Canvas.Left="70" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource MahApps.Brushes.AccentBase}">ΔΕΥΤΕΡΑ</TextBlock>
+                    <TextBlock x:Name="Month" Canvas.Top="25" Canvas.Left="70" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource MahApps.Brushes.AccentBase}">ΝΟΕΜΒΡΙΟΥ</TextBlock>
+                    <TextBlock x:Name="DayNo" Canvas.Top="0" Canvas.Left="5" FontSize="56" FontWeight="Bold" Foreground="{DynamicResource MahApps.Brushes.AccentBase}">01</TextBlock>
+                    <TextBlock x:Name="Year" Canvas.Top="0" Canvas.Right="10" FontSize="56" FontWeight="Bold" Foreground="{DynamicResource MahApps.Brushes.AccentBase}">2025</TextBlock>
+                    <Rectangle Canvas.Top="60" Fill="{DynamicResource MahApps.Brushes.AccentBase}" Width="600" Height="5"/>
+                    <StackPanel Style="{StaticResource Page}" Canvas.Top="75">
+                        <TextBlock x:Name="Time0800">08:00</TextBlock>
+                        <TextBlock x:Name="Time0830">08:30</TextBlock>
+                        <TextBlock x:Name="Time0900">09:00</TextBlock>
+                        <TextBlock x:Name="Time0930">09:30</TextBlock>
+                        <TextBlock x:Name="Time1000">10:00</TextBlock>
+                        <TextBlock x:Name="Time1030">10:30</TextBlock>
+                        <TextBlock x:Name="Time1100">11:00</TextBlock>
+                        <TextBlock x:Name="Time1130">11:30</TextBlock>
+                        <TextBlock x:Name="Time1200">12:00</TextBlock>
+                        <TextBlock x:Name="Time1230">12:30</TextBlock>
+                        <TextBlock x:Name="Time1300">13:00</TextBlock>
+                        <TextBlock x:Name="Time1330">13:30</TextBlock>
+                        <TextBlock x:Name="Time1400">14:00</TextBlock>
+                        <TextBlock x:Name="Time1430">14:30</TextBlock>
+                        <TextBlock x:Name="Time1500">15:00</TextBlock>
+                        <TextBlock x:Name="Time1530">15:30</TextBlock>
+                        <TextBlock x:Name="Time1600">16:00</TextBlock>
+                        <TextBlock x:Name="Time1630">16:30</TextBlock>
+                        <TextBlock x:Name="Time1700">17:00</TextBlock>
+                        <TextBlock x:Name="Time1730">17:30</TextBlock>
+                        <TextBlock x:Name="Time1800">18:00</TextBlock>
+                        <TextBlock x:Name="Time1830">18:30</TextBlock>
+                        <TextBlock x:Name="Time1900">19:00</TextBlock>
+                        <TextBlock x:Name="Time1930">19:30</TextBlock>
+                        <TextBlock x:Name="Time2000">20:00</TextBlock>
+                        <TextBlock x:Name="Time2030">20:30</TextBlock>
+                        <TextBlock x:Name="Time2100">21:00</TextBlock>
+                        <TextBlock x:Name="Time2130">21:30</TextBlock>
+                        <TextBlock x:Name="Time2200">22:00</TextBlock>
+                    </StackPanel>
+                    <StackPanel Style="{StaticResource Borders}">
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                        <Rectangle/>
+                    </StackPanel>
+                    <StackPanel Style="{StaticResource TextBoxes}">
+                        <TextBlock x:Name="Entry0800"/>
+                        <TextBlock x:Name="Entry0830"/>
+                        <TextBlock x:Name="Entry0900"/>
+                        <TextBlock x:Name="Entry0930"/>
+                        <TextBlock x:Name="Entry1000"/>
+                        <TextBlock x:Name="Entry1030"/>
+                        <TextBlock x:Name="Entry1100"/>
+                        <TextBlock x:Name="Entry1130"/>
+                        <TextBlock x:Name="Entry1200"/>
+                        <TextBlock x:Name="Entry1230"/>
+                        <TextBlock x:Name="Entry1300"/>
+                        <TextBlock x:Name="Entry1330"/>
+                        <TextBlock x:Name="Entry1400"/>
+                        <TextBlock x:Name="Entry1430"/>
+                        <TextBlock x:Name="Entry1500"/>
+                        <TextBlock x:Name="Entry1530"/>
+                        <TextBlock x:Name="Entry1600"/>
+                        <TextBlock x:Name="Entry1630"/>
+                        <TextBlock x:Name="Entry1700"/>
+                        <TextBlock x:Name="Entry1730"/>
+                        <TextBlock x:Name="Entry1800"/>
+                        <TextBlock x:Name="Entry1830"/>
+                        <TextBlock x:Name="Entry1900"/>
+                        <TextBlock x:Name="Entry1930"/>
+                        <TextBlock x:Name="Entry2000"/>
+                        <TextBlock x:Name="Entry2030"/>
+                        <TextBlock x:Name="Entry2100"/>
+                        <TextBlock x:Name="Entry2130"/>
+                        <TextBlock x:Name="Entry2200"/>
+                    </StackPanel>
+                </Canvas>
+            </GroupBox>
+        </StackPanel>
+    </Grid>
+</UserControl>

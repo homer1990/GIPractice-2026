@@ -1,13 +1,78 @@
 <Application x:Class="GIPractice.Wpf.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+             xmlns:vm="clr-namespace:GIPractice.Wpf.ViewModels"
+             xmlns:views="clr-namespace:GIPractice.Wpf.Views"
              ShutdownMode="OnMainWindowClose">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- Your existing styles -->
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Light.Steel.xaml" />
+
+                <!-- put your own styles LAST so you win -->
                 <ResourceDictionary Source="Resources/Styles.xaml" />
+
+                <ResourceDictionary Source="/GIPractice.Wpf;component/Views/Templates/NewAppointmentDayTemplate.xaml" />
+                <ResourceDictionary Source="/GIPractice.Wpf;component/Views/Templates/PatientsPageTemplate.xaml" />
+
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Your embedded font (use your assembly name to be explicit) -->
+            <FontFamily x:Key="AppFont">
+                pack://application:,,,/GIPractice.Wpf;component/Fonts/#RobotoMonoRegular
+            </FontFamily>
+
+            <!-- Override MahApps font keys (MUST be the URI string, not {StaticResource ...}) -->
+            <FontFamily x:Key="MahApps.Fonts.Family.Control">
+                pack://application:,,,/GIPractice.Wpf;component/Fonts/#RobotoMonoRegular
+            </FontFamily>
+            <FontFamily x:Key="MahApps.Fonts.Family.Header">
+                pack://application:,,,/GIPractice.Wpf;component/Fonts/#RobotoMonoRegular
+            </FontFamily>
+            <FontFamily x:Key="MahApps.Fonts.Family.Button">
+                pack://application:,,,/GIPractice.Wpf;component/Fonts/#RobotoMonoRegular
+            </FontFamily>
+
+            <!-- Optional: force plain WPF controls too -->
+            <Style TargetType="{x:Type Control}">
+                <Setter Property="FontFamily" Value="{StaticResource AppFont}" />
+            </Style>
+            <Style TargetType="{x:Type TextBlock}">
+                <Setter Property="FontFamily" Value="{StaticResource AppFont}" />
+            </Style>
+            <!-- Windows Icon Font for Segoe Fluent Icons -->
+            <FontFamily x:Key="WindowsIconFont">Segoe Fluent Icons</FontFamily>
+
+            <Style x:Key="IconGlyph" TargetType="{x:Type TextBlock}">
+                <Setter Property="FontFamily" Value="{StaticResource WindowsIconFont}" />
+                <Setter Property="FontSize" Value="20" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+            <!-- VM -> View mapping -->
+            <DataTemplate DataType="{x:Type vm:PatientsPageViewModel}">
+                <views:PatientSearchView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vm:NewVisitVm}">
+                <views:NewVisitView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vm:NewAppointmentVm}">
+                <views:NewAppointmentView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vm:NewEndoscopyVm}">
+                <views:NewEndoscopyView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vm:NewPathologyReportVm}">
+                <views:NewPathologyReportView/>
+            </DataTemplate>
+
         </ResourceDictionary>
     </Application.Resources>
+
 </Application>

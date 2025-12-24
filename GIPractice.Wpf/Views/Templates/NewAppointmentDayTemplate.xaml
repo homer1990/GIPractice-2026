@@ -1,0 +1,237 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    xmlns:vm="clr-namespace:GIPractice.Wpf.ViewModels">
+
+    <!-- Implicit template: whenever Content is a NewAppointmentDayViewModel, this renders -->
+    <DataTemplate DataType="{x:Type vm:NewAppointmentDayViewModel}">
+        <Grid Margin="0" Language="el-GR">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="400"/>
+            </Grid.RowDefinitions>
+
+            <!-- LEFT: Selected patient -->
+            <GroupBox Margin="10,10,0,10" Grid.Column="0" Grid.Row="0"
+                      Header="ΣΤΟΙΧΕΙΑ ΕΠΙΛΕΓΜΕΝΟΥ ΑΣΘΕΝΟΥΣ">
+                <StackPanel Orientation="Vertical">
+
+                    <!-- Photo (replace your Canvas with an Image) -->
+                    <Border Width="230" Height="230" Margin="15" Background="Black">
+                        <Image Source="{Binding SelectedPatient.PhotoImageSource}"
+                               Stretch="UniformToFill"/>
+                    </Border>
+
+                    <Grid Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Margin="10,10,0,0" Grid.Row="0" Grid.Column="0" VerticalAlignment="Bottom">Σ/Α</TextBlock>
+                        <TextBlock Margin="10,10,0,0" Grid.Row="0" Grid.Column="1" VerticalAlignment="Bottom"
+                                   Text="{Binding SelectedPatient.Id}"/>
+
+                        <TextBlock Margin="10,10,0,0" Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom">Όνομα</TextBlock>
+                        <TextBlock Margin="10,10,0,0" Grid.Row="1" Grid.Column="1" VerticalAlignment="Bottom"
+                                   Text="{Binding SelectedPatient.FirstName}"/>
+
+                        <TextBlock Margin="10,10,0,0" Grid.Row="2" Grid.Column="0" VerticalAlignment="Bottom">Επίθετο</TextBlock>
+                        <TextBlock Margin="10,10,0,0" Grid.Row="2" Grid.Column="1" VerticalAlignment="Bottom"
+                                   Text="{Binding SelectedPatient.LastName}"/>
+
+                        <TextBlock Margin="10,10,0,0" Grid.Row="3" Grid.Column="0" VerticalAlignment="Bottom">Πατρώνυμο</TextBlock>
+                        <TextBlock Margin="10,10,0,0" Grid.Row="3" Grid.Column="1" VerticalAlignment="Bottom"
+                                   Text="{Binding SelectedPatient.FathersName}"/>
+
+                        <TextBlock Margin="10,10,0,0" Grid.Row="4" Grid.Column="0" VerticalAlignment="Bottom">ΠΑ</TextBlock>
+                        <TextBlock Margin="10,10,0,0" Grid.Row="4" Grid.Column="1" VerticalAlignment="Bottom"
+                                   Text="{Binding SelectedPatient.PersonalNumber}"/>
+
+                        <TextBlock Margin="10,10,0,0" Grid.Row="5" Grid.Column="0" VerticalAlignment="Bottom">Ημ. Γεννήσεως</TextBlock>
+                        <TextBlock Margin="10,10,0,0" Grid.Row="5" Grid.Column="1" VerticalAlignment="Bottom"
+                                   Text="{Binding SelectedPatient.BirthDate, StringFormat={}{0:dd/MM/yyyy}}"/>
+
+                        <TextBlock Margin="10,10,0,0" Grid.Row="6" Grid.Column="0" VerticalAlignment="Bottom">Φύλο</TextBlock>
+                        <TextBlock Margin="10,10,0,0" Grid.Row="6" Grid.Column="1" VerticalAlignment="Bottom"
+                                   Text="{Binding SelectedPatient.Gender}"/>
+
+                        <TextBlock Margin="10,10,0,0" Grid.Row="7" Grid.Column="0" VerticalAlignment="Bottom">Email</TextBlock>
+                        <TextBlock Margin="10,10,0,0" Grid.Row="7" Grid.Column="1" VerticalAlignment="Bottom"
+                                   Text="{Binding SelectedPatient.Email}"/>
+
+                        <TextBlock Margin="10,10,0,0" Grid.Row="8" Grid.Column="0" VerticalAlignment="Bottom">Τηλέφωνο</TextBlock>
+                        <TextBlock Margin="10,10,0,0" Grid.Row="8" Grid.Column="1" VerticalAlignment="Bottom"
+                                   Text="{Binding SelectedPatient.PhoneNumber}"/>
+
+                        <TextBlock Margin="10,10,0,0" Grid.Row="9" Grid.Column="0" VerticalAlignment="Bottom">Διεύθυνση</TextBlock>
+                        <TextBlock Margin="10,10,0,0" Grid.Row="9" Grid.Column="1" VerticalAlignment="Bottom"
+                                   Text="{Binding SelectedPatient.Address}"/>
+                    </Grid>
+
+                    <!-- Search patient (MVVM command) -->
+                    <Button Margin="10" Padding="10"
+                            HorizontalAlignment="Left"
+                            ToolTip="ΑΝΑΖΗΤΗΣΗ ΑΣΘΕΝΟΥΣ"
+                            Command="{Binding SearchPatientCommand}">
+                        <TextBlock FontFamily="Segoe Fluent Icons" FontSize="24">&#xE721;</TextBlock>
+                    </Button>
+
+                </StackPanel>
+            </GroupBox>
+
+            <!-- LEFT: Calendar -->
+            <GroupBox Grid.Column="0" Grid.Row="1" Margin="10,0,0,10" Header="ΗΜΕΡΟΛΟΓΙΟ">
+                <StackPanel Margin="10">
+                    <DatePicker SelectedDate="{Binding SelectedDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+            </GroupBox>
+
+            <!-- RIGHT: Schedule -->
+            <GroupBox Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Margin="10"
+                      Header="ΠΡΟΓΡΑΜΜΑ">
+
+                <DockPanel Margin="10">
+
+                    <!-- Date header -->
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" FontSize="56" FontWeight="Bold"
+                                   Foreground="{DynamicResource MahApps.Brushes.AccentBase}"
+                                   Text="{Binding SelectedDate, StringFormat={}{0:dd}}"/>
+
+                        <StackPanel Grid.Column="1" Margin="10,5,0,0">
+                            <TextBlock FontSize="18" FontWeight="Bold"
+                                       Foreground="{DynamicResource MahApps.Brushes.AccentBase}"
+                                       Text="{Binding SelectedDate, StringFormat={}{0:dddd}}"/>
+                            <TextBlock FontSize="28" FontWeight="Bold"
+                                       Foreground="{DynamicResource MahApps.Brushes.AccentBase}"
+                                       Text="{Binding SelectedDate, StringFormat={}{0:MMMM}}"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Column="2" FontSize="56" FontWeight="Bold"
+                                   Foreground="{DynamicResource MahApps.Brushes.AccentBase}"
+                                   Text="{Binding SelectedDate, StringFormat={}{0:yyyy}}"/>
+                    </Grid>
+
+                    <!-- Add-new appointment row -->
+                    <Border DockPanel.Dock="Top" Padding="10" Margin="0,0,0,10"
+                            BorderThickness="1" BorderBrush="{DynamicResource MahApps.Brushes.Gray9}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Appointment Type (ComboBox, not ListBox) -->
+                            <ComboBox Grid.Column="0" Margin="0,0,10,0"
+                                      ItemsSource="{Binding AppointmentTypes}"
+                                      SelectedItem="{Binding NewAppointmentType, Mode=TwoWay}"
+                                      DisplayMemberPath="Name"
+                                      IsSynchronizedWithCurrentItem="False"/>
+
+                            <!-- Start time: show only allowed times -->
+                            <ComboBox Grid.Column="1" Margin="0,0,10,0"
+                                      ItemsSource="{Binding AvailableStartTimes}"
+                                      SelectedItem="{Binding NewStartTime, Mode=TwoWay}"
+                                      IsEditable="False"
+                                      ItemStringFormat="{}{0:hh\\:mm}"/>
+
+                            <!-- Optional: show computed duration -->
+                            <TextBlock Grid.Column="2" VerticalAlignment="Center"
+                                       Text="{Binding NewAppointmentType.MeanDurationMinutes, StringFormat=Διάρκεια: {0}′}"/>
+
+                            <Button Grid.Column="3" Padding="10,6" Margin="10,0,0,0"
+                                    Content="ΠΡΟΣΘΗΚΗ"
+                                    Command="{Binding AddAppointmentCommand}"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Existing appointments list -->
+                    <ListBox ItemsSource="{Binding AppointmentsOfSelectedDate}"
+                             SelectedItem="{Binding SelectedAppointment}"
+                             BorderThickness="0">
+
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,6" Height="56">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Styling Rectangle -->
+                                    <Rectangle Grid.Column="0" RadiusX="2" RadiusY="2"
+                                               Fill="{Binding TypeAccentBrush}"/>
+
+                                    <!-- Time -->
+                                    <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                               FontWeight="Bold"
+                                               Text="{Binding Start, StringFormat={}{0:HH:mm}}"/>
+
+                                    <!-- Main text -->
+                                    <StackPanel Grid.Column="2" Orientation="Vertical" Margin="10,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock FontSize="15" FontWeight="SemiBold"
+                                                   Text="{Binding PatientFullName}"/>
+                                        <DockPanel>
+                                            <TextBlock DockPanel.Dock="Left"
+                                                       Text="{Binding PatientPhoneNo}"/>
+                                            <TextBlock Margin="10,0,0,0"
+                                                       Foreground="{DynamicResource MahApps.Brushes.Gray6}"
+                                                       Text="{Binding AppointmentTypeName}"/>
+                                        </DockPanel>
+                                    </StackPanel>
+
+                                    <!-- Edit / Delete -->
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button Margin="0,0,6,0"
+                                                ToolTip="Επεξεργασία"
+                                                Command="{Binding DataContext.EditAppointmentCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                CommandParameter="{Binding}">
+                                            <iconPacks:PackIconMaterial Kind="Pencil" Width="18" Height="18"/>
+                                        </Button>
+
+                                        <Button ToolTip="Διαγραφή"
+                                                Command="{Binding DataContext.DeleteAppointmentCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                CommandParameter="{Binding}">
+                                            <iconPacks:PackIconMaterial Kind="TrashCanOutline" Width="18" Height="18"/>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+
+                    </ListBox>
+                </DockPanel>
+            </GroupBox>
+        </Grid>
+    </DataTemplate>
+</ResourceDictionary>

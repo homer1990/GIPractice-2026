@@ -1,0 +1,43 @@
+﻿<Page x:Class="GIPractice.Wpf.Pages.Home"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:GIPractice.Wpf.Pages"
+      xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+      mc:Ignorable="d" 
+      d:DesignHeight="1080" d:DesignWidth="1920"
+      Title="Home">
+    <mah:HamburgerMenu
+        x:Name="HamburgerMenuControl"
+        Style="{StaticResource GiPracticeHamburgerMenuStyle}"
+        DisplayMode="CompactInline"
+        IsPaneOpen="True"
+        ItemInvoked="HamburgerMenuControl_OnItemInvoked">
+        <mah:HamburgerMenu.ItemsSource>
+            <mah:HamburgerMenuItemCollection>
+                <mah:HamburgerMenuGlyphItem Label="Patients"    Glyph="&#xE77B;" Tag="Patients"/>
+                <!-- Contact -->
+                <mah:HamburgerMenuGlyphItem Label="Calendar"    Glyph="&#xE787;" Tag="Calendar"/>
+                <!-- Calendar -->
+                <mah:HamburgerMenuGlyphItem Label="Endoscopies" Glyph="&#xE722;" Tag="Endoscopies"/>
+                <!-- Camera -->
+            </mah:HamburgerMenuItemCollection>
+        </mah:HamburgerMenu.ItemsSource>
+
+        <mah:HamburgerMenu.OptionsItemsSource>
+            <mah:HamburgerMenuItemCollection>
+                <mah:HamburgerMenuGlyphItem Label="Settings" Glyph="&#xE713;" Tag="Settings"/>
+                <!-- Setting -->
+                <mah:HamburgerMenuGlyphItem Label="Help"     Glyph="&#xE82F;" Tag="Help"/>
+                <!-- ToolTip -->
+                <mah:HamburgerMenuGlyphItem Label="Exit"     Glyph="&#xE7E8;" Tag="__EXIT__"/>
+                <!-- PowerButton -->
+            </mah:HamburgerMenuItemCollection>
+        </mah:HamburgerMenu.OptionsItemsSource>
+        <mah:HamburgerMenu.Content>
+            <Frame x:Name="MainFrame"
+               NavigationUIVisibility="Hidden" />
+        </mah:HamburgerMenu.Content>
+    </mah:HamburgerMenu>
+</Page>

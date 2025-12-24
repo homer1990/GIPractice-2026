@@ -7,6 +7,11 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Fonts\BPtypewriteDamaged.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MahApps.Metro" Version="2.4.11" />
+    <PackageReference Include="MahApps.Metro.IconPacks" Version="6.2.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
@@ -22,5 +27,18 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Backend\Queries\Patients\" />
+    <Folder Include="UserControls\" />
+    <Folder Include="Tools\" />
+    <Folder Include="ViewModels\Search\" />
+    <Folder Include="Views\Auth\" />
+    <Folder Include="Views\Patients\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Fonts\BPtypewriteDamaged.ttf">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 </Project>

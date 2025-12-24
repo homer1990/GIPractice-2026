@@ -24,4 +24,7 @@
     <ProjectReference Include="..\GIPractice.Core\GIPractice.Core.csproj" />
     <ProjectReference Include="..\GIPractice.Infrastructure\GIPractice.Infrastructure.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Mapping\" />
+  </ItemGroup>
 </Project>

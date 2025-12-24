@@ -1,0 +1,13 @@
+﻿<Page x:Class="GIPractice.Wpf.Pages.Patients"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:vm="clr-namespace:GIPractice.Wpf.ViewModels"
+      Title="Patients">
+
+    <Page.DataContext>
+        <vm:PatientsPageViewModel/>
+    </Page.DataContext>
+
+    <!-- Implicit template picks PatientsPageTemplate.xaml -->
+    <ContentControl Content="{Binding}" />
+</Page>
