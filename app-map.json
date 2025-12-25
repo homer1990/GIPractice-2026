@@ -1,0 +1,57 @@
+{
+  "rootNamespace": "GIPractice.Wpf",
+  "features": [
+    {
+      "name": "Patients",
+      "entity": "Patient"
+    },
+    {
+      "name": "Appointments",
+      "entity": "Appointment"
+    },
+    {
+      "name": "Encounters",
+      "entity": "Encounter"
+    },
+    {
+      "name": "EndoscopySessions",
+      "entity": "EndoscopySession"
+    },
+    {
+      "name": "BiopsyBottles",
+      "entity": "BiopsyBottle"
+    },
+    {
+      "name": "DispatchProtocols",
+      "entity": "DispatchProtocol"
+    },
+    {
+      "name": "DispatchItems",
+      "entity": "DispatchItem"
+    },
+    {
+      "name": "PathologyReports",
+      "entity": "PathologyReport"
+    },
+    {
+      "name": "ExamsOrthos",
+      "entity": "ExamOrtho"
+    },
+    {
+      "name": "INFAIs",
+      "entity": "INFAI"
+    },
+    {
+      "name": "RecallTasks",
+      "entity": "RecallTask"
+    },
+    {
+      "name": "RescheduleTasks",
+      "entity": "RescheduleTask"
+    },
+    {
+      "name": "Settings",
+      "entity": "Settings"
+    }
+  ]
+}

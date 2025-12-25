@@ -103,6 +103,20 @@
             <GroupBox Grid.Column="0" Grid.Row="1" Margin="10,0,0,10" Header="ΗΜΕΡΟΛΟΓΙΟ">
                 <StackPanel Margin="10">
                     <DatePicker SelectedDate="{Binding SelectedDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <Separator Margin="0,10,0,10"/>
+
+                    <mah:ToggleSwitch Header="ΡΕΠΟ (ΚΛΕΙΣΤΟ)"
+                          IsOn="{Binding CurrentDay.IsDayOff, Mode=TwoWay}"/>
+
+                    <mah:ToggleSwitch Header="ΑΡΓΙΑ"
+                          IsOn="{Binding CurrentDay.IsHoliday, Mode=TwoWay}"/>
+
+                    <TextBox Margin="0,10,0,0"
+                 AcceptsReturn="True"
+                 Height="120"
+                 mah:TextBoxHelper.Watermark="Σημειώσεις ημέρας..."
+                 Text="{Binding CurrentDay.Note, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
             </GroupBox>
 
@@ -111,6 +125,13 @@
                       Header="ΠΡΟΓΡΑΜΜΑ">
 
                 <DockPanel Margin="10">
+                    <TextBlock DockPanel.Dock="Top"
+                               Margin="0,0,0,10"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               Foreground="Tomato"
+                               Text="ΗΜΕΡΑ ΚΛΕΙΣΤΗ (ΡΕΠΟ/ΑΡΓΙΑ)"
+                               Visibility="{Binding CanSchedule, Converter={StaticResource BoolToVis}, ConverterParameter=False}"/>
 
                     <!-- Date header -->
                     <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
@@ -140,7 +161,8 @@
 
                     <!-- Add-new appointment row -->
                     <Border DockPanel.Dock="Top" Padding="10" Margin="0,0,0,10"
-                            BorderThickness="1" BorderBrush="{DynamicResource MahApps.Brushes.Gray9}">
+                            BorderThickness="1" BorderBrush="{DynamicResource MahApps.Brushes.Gray9}"
+                            IsEnabled="{Binding CanSchedule}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>

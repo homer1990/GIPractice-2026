@@ -7,6 +7,8 @@ namespace GIPractice.Wpf.ViewModels;
 
 public sealed class PatientsPageViewModel : ViewModelBase
 {
+    private readonly ICalendarDayMetaStore _dayStore = new InMemoryCalendarDayMetaStore();
+
     private bool _isSchedulerOpen;
     private NewAppointmentDayViewModel? _appointmentScheduler;
 
@@ -264,7 +266,7 @@ public sealed class PatientsPageViewModel : ViewModelBase
     {
         if (SelectedPatient == null) return;
 
-        var vm = new NewAppointmentDayViewModel
+        var vm = new NewAppointmentDayViewModel(_dayStore)
         {
             SelectedPatient = SelectedPatient,
             SelectedDate = DateTime.Today

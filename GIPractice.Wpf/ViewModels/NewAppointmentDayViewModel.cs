@@ -1,11 +1,36 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 
 namespace GIPractice.Wpf.ViewModels;
 
 public sealed class NewAppointmentDayViewModel : ViewModelBase
 {
+    private readonly ICalendarDayMetaStore _dayStore;
+
+    private DayMetaVm? _currentDay;
+    public DayMetaVm? CurrentDay
+    {
+        get => _currentDay;
+        private set
+        {
+            if (_currentDay != null)
+                _currentDay.PropertyChanged -= CurrentDay_PropertyChanged;
+
+            if (!SetProperty(ref _currentDay, value))
+                return;
+
+            if (_currentDay != null)
+                _currentDay.PropertyChanged += CurrentDay_PropertyChanged;
+
+            OnPropertyChanged(nameof(CanSchedule));
+            RebuildAvailableStartTimes();
+            AddAppointmentCommand.RaiseCanExecuteChanged();
+        }
+    }
+
+    public bool CanSchedule => CurrentDay?.IsClosed == false;
     private static readonly TimeSpan ClinicOpen = TimeSpan.FromHours(8);
     private static readonly TimeSpan ClinicClose = TimeSpan.FromHours(22);
     private static readonly TimeSpan SlotStep = TimeSpan.FromMinutes(30);
@@ -84,7 +109,7 @@ public sealed class NewAppointmentDayViewModel : ViewModelBase
     public RelayCommand<AppointmentVm> EditAppointmentCommand { get; }
     public RelayCommand<AppointmentVm> DeleteAppointmentCommand { get; }
 
-    public NewAppointmentDayViewModel()
+    public NewAppointmentDayViewModel(ICalendarDayMetaStore? dayStore = null)
     {
         SearchPatientCommand = new RelayCommand(SearchPatient);
         AddAppointmentCommand = new RelayCommand(AddAppointment, CanAddAppointment);
@@ -92,18 +117,28 @@ public sealed class NewAppointmentDayViewModel : ViewModelBase
         DeleteAppointmentCommand = new RelayCommand<AppointmentVm>(DeleteAppointment);
 
         AppointmentsOfSelectedDate.CollectionChanged += (_, __) => RebuildAvailableStartTimes();
-    }
 
+        _dayStore = dayStore ?? new InMemoryCalendarDayMetaStore();
+    }
+    private void CurrentDay_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(DayMetaVm.IsDayOff) or nameof(DayMetaVm.IsHoliday) or nameof(DayMetaVm.IsClosed))
+        {
+            OnPropertyChanged(nameof(CanSchedule));
+            RebuildAvailableStartTimes();
+            AddAppointmentCommand.RaiseCanExecuteChanged();
+        }
+    }
+    private bool CanAddAppointment()
+    => SelectedPatient != null
+       && NewAppointmentType != null
+       && NewStartTime != null
+       && CanSchedule;
     private void SearchPatient()
     {
         // dummy: scheduler is usually opened from Patients with SelectedPatient already set.
         // later: call a dialog/search service.
     }
-
-    private bool CanAddAppointment()
-        => SelectedPatient != null
-           && NewAppointmentType != null
-           && NewStartTime != null;
 
     private void AddAppointment()
     {
@@ -145,7 +180,7 @@ public sealed class NewAppointmentDayViewModel : ViewModelBase
     {
         AvailableStartTimes.Clear();
 
-        if (NewAppointmentType == null)
+        if (!CanSchedule || NewAppointmentType == null)
         {
             NewStartTime = null;
             return;

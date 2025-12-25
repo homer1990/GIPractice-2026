@@ -13,6 +13,28 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Wpf", "GIPractic
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Wpf.UserControls", "GIPractice.Wpf.UserControls\GIPractice.Wpf.UserControls.csproj", "{69957ECE-872C-4698-84BC-E55DD60E41F3}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{24620B8B-CB1F-4A14-8748-9D3916B80D71}"
+	ProjectSection(SolutionItems) = preProject
+		00-Solution.md = 00-Solution.md
+		01-Containers.md = 01-Containers.md
+		02-wpf-navigation.md = 02-wpf-navigation.md
+		03-wpf-layers.md = 03-wpf-layers.md
+		04-domain.md = 04-domain.md
+		06-sequences.md = 06-sequences.md
+		Architecture.md = Architecture.md
+		05-states.md = 05-states.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scaffold", "scaffold", "{0A19229E-90C2-4CE7-BCA5-8EF6C3A0FDAF}"
+	ProjectSection(SolutionItems) = preProject
+		app-map.json = app-map.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{485DC98E-479F-4856-B706-EB2A7E88BE40}"
+	ProjectSection(SolutionItems) = preProject
+		scaffold.ps1 = scaffold.ps1
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,6 +64,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0A19229E-90C2-4CE7-BCA5-8EF6C3A0FDAF} = {24620B8B-CB1F-4A14-8748-9D3916B80D71}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {44411DC2-0FF5-461D-AF70-3AA7BBDB65EF}

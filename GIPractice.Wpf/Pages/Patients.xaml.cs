@@ -8,7 +8,7 @@ namespace GIPractice.Wpf.Pages;
 
 public partial class Patients : Page
 {
-    private ShellViewModel? Shell =>
+    private static ShellViewModel? Shell =>
         Application.Current.MainWindow?.DataContext as ShellViewModel;
 
     private void OpenFlyout_Click(object sender, RoutedEventArgs e)
