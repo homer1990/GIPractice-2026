@@ -11,10 +11,6 @@
     TitleBarHeight="32"
     Width="0"
     x:Name="ShellWindow">
-    <mah:MetroWindow.Resources>
-        <local:TopThicknessConverter x:Key="TopThicknessConverter"/>
-    </mah:MetroWindow.Resources>
-
     <mah:MetroWindow.Flyouts>
         <mah:FlyoutsControl
             Margin="{Binding ElementName=ShellWindow,

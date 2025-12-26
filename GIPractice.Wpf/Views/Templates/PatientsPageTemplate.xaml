@@ -26,7 +26,6 @@
 
     <DataTemplate DataType="{x:Type vm:PatientsPageViewModel}">
         <Grid>
-
             <Grid.ColumnDefinitions>
                 <!-- Search panel column: Auto so Collapsed search doesn't keep empty space -->
                 <ColumnDefinition Width="Auto"/>
@@ -101,10 +100,18 @@
 			                <ListBox.ItemTemplate>
 			                    <DataTemplate>
 			                        <StackPanel Margin="4">
-			                            <TextBlock FontWeight="SemiBold">
-			                                <Run Text="{Binding LastName}"/><Run Text=" "/><Run Text="{Binding FirstName}"/>
-			                            </TextBlock>
-			                            <TextBlock Opacity="0.75" Text="{Binding PhoneNumber}"/>
+                                    <TextBlock FontWeight="SemiBold">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource PatientHeaderLineConverter}">
+                                                <Binding Path="LastName"/>
+                                                <Binding Path="FirstName"/>
+                                                <Binding Path="FathersName"/>
+                                                <Binding Path="BirthDate"/>
+                                                <Binding Path="PersonalNumber"/>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                    <TextBlock Opacity="0.75" Text="{Binding PhoneNumber}"/>
 			                        </StackPanel>
 			                    </DataTemplate>
 			                </ListBox.ItemTemplate>
@@ -118,44 +125,17 @@
 
             <!-- RIGHT: MAIN CONTENT -->
             <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="5" Orientation="Vertical">
-
-                    <!-- Toolbar -->
-                    <DockPanel Margin="0,0,0,8">
-                        <Button Width="Auto" Height="Auto" Padding="10" Margin="5"
-                                ToolTip="ΑΝΑΖΗΤΗΣΗ ΑΣΘΕΝΟΥΣ"
-                                Command="{Binding ToggleSearchCommand}">
-                            <TextBlock FontFamily="Segoe Fluent Icons" FontSize="24">&#xE721;</TextBlock>
-                        </Button>
-
-			                <Button Style="{StaticResource ToolbarIconButton}"
-			                        ToolTip="ΝΕΟΣ ΑΣΘΕΝΗΣ"
-			                        Command="{Binding NewPatientCommand}">
-			                    <TextBlock FontFamily="Segoe Fluent Icons" FontSize="24">&#xE8FA;</TextBlock>
-			                </Button>
-
-			                <Button Style="{StaticResource ToolbarIconButton}"
-			                        ToolTip="ΕΝΗΜΕΡΩΣΗ ΑΣΘΕΝΟΥΣ"
-			                        Command="{Binding SavePatientCommand}">
-			                    <TextBlock FontFamily="Segoe Fluent Icons" FontSize="24">&#xE74E;</TextBlock>
-			                </Button>
-
-			                <Button Style="{StaticResource ToolbarIconButton}"
-			                        ToolTip="ΔΙΑΓΡΑΦΗ ΑΣΘΕΝΟΥΣ"
-			                        Background="Red" Foreground="Yellow"
-			                        Command="{Binding DeletePatientCommand}">
-			                    <TextBlock FontFamily="Segoe Fluent Icons" FontSize="24">&#xE74D;</TextBlock>
-			                </Button>
-			            </StackPanel>
+                <WrapPanel Margin="5" Orientation="Horizontal">
 
                     <!-- Patient details section (same bindings as before) -->
-                    <StackPanel Width="1000">
+                    <StackPanel Width="Auto">
                         <GroupBox Margin="0,0,20,0" Header="ΣΤΟΙΧΕΙΑ ΑΣΘΕΝΟΥΣ">
                             <StackPanel Orientation="Horizontal">
 
                                 <!-- Form -->
                                 <Grid>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
@@ -172,48 +152,74 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
+                                    <!-- Toolbar -->
+                                    <StackPanel Margin="0,0,0,8" Grid.Row="0" Grid.Column="0" Grid.RowSpan="7">
+                                        <Button Style="{StaticResource ToolbarIconButton}"
+                                            ToolTip="ΑΝΑΖΗΤΗΣΗ ΑΣΘΕΝΟΥΣ"
+                                            Command="{Binding ToggleSearchCommand}">
+                                            <TextBlock FontFamily="Segoe Fluent Icons" FontSize="24">&#xE721;</TextBlock>
+                                        </Button>
 
-                                    <Label Grid.Row="0" Grid.Column="0">Σ/Α</Label>
-                                    <TextBlock Grid.Row="0" Grid.Column="1" Margin="0,2.5"
-                                               Text="{Binding SelectedPatient.Id}"/>
+                                        <Button Style="{StaticResource ToolbarIconButton}"
+			                                ToolTip="ΝΕΟΣ ΑΣΘΕΝΗΣ"
+			                                Command="{Binding NewPatientCommand}">
+                                            <TextBlock FontFamily="Segoe Fluent Icons" FontSize="24">&#xE8FA;</TextBlock>
+                                        </Button>
 
-                                    <Label Grid.Row="1" Grid.Column="0">Όνομα</Label>
-                                    <TextBox Grid.Row="1" Grid.Column="1" Margin="0,2.5"
-                                             Text="{Binding SelectedPatient.FirstName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Button Style="{StaticResource ToolbarIconButton}"
+			                                ToolTip="ΕΝΗΜΕΡΩΣΗ ΑΣΘΕΝΟΥΣ"
+			                                Command="{Binding SavePatientCommand}">
+                                            <TextBlock FontFamily="Segoe Fluent Icons" FontSize="24">&#xE74E;</TextBlock>
+                                        </Button>
 
-                                    <Label Grid.Row="2" Grid.Column="0">Επίθετο</Label>
-                                    <TextBox Grid.Row="2" Grid.Column="1" Margin="0,2.5"
-                                             Text="{Binding SelectedPatient.LastName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Button Style="{StaticResource ToolbarIconButton}"
+			                                ToolTip="ΔΙΑΓΡΑΦΗ ΑΣΘΕΝΟΥΣ"
+			                                Background="Red" Foreground="Yellow"
+			                                Command="{Binding DeletePatientCommand}">
+                                            <TextBlock FontFamily="Segoe Fluent Icons" FontSize="24">&#xE74D;</TextBlock>
+                                        </Button>
+                                    </StackPanel>
+                                    <Label Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">Σ/Α</Label>
+                                    <TextBlock Grid.Row="0" Grid.Column="2" Margin="0,10,0,10" VerticalAlignment="Center"
+                                            Text="{Binding SelectedPatient.Id}"/>
 
-                                    <Label Grid.Row="3" Grid.Column="0">Πατρώνυμο</Label>
-                                    <TextBox Grid.Row="3" Grid.Column="1" Margin="0,2.5"
-                                             Text="{Binding SelectedPatient.FathersName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <Label Grid.Row="1" Grid.Column="1">Όνομα</Label>
+                                    <TextBox Grid.Row="1" Grid.Column="2" Margin="0,2.5"
+                                            Text="{Binding SelectedPatient.FirstName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
-                                    <Label Grid.Row="4" Grid.Column="0">ΠΑ</Label>
-                                    <TextBox Grid.Row="4" Grid.Column="1" Margin="0,2.5"
-                                             Text="{Binding SelectedPatient.PersonalNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <Label Grid.Row="2" Grid.Column="1">Επίθετο</Label>
+                                    <TextBox Grid.Row="2" Grid.Column="2" Margin="0,2.5"
+                                            Text="{Binding SelectedPatient.LastName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
-                                    <Label Grid.Row="5" Grid.Column="0">Ημ. Γεννήσεως</Label>
-                                    <mah:DateTimePicker Grid.Row="5" Grid.Column="1" Margin="0,2.5"
-                                                        SelectedDateTime="{Binding SelectedPatient.BirthDate, Mode=TwoWay}"
-                                                        mah:TextBoxHelper.Watermark="Επιλογή Ημερομηνίας"/>
+                                    <Label Grid.Row="3" Grid.Column="1">Πατρώνυμο</Label>
+                                    <TextBox Grid.Row="3" Grid.Column="2" Margin="0,2.5"
+                                            Text="{Binding SelectedPatient.FathersName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
-                                    <Label Grid.Row="6" Grid.Column="0">Φύλο</Label>
-                                    <ComboBox Grid.Row="6" Grid.Column="1" Margin="0,2.5"
-                                              ItemsSource="{Binding GenderOptions}"
-                                              SelectedItem="{Binding SelectedPatient.Gender, Mode=TwoWay}"/>
+                                    <Label Grid.Row="4" Grid.Column="1">ΠΑ</Label>
+                                    <TextBox Grid.Row="4" Grid.Column="2" Margin="0,2.5"
+                                            Text="{Binding SelectedPatient.PersonalNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                    <Label Grid.Row="5" Grid.Column="1">Ημ. Γεννήσεως</Label>
+                                    <mah:DateTimePicker Grid.Row="5" Grid.Column="2" Margin="0,2.5"
+                                                    SelectedDateTime="{Binding SelectedPatient.BirthDate, Mode=TwoWay}"
+                                                    mah:TextBoxHelper.Watermark="Επιλογή Ημερομηνίας"/>
+
+                                    <Label Grid.Row="6" Grid.Column="1">Φύλο</Label>
+                                    <ComboBox Grid.Row="6" Grid.Column="2" Margin="0,2.5"
+                                            ItemsSource="{Binding GenderOptions}"
+                                            SelectedItem="{Binding SelectedPatient.Gender, Mode=TwoWay}"/>
 
                                     <Label Grid.Row="7" Grid.Column="0">Email</Label>
-                                    <TextBox Grid.Row="7" Grid.Column="1" Margin="0,2.5"
-                                             Text="{Binding SelectedPatient.Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <TextBox Grid.Row="7" Grid.Column="1" Margin="0,2.5" Grid.ColumnSpan="2"
+                                            Text="{Binding SelectedPatient.Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
                                     <Label Grid.Row="8" Grid.Column="0">Τηλέφωνο</Label>
-                                    <TextBox Grid.Row="8" Grid.Column="1" Margin="0,2.5"
-                                             Text="{Binding SelectedPatient.PhoneNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <TextBox Grid.Row="8" Grid.Column="1" Margin="0,2.5" Grid.ColumnSpan="2"
+                                            Text="{Binding SelectedPatient.PhoneNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
                                     <Label Grid.Row="9" Grid.Column="0">Διεύθυνση</Label>
-                                    <TextBox Grid.Row="9" Grid.Column="1" Margin="0,2.5"
-                                             Text="{Binding SelectedPatient.Address, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <TextBox Grid.Row="9" Grid.Column="1" Margin="0,2.5" Grid.ColumnSpan="2"
+                                            Text="{Binding SelectedPatient.Address, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                 </Grid>
 
                                 <!-- Photo -->
@@ -229,18 +235,18 @@
 
                                     <StackPanel Grid.Row="1" Orientation="Horizontal">
                                         <Button Margin="5" ToolTip="ΛΗΨΗ ΝΕΑΣ ΦΩΤΟΓΡΑΦΙΑΣ"
-                                                Command="{Binding CapturePhotoCommand}">
+                                            Command="{Binding CapturePhotoCommand}">
                                             <TextBlock FontFamily="Segoe Fluent Icons" FontSize="24">&#xE722;</TextBlock>
                                         </Button>
 
                                         <Button Margin="5" ToolTip="ΑΠΟ ΑΡΧΕΙΟ..."
-                                                Command="{Binding PhotoFromFileCommand}">
+                                            Command="{Binding PhotoFromFileCommand}">
                                             <TextBlock FontFamily="Segoe Fluent Icons" FontSize="24">&#xEC50;</TextBlock>
                                         </Button>
 
                                         <!-- ΕΠΑΝΑΦΟΡΑ = reset photo baseline -->
                                         <Button Margin="5" ToolTip="ΕΠΑΝΑΦΟΡΑ"
-                                                Command="{Binding RefreshPatientCommand}">
+                                            Command="{Binding RefreshPatientCommand}">
                                             <TextBlock FontFamily="Segoe Fluent Icons" FontSize="24">&#xE777;</TextBlock>
                                         </Button>
                                     </StackPanel>
@@ -250,8 +256,8 @@
                                 <StackPanel Width="360">
                                     <GroupBox Margin="0,10,20,0" Header="ΒΙΟΨΙΕΣ ΠΟΥ ΔΕΝ ΕΧΟΥΝ ΣΤΑΛΘΕΙ">
                                         <DataGrid AutoGenerateColumns="False" IsReadOnly="True"
-                                                  CanUserAddRows="False" CanUserDeleteRows="False"
-                                                  ItemsSource="{Binding PendingBiopsies}">
+                                                CanUserAddRows="False" CanUserDeleteRows="False"
+                                                ItemsSource="{Binding PendingBiopsies}">
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="ΗΜ/ΩΡΑ" Binding="{Binding EndoscopyDateTime, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="*"/>
                                                 <DataGridCheckBoxColumn Header="ΕΠΕΙΓΟΝ" Binding="{Binding IsUrgent}" Width="0.415*"/>
@@ -262,8 +268,8 @@
 
                                     <GroupBox Margin="0,10,20,0" Header="ΠΑΘΟΛΟΓ/ΚΕΣ ΠΟΥ ΔΕΝ ΕΧΟΥΝ ΒΓΕΙ ΑΚΟΜΗ">
                                         <DataGrid AutoGenerateColumns="False" IsReadOnly="True"
-                                                  CanUserAddRows="False" CanUserDeleteRows="False"
-                                                  ItemsSource="{Binding PendingPathologyReports}">
+                                                CanUserAddRows="False" CanUserDeleteRows="False"
+                                                ItemsSource="{Binding PendingPathologyReports}">
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="ΗΜ/ΩΡΑ" Binding="{Binding EndoscopyDateTime, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="*"/>
                                                 <DataGridCheckBoxColumn Header="ΕΠΕΙΓΟΝ" Binding="{Binding IsUrgent}" Width="0.415*"/>
@@ -272,24 +278,24 @@
                                         </DataGrid>
                                     </GroupBox>
 
-							            <GroupBox Margin="0,10,20,0" Header="ΠΡΟΣΕΧΗ ΡΑΝΤΕΒΟΥ">
-							                <DataGrid AutoGenerateColumns="False" IsReadOnly="True"
-							                          CanUserAddRows="False" CanUserDeleteRows="False"
-							                          ItemsSource="{Binding PendingAppointments}">
-							                    <DataGrid.Columns>
-							                        <DataGridTextColumn Header="ΗΜΕΡΟΜΗΝΙΑ" Binding="{Binding Date, StringFormat={}{0:dd/MM}}" Width="0.9*"/>
-							                        <DataGridTextColumn Header="ΩΡΑ" Binding="{Binding Date, StringFormat={}{0:HH:mm}}" Width="0.4*"/>
-							                        <DataGridCheckBoxColumn Header="ΕΠΕΙΓΟΝ" Binding="{Binding IsUrgent}" Width="0.4*"/>
-							                        <DataGridTextColumn Header="ΤΥΠΟΣ" Binding="{Binding AppointmentTypeName}" Width="1.3*">
-							                            <DataGridTextColumn.ElementStyle>
-							                                <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridTrimText}">
-							                                    <Setter Property="ToolTip" Value="{Binding AppointmentTypeName}"/>
-							                                </Style>
-							                            </DataGridTextColumn.ElementStyle>
-							                        </DataGridTextColumn>
-							                    </DataGrid.Columns>
-							                </DataGrid>
-							            </GroupBox>
+                                    <GroupBox Margin="0,10,20,0" Header="ΠΡΟΣΕΧΗ ΡΑΝΤΕΒΟΥ">
+                                        <DataGrid AutoGenerateColumns="False" IsReadOnly="True"
+							                        CanUserAddRows="False" CanUserDeleteRows="False"
+							                        ItemsSource="{Binding PendingAppointments}">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="ΗΜΕΡΟΜΗΝΙΑ" Binding="{Binding Date, StringFormat={}{0:dd/MM/yyyy}}" Width="*"/>
+                                                <DataGridTextColumn Header="ΩΡΑ" Binding="{Binding Date, StringFormat={}{0:HH:mm}}" Width="0.5*"/>
+                                                <DataGridCheckBoxColumn Header="ΕΠΕΙΓΟΝ" Binding="{Binding IsUrgent}" Width="Auto"/>
+                                                <DataGridTextColumn Header="ΤΥΠΟΣ" Binding="{Binding AppointmentTypeName}" Width="*">
+                                                    <DataGridTextColumn.ElementStyle>
+                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridTrimText}">
+                                                            <Setter Property="ToolTip" Value="{Binding AppointmentTypeName}"/>
+                                                        </Style>
+                                                    </DataGridTextColumn.ElementStyle>
+                                                </DataGridTextColumn>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </GroupBox>
                                 </StackPanel>
 
                             </StackPanel>
@@ -297,54 +303,55 @@
                     </StackPanel>
 
                     <!-- Patient appointments section with NewAppointmentCommand -->
-                    <StackPanel Width="1000">
-                        <GroupBox Margin="0,10,20,0" Header="ΡΑΝΤΕΒΟΥ ΑΣΘΕΝΟΥΣ">
-                            <StackPanel>
-							                <DataGrid AutoGenerateColumns="False" IsReadOnly="True"
-							                          CanUserAddRows="False" CanUserDeleteRows="False"
-							                          ItemsSource="{Binding PatientAppointments}">
-							                    <DataGrid.Columns>
-							                        <DataGridTextColumn Header="ΗΜΕΡΟΜΗΝΙΑ" Binding="{Binding Start, StringFormat={}{0:dd/MM/yyyy}}" Width="*"/>
-							                        <DataGridTextColumn Header="ΩΡΑ" Binding="{Binding Start, StringFormat={}{0:HH:mm}}" Width="*"/>
-							                        <DataGridTextColumn Header="ΣΚΟΠΟΣ" Binding="{Binding AppointmentTypeName}" Width="2*" MinWidth="200">
-							                            <DataGridTextColumn.ElementStyle>
-							                                <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridTrimText}">
-							                                    <Setter Property="ToolTip" Value="{Binding AppointmentTypeName}"/>
-							                                </Style>
-							                            </DataGridTextColumn.ElementStyle>
-							                        </DataGridTextColumn>
+                    <StackPanel Width="Auto">
+                        <StackPanel Orientation="Horizontal">
+                            <GroupBox Margin="0,10,20,0" Header="ΡΑΝΤΕΒΟΥ ΑΣΘΕΝΟΥΣ">
+                                <StackPanel Width="500">
+                                    <DataGrid AutoGenerateColumns="False" IsReadOnly="True"
+							                        CanUserAddRows="False" CanUserDeleteRows="False"
+							                        ItemsSource="{Binding PatientAppointments}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="ΗΜΕΡΟΜΗΝΙΑ" Binding="{Binding Start, StringFormat={}{0:dd/MM/yyyy}}" Width="*"/>
+                                            <DataGridTextColumn Header="ΩΡΑ" Binding="{Binding Start, StringFormat={}{0:HH:mm}}" Width="*"/>
+                                            <DataGridTextColumn Header="ΣΚΟΠΟΣ" Binding="{Binding AppointmentTypeName}" Width="2*" MinWidth="200">
+                                                <DataGridTextColumn.ElementStyle>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridTrimText}">
+                                                        <Setter Property="ToolTip" Value="{Binding AppointmentTypeName}"/>
+                                                    </Style>
+                                                </DataGridTextColumn.ElementStyle>
+                                            </DataGridTextColumn>
 
-							                        <!-- Edit/Delete icons on each row -->
-							                        <DataGridTemplateColumn Width="80" IsReadOnly="True">
-							                            <DataGridTemplateColumn.CellTemplate>
-							                                <DataTemplate>
-							                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-							                                        <Button Padding="6" Margin="0,0,6,0" ToolTip="Επεξεργασία"
-							                                                Command="{Binding DataContext.EditPatientAppointmentCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-							                                                CommandParameter="{Binding}">
-							                                            <iconPacks:PackIconMaterial Kind="Pencil" Width="18" Height="18"/>
-							                                        </Button>
-							                                        <Button Padding="6" ToolTip="Διαγραφή"
-							                                                Command="{Binding DataContext.DeletePatientAppointmentCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-							                                                CommandParameter="{Binding}">
-							                                            <iconPacks:PackIconMaterial Kind="TrashCanOutline" Width="18" Height="18"/>
-							                                        </Button>
-							                                    </StackPanel>
-							                                </DataTemplate>
-							                            </DataGridTemplateColumn.CellTemplate>
-							                        </DataGridTemplateColumn>
-							                    </DataGrid.Columns>
-							                </DataGrid>
+                                            <!-- Edit/Delete icons on each row -->
+                                            <DataGridTemplateColumn Width="80" IsReadOnly="True">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                            <Button Padding="6" Margin="0,0,6,0" ToolTip="Επεξεργασία"
+							                                            Command="{Binding DataContext.EditPatientAppointmentCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+							                                            CommandParameter="{Binding}">
+                                                                <iconPacks:PackIconMaterial Kind="Pencil" Width="18" Height="18"/>
+                                                            </Button>
+                                                            <Button Padding="6" ToolTip="Διαγραφή"
+							                                            Command="{Binding DataContext.DeletePatientAppointmentCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+							                                            CommandParameter="{Binding}">
+                                                                <iconPacks:PackIconMaterial Kind="TrashCanOutline" Width="18" Height="18"/>
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
 
-							                <Button Style="{StaticResource ToolbarIconButton}" ToolTip="ΝΕΟ ΡΑΝΤΕΒΟΥ"
-							                        Command="{Binding NewAppointmentCommand}">
-							                    <TextBlock FontFamily="Segoe Fluent Icons" FontSize="24">&#xE710;</TextBlock>
-							                </Button>
-                            </StackPanel>
-                        </GroupBox>
+                                    <Button Style="{StaticResource ToolbarIconButton}" ToolTip="ΝΕΟ ΡΑΝΤΕΒΟΥ"
+							                    Command="{Binding NewAppointmentCommand}">
+                                        <TextBlock FontFamily="Segoe Fluent Icons" FontSize="24">&#xE710;</TextBlock>
+                                    </Button>
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
                     </StackPanel>
-
-                </StackPanel>
+                </WrapPanel>
             </ScrollViewer>
 
             <!-- SCHEDULER OVERLAY (reuses your existing NewAppointmentDayTemplate) -->

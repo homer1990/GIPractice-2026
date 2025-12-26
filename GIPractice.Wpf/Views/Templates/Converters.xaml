@@ -1,0 +1,9 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:GIPractice.Wpf">
+
+    <local:AgeConverter x:Key="AgeConverter"/>
+    <local:TopThicknessConverter x:Key="TopThicknessConverter"/>
+    <local:PatientHeaderLineConverter x:Key="PatientHeaderLineConverter"/>
+</ResourceDictionary>

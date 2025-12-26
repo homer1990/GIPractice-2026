@@ -4,10 +4,12 @@
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
              xmlns:vm="clr-namespace:GIPractice.Wpf.ViewModels"
              xmlns:views="clr-namespace:GIPractice.Wpf.Views"
+             xmlns:local="clr-namespace:GIPractice.Wpf"
              ShutdownMode="OnMainWindowClose">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Views/Templates/Converters.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Light.Steel.xaml" />
@@ -70,7 +72,6 @@
             <DataTemplate DataType="{x:Type vm:NewPathologyReportVm}">
                 <views:NewPathologyReportView/>
             </DataTemplate>
-
         </ResourceDictionary>
     </Application.Resources>
 
