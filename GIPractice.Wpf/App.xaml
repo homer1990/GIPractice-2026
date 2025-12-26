@@ -17,6 +17,8 @@
 
                 <ResourceDictionary Source="/GIPractice.Wpf;component/Views/Templates/NewAppointmentDayTemplate.xaml" />
                 <ResourceDictionary Source="/GIPractice.Wpf;component/Views/Templates/PatientsPageTemplate.xaml" />
+                <ResourceDictionary Source="/GIPractice.Wpf;component/Views/Templates/AutoTemplates.xaml" />
+
 
             </ResourceDictionary.MergedDictionaries>
 
