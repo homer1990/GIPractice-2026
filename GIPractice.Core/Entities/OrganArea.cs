@@ -11,9 +11,9 @@ public class OrganArea : BaseEntity
     public string DefaultName { get; set; } = string.Empty;
 
     // many-to-many Organ <-> OrganArea
-    public List<OrganAreaOrgan> OrganAreaOrgans { get; set; } = new();
+    public List<OrganAreaOrgan> OrganAreaOrgans { get; set; } = [];
 
     // existing relationships
-    public List<Observation> Observations { get; set; } = new();
-    public List<BiopsyBottle> BiopsyBottles { get; set; } = new();
+    public List<Observation> Observations { get; set; } = [];
+    public List<BiopsyBottle> BiopsyBottles { get; set; } = [];
 }

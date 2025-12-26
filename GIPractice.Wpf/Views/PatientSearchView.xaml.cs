@@ -33,8 +33,8 @@ namespace GIPractice.Wpf.Views
 
     public static class MockPatients
     {
-        public static List<PatientGridRow> Create() => new()
-        {
+        public static List<PatientGridRow> Create() =>
+        [
             new() { PersonalNumber="PN-000001", FirstName="Γεώργιος", LastName="Παπαδόπουλος", FatherName="Δημήτριος", Birthdate=new DateTime(1978, 3, 12), LastVisitDate=new DateTime(2025, 11, 8),  LastEndoscopyDate=new DateTime(2025, 10, 21) },
             new() { PersonalNumber="PN-000002", FirstName="Μαρία",     LastName="Νικολάου",    FatherName="Ιωάννης",  Birthdate=new DateTime(1986, 7, 2),  LastVisitDate=new DateTime(2025, 9, 14),  LastEndoscopyDate=new DateTime(2024, 12, 5) },
             new() { PersonalNumber="PN-000003", FirstName="Κωνσταντίνος", LastName="Αντωνίου", FatherName="Παναγιώτης", Birthdate=new DateTime(1969, 1, 29), LastVisitDate=new DateTime(2025, 6, 30), LastEndoscopyDate=new DateTime(2025, 6, 30) },
@@ -73,7 +73,7 @@ namespace GIPractice.Wpf.Views
             new() { PersonalNumber="PN-000034", FirstName="Παναγιώτα",  LastName="Ζαχαρίου",   FatherName="Χρήστος", Birthdate=new DateTime(1999, 9, 9),   LastVisitDate=new DateTime(2025, 3, 3),  LastEndoscopyDate=null },
             new() { PersonalNumber="PN-000035", FirstName="Λουκάς",     LastName="Παπακωνσταντίνου", FatherName="Κυριάκος", Birthdate=new DateTime(1961, 7, 7), LastVisitDate=new DateTime(2025, 12, 2), LastEndoscopyDate=new DateTime(2024, 12, 2) },
             new() { PersonalNumber="PN-000036", FirstName="Ιφιγένεια",  LastName="Μελά",       FatherName="Νικόλαος", Birthdate=new DateTime(1980, 12, 31), LastVisitDate=new DateTime(2025, 9, 12), LastEndoscopyDate=new DateTime(2025, 9, 12) },
-        };
+        ];
 
     }
 }

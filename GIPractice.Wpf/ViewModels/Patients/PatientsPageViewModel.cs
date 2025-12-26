@@ -1,9 +1,9 @@
-using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 
+#pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace GIPractice.Wpf.ViewModels;
+#pragma warning restore IDE0130 // Namespace does not match folder structure
 
 public sealed class PatientsPageViewModel : ViewModelBase
 {
@@ -76,8 +76,10 @@ public sealed class PatientsPageViewModel : ViewModelBase
 	public bool SearchHasPendingBiopsies { get => _searchHasPendingBiopsies; set => SetProperty(ref _searchHasPendingBiopsies, value); }
 	public bool SearchHasScheduledEndo { get => _searchHasScheduledEndo; set => SetProperty(ref _searchHasScheduledEndo, value); }
 
-    public ObservableCollection<PatientVm> AllPatients { get; } = new();
-    public ObservableCollection<PatientVm> SearchResults { get; } = new();
+    private static readonly ObservableCollection<PatientVm> patientVms = [];
+
+    public ObservableCollection<PatientVm> AllPatients { get; } = patientVms;
+    public ObservableCollection<PatientVm> SearchResults { get; } = patientVms;
 
     public PatientVm? SearchSelectedPatient
     {
@@ -91,23 +93,23 @@ public sealed class PatientsPageViewModel : ViewModelBase
     }
 
     public ObservableCollection<string> GenderOptions { get; } =
-        new() { "Άρρεν", "Θήλυ", "Άλλο..." };
+        ["Άρρεν", "Θήλυ", "Άλλο..."];
 
     // Dummy dashboard collections (you added these VMs in PatientDashboardRowVms.cs)
-    public ObservableCollection<PendingBiopsyVm> PendingBiopsies { get; } = new();
-    public ObservableCollection<PendingPathologyVm> PendingPathologyReports { get; } = new();
-    public ObservableCollection<PendingAppointmentVm> PendingAppointments { get; } = new();
-    public ObservableCollection<VisitVm> PatientVisits { get; } = new();
+    public ObservableCollection<PendingBiopsyVm> PendingBiopsies { get; } = [];
+    public ObservableCollection<PendingPathologyVm> PendingPathologyReports { get; } = [];
+    public ObservableCollection<PendingAppointmentVm> PendingAppointments { get; } = [];
+    public ObservableCollection<VisitVm> PatientVisits { get; } = [];
 
     // Continuity: reuse AppointmentVm from scheduler work
-    public ObservableCollection<AppointmentVm> PatientAppointments { get; } = new();
+    public ObservableCollection<AppointmentVm> PatientAppointments { get; } = [];
 
     // Patient history: encounters (real-world happened). If EndoscopyTypeName is set, UI shows that instead of EncounterTypeName.
-    public ObservableCollection<EncounterHistoryVm> PatientHistoryEncounters { get; } = new();
+    public ObservableCollection<EncounterHistoryVm> PatientHistoryEncounters { get; } = [];
 
 
-    public ObservableCollection<EndoscopyVm> PatientEndoscopies { get; } = new();
-    public ObservableCollection<PathologyReportVm> PatientPathologyReports { get; } = new();
+    public ObservableCollection<EndoscopyVm> PatientEndoscopies { get; } = [];
+    public ObservableCollection<PathologyReportVm> PatientPathologyReports { get; } = [];
 
     // Commands
     public RelayCommand ToggleSearchCommand { get; }
@@ -339,6 +341,7 @@ public sealed class PatientsPageViewModel : ViewModelBase
             EndoscopyTypeName = "Γαστροσκόπηση",
             Notes = "Ήπια γαστρίτιδα"
         });
+    }
 
     private void OpenScheduler()
     {

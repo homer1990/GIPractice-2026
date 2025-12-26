@@ -11,7 +11,7 @@ public sealed class RecallTasksSearchViewModel : ViewModelBase
         set => SetProperty(ref _query, value);
     }
 
-    public ObservableCollection<object> Items { get; } = new();
+    public ObservableCollection<object> Items { get; } = [];
 
     public RelayCommand SearchCommand { get; }
     public RelayCommand NewCommand { get; }

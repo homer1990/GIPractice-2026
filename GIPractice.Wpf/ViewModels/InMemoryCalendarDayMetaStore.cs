@@ -10,7 +10,7 @@ public interface ICalendarDayMetaStore
 
 public sealed class InMemoryCalendarDayMetaStore : ICalendarDayMetaStore
 {
-    private readonly Dictionary<DateTime, DayMetaVm> _map = new();
+    private readonly Dictionary<DateTime, DayMetaVm> _map = [];
 
     public DayMetaVm GetOrCreate(DateTime date)
     {

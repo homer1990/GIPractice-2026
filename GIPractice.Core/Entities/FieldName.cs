@@ -7,5 +7,5 @@ public class FieldName : BaseEntity
     public string Field { get; set; } = string.Empty;
     public string DefaultText { get; set; } = string.Empty;
 
-    public ICollection<Localization> Localizations { get; set; } = new List<Localization>();
+    public ICollection<Localization> Localizations { get; set; } = [];
 }

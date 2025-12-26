@@ -19,5 +19,5 @@ public class BiopsyBottle : BaseEntity
     public string Label { get; set; } = string.Empty;
     public int Number { get; set; }
 
-    public List<OrganArea> OrganAreas { get; set; } = new();
+    public List<OrganArea> OrganAreas { get; set; } = [];
 }

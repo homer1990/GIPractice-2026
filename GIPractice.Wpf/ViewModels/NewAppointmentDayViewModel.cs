@@ -70,8 +70,8 @@ public sealed class NewAppointmentDayViewModel : ViewModelBase
         }
     }
 
-    public ObservableCollection<AppointmentVm> AppointmentsOfSelectedDate { get; } = new();
-    public ObservableCollection<AppointmentTypeVm> AppointmentTypes { get; } = new();
+    public ObservableCollection<AppointmentVm> AppointmentsOfSelectedDate { get; } = [];
+    public ObservableCollection<AppointmentTypeVm> AppointmentTypes { get; } = [];
 
     public AppointmentTypeVm? NewAppointmentType
     {
@@ -86,7 +86,7 @@ public sealed class NewAppointmentDayViewModel : ViewModelBase
         }
     }
 
-    public ObservableCollection<TimeSpan> AvailableStartTimes { get; } = new();
+    public ObservableCollection<TimeSpan> AvailableStartTimes { get; } = [];
 
     public TimeSpan? NewStartTime
     {

@@ -31,7 +31,11 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-
+            <StackPanel Margin="0,0,0,8" Height="200">
+                <TextBlock Text="{Binding AllPatients.Count, StringFormat=AllPatients: {0}}"/>
+                <TextBlock Text="{Binding SearchResults.Count, StringFormat=SearchResults: {0}}"/>
+                <TextBlock Text="{Binding SelectedPatient.Id, StringFormat=SelectedPatient.Id: {0}}"/>
+            </StackPanel>
             <!-- LEFT: SEARCH PANEL -->
 			    <Border Grid.Column="0" Width="420"
 			            Background="{DynamicResource MahApps.Brushes.Gray10}"
@@ -59,7 +63,7 @@
 			            </DockPanel>
 
 			            <!-- Criteria -->
-			            <ScrollViewer Grid.Row="1" Margin="0,10,0,10"
+                    <ScrollViewer Grid.Row="1" Margin="0,10,0,10"
 			                          VerticalScrollBarVisibility="Auto"
 			                          HorizontalScrollBarVisibility="Disabled">
 			                <StackPanel>
@@ -95,7 +99,7 @@
 			            </ScrollViewer>
 
 			            <!-- Results -->
-			            <ListBox Grid.Row="2" ItemsSource="{Binding SearchResults}"
+                    <ListBox Grid.Row="2" ItemsSource="{Binding SearchResults}"
 			                     SelectedItem="{Binding SearchSelectedPatient, Mode=TwoWay}">
 			                <ListBox.ItemTemplate>
 			                    <DataTemplate>
@@ -253,7 +257,7 @@
                                 </Grid>
 
                                 <!-- Side grids (bind to dummy collections) -->
-                                <StackPanel Width="360">
+                                <StackPanel Width="410">
                                     <GroupBox Margin="0,10,20,0" Header="ΒΙΟΨΙΕΣ ΠΟΥ ΔΕΝ ΕΧΟΥΝ ΣΤΑΛΘΕΙ">
                                         <DataGrid AutoGenerateColumns="False" IsReadOnly="True"
                                                 CanUserAddRows="False" CanUserDeleteRows="False"
@@ -306,14 +310,14 @@
                     <StackPanel Width="Auto">
                         <StackPanel Orientation="Horizontal">
                             <GroupBox Margin="0,10,20,0" Header="ΡΑΝΤΕΒΟΥ ΑΣΘΕΝΟΥΣ">
-                                <StackPanel Width="500">
+                                <StackPanel Width="Auto">
                                     <DataGrid AutoGenerateColumns="False" IsReadOnly="True"
 							                        CanUserAddRows="False" CanUserDeleteRows="False"
 							                        ItemsSource="{Binding PatientAppointments}">
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="ΗΜΕΡΟΜΗΝΙΑ" Binding="{Binding Start, StringFormat={}{0:dd/MM/yyyy}}" Width="*"/>
-                                            <DataGridTextColumn Header="ΩΡΑ" Binding="{Binding Start, StringFormat={}{0:HH:mm}}" Width="*"/>
-                                            <DataGridTextColumn Header="ΣΚΟΠΟΣ" Binding="{Binding AppointmentTypeName}" Width="2*" MinWidth="200">
+                                            <DataGridTextColumn Header="ΗΜΕΡΟΜΗΝΙΑ" Binding="{Binding Start, StringFormat={}{0:dd/MM/yyyy}}" Width="Auto"/>
+                                            <DataGridTextColumn Header="ΩΡΑ" Binding="{Binding Start, StringFormat={}{0:HH:mm}}" Width="Auto"/>
+                                            <DataGridTextColumn Header="ΣΚΟΠΟΣ" Binding="{Binding AppointmentTypeName}" Width="Auto" MinWidth="200">
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridTrimText}">
                                                         <Setter Property="ToolTip" Value="{Binding AppointmentTypeName}"/>
@@ -350,22 +354,22 @@
                                 </StackPanel>
                             </GroupBox>
                             <GroupBox Margin="0,10,20,0" Header="ΙΣΤΟΡΙΚΟ ΑΣΘΕΝΟΥΣ">
-                                <StackPanel Width="650">
+                                <StackPanel Width="Auto">
                                     <DataGrid AutoGenerateColumns="False" IsReadOnly="True"
                                               CanUserAddRows="False" CanUserDeleteRows="False"
                                               ItemsSource="{Binding PatientHistoryEncounters}">
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="ΗΜΕΡΟΜΗΝΙΑ" Binding="{Binding Start, StringFormat={}{0:dd/MM/yyyy}}" Width="*"/>
-                                            <DataGridTextColumn Header="ΕΝΑΡΞΗ" Binding="{Binding Start, StringFormat={}{0:HH:mm}}" Width="0.7*"/>
-                                            <DataGridTextColumn Header="ΤΥΠΟΣ" Binding="{Binding DisplayType}" Width="2*" MinWidth="220">
+                                            <DataGridTextColumn Header="ΗΜΕΡΟΜΗΝΙΑ" Binding="{Binding Start, StringFormat={}{0:dd/MM/yyyy}}" Width="Auto"/>
+                                            <DataGridTextColumn Header="ΕΝΑΡΞΗ" Binding="{Binding Start, StringFormat={}{0:HH:mm}}" Width="Auto"/>
+                                            <DataGridTextColumn Header="ΤΥΠΟΣ" Binding="{Binding DisplayType}" Width="Auto" MinWidth="150">
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridTrimText}">
                                                         <Setter Property="ToolTip" Value="{Binding DisplayType}"/>
                                                     </Style>
                                                 </DataGridTextColumn.ElementStyle>
                                             </DataGridTextColumn>
-                                            <DataGridTextColumn Header="ΔΙΑΡΚΕΙΑ" Binding="{Binding DurationMinutes}" Width="0.8*"/>
-                                            <DataGridTextColumn Header="ΣΗΜΕΙΩΣΕΙΣ" Binding="{Binding Notes}" Width="2*" MinWidth="240">
+                                            <DataGridTextColumn Header="ΔΙΑΡΚΕΙΑ" Binding="{Binding DurationMinutes}" Width="Auto"/>
+                                            <DataGridTextColumn Header="ΣΗΜΕΙΩΣΕΙΣ" Binding="{Binding Notes}" Width="Auto" MinWidth="240">
                                                 <DataGridTextColumn.ElementStyle>
                                                     <Style TargetType="TextBlock" BasedOn="{StaticResource DataGridTrimText}">
                                                         <Setter Property="ToolTip" Value="{Binding Notes}"/>
