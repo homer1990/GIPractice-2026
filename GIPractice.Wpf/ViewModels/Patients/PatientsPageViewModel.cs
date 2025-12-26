@@ -26,7 +26,16 @@ public sealed class PatientsPageViewModel : ViewModelBase
 
     private PatientVm? _selectedPatient;
     private bool _isSearchOpen;
-    private string? _searchText;
+	private string? _searchFirstName;
+	private string? _searchLastName;
+	private string? _searchFathersName;
+	private string? _searchPersonalNumber;
+	private string? _searchPhone;
+	private string? _searchEmail;
+	private bool _searchHasHadCA;
+	private bool _searchHasHadIBD;
+	private bool _searchHasPendingBiopsies;
+	private bool _searchHasScheduledEndo;
     private PatientVm? _searchSelectedPatient;
 
     public PatientVm? SelectedPatient
@@ -54,16 +63,18 @@ public sealed class PatientsPageViewModel : ViewModelBase
         set => SetProperty(ref _isSearchOpen, value);
     }
 
-    public string? SearchText
-    {
-        get => _searchText;
-        set
-        {
-            if (!SetProperty(ref _searchText, value))
-                return;
-            PerformSearch(); // live filter
-        }
-    }
+	// Explicit field-by-field search (no live filtering for performance).
+	public string? SearchFirstName { get => _searchFirstName; set => SetProperty(ref _searchFirstName, value); }
+	public string? SearchLastName { get => _searchLastName; set => SetProperty(ref _searchLastName, value); }
+	public string? SearchFathersName { get => _searchFathersName; set => SetProperty(ref _searchFathersName, value); }
+	public string? SearchPersonalNumber { get => _searchPersonalNumber; set => SetProperty(ref _searchPersonalNumber, value); }
+	public string? SearchPhone { get => _searchPhone; set => SetProperty(ref _searchPhone, value); }
+	public string? SearchEmail { get => _searchEmail; set => SetProperty(ref _searchEmail, value); }
+
+	public bool SearchHasHadCA { get => _searchHasHadCA; set => SetProperty(ref _searchHasHadCA, value); }
+	public bool SearchHasHadIBD { get => _searchHasHadIBD; set => SetProperty(ref _searchHasHadIBD, value); }
+	public bool SearchHasPendingBiopsies { get => _searchHasPendingBiopsies; set => SetProperty(ref _searchHasPendingBiopsies, value); }
+	public bool SearchHasScheduledEndo { get => _searchHasScheduledEndo; set => SetProperty(ref _searchHasScheduledEndo, value); }
 
     public ObservableCollection<PatientVm> AllPatients { get; } = new();
     public ObservableCollection<PatientVm> SearchResults { get; } = new();
@@ -97,6 +108,7 @@ public sealed class PatientsPageViewModel : ViewModelBase
     // Commands
     public RelayCommand ToggleSearchCommand { get; }
     public RelayCommand PerformSearchCommand { get; }
+	public RelayCommand ClearSearchCommand { get; }
     public RelayCommand SelectSearchPatientCommand { get; }
 
     public RelayCommand NewPatientCommand { get; }
@@ -106,6 +118,9 @@ public sealed class PatientsPageViewModel : ViewModelBase
     public RelayCommand CapturePhotoCommand { get; }
     public RelayCommand PhotoFromFileCommand { get; }
     public RelayCommand RefreshPatientCommand { get; } // ΕΠΑΝΑΦΟΡΑ: reset photo baseline
+
+	public RelayCommand<AppointmentVm> EditPatientAppointmentCommand { get; }
+	public RelayCommand<AppointmentVm> DeletePatientAppointmentCommand { get; }
 
     // fields
     private readonly RelayCommand _newAppointmentCommand;
@@ -119,6 +134,7 @@ public sealed class PatientsPageViewModel : ViewModelBase
     {
         ToggleSearchCommand = new RelayCommand(() => IsSearchOpen = !IsSearchOpen);
         PerformSearchCommand = new RelayCommand(PerformSearch);
+		ClearSearchCommand = new RelayCommand(ClearSearch);
         SelectSearchPatientCommand = new RelayCommand(SelectSearchPatient, () => SearchSelectedPatient != null);
 
         NewPatientCommand = new RelayCommand(NewPatient);
@@ -131,6 +147,9 @@ public sealed class PatientsPageViewModel : ViewModelBase
         RefreshPatientCommand = new RelayCommand(
             () => SelectedPatient?.ResetPhotoToBaseline(),
             () => SelectedPatient != null && SelectedPatient.IsPhotoDirty);
+
+		EditPatientAppointmentCommand = new RelayCommand<AppointmentVm>(EditPatientAppointment);
+		DeletePatientAppointmentCommand = new RelayCommand<AppointmentVm>(DeletePatientAppointment);
 
         _newAppointmentCommand = new RelayCommand(OpenScheduler, () => SelectedPatient != null);
         _closeSchedulerCommand = new RelayCommand(() => IsSchedulerOpen = false);
@@ -155,10 +174,13 @@ public sealed class PatientsPageViewModel : ViewModelBase
 
         var p1 = PatientVm.CreateNew();
         p1.Id = 1; p1.FirstName = "Γιώργος"; p1.LastName = "Παπαδόπουλος"; p1.PhoneNumber = "69xxxxxxxx";
+		p1.HasHadIBD = true;
         p1.AcceptPhotoAsBaseline();
 
         var p2 = PatientVm.CreateNew();
         p2.Id = 2; p2.FirstName = "Μαρία"; p2.LastName = "Ιωάννου"; p2.PhoneNumber = "69yyyyyyyy";
+		p2.HasPendingBiopsies = true;
+		p2.HasScheduledEndo = true;
         p2.AcceptPhotoAsBaseline();
 
         AllPatients.Add(p1);
@@ -169,20 +191,52 @@ public sealed class PatientsPageViewModel : ViewModelBase
     {
         SearchResults.Clear();
 
-        var q = (SearchText ?? "").Trim();
-        var src = string.IsNullOrWhiteSpace(q)
-            ? AllPatients
-            : new ObservableCollection<PatientVm>(
-                AllPatients.Where(p =>
-                    (p.FirstName ?? "").Contains(q, StringComparison.OrdinalIgnoreCase) ||
-                    (p.LastName ?? "").Contains(q, StringComparison.OrdinalIgnoreCase) ||
-                    (p.PhoneNumber ?? "").Contains(q, StringComparison.OrdinalIgnoreCase)));
+		string norm(string? s) => (s ?? "").Trim();
+		bool has(string? s) => !string.IsNullOrWhiteSpace(s);
+		bool contains(string? hay, string needle)
+			=> (hay ?? "").Contains(needle, StringComparison.OrdinalIgnoreCase);
+
+		var fn = norm(SearchFirstName);
+		var ln = norm(SearchLastName);
+		var fat = norm(SearchFathersName);
+		var pn = norm(SearchPersonalNumber);
+		var ph = norm(SearchPhone);
+		var em = norm(SearchEmail);
+
+		var src = new ObservableCollection<PatientVm>(
+			AllPatients.Where(p =>
+				(!has(fn) || contains(p.FirstName, fn)) &&
+				(!has(ln) || contains(p.LastName, ln)) &&
+				(!has(fat) || contains(p.FathersName, fat)) &&
+				(!has(pn) || contains(p.PersonalNumber, pn)) &&
+				(!has(ph) || contains(p.PhoneNumber, ph)) &&
+				(!has(em) || contains(p.Email, em)) &&
+				(!SearchHasHadCA || p.HasHadCA) &&
+				(!SearchHasHadIBD || p.HasHadIBD) &&
+				(!SearchHasPendingBiopsies || p.HasPendingBiopsies) &&
+				(!SearchHasScheduledEndo || p.HasScheduledEndo)
+			));
 
         foreach (var p in src)
             SearchResults.Add(p);
 
         SearchSelectedPatient = SearchResults.FirstOrDefault();
     }
+
+	private void ClearSearch()
+	{
+		SearchFirstName = null;
+		SearchLastName = null;
+		SearchFathersName = null;
+		SearchPersonalNumber = null;
+		SearchPhone = null;
+		SearchEmail = null;
+		SearchHasHadCA = false;
+		SearchHasHadIBD = false;
+		SearchHasPendingBiopsies = false;
+		SearchHasScheduledEndo = false;
+		PerformSearch();
+	}
 
     private void SelectSearchPatient()
     {
@@ -289,6 +343,18 @@ public sealed class PatientsPageViewModel : ViewModelBase
         AppointmentScheduler = vm;
         IsSchedulerOpen = true;
     }
+
+	private void EditPatientAppointment(AppointmentVm appt)
+	{
+		// Dummy implementation for now.
+		// Later: open scheduler/details with this appointment pre-selected.
+		IsSchedulerOpen = true;
+	}
+
+	private void DeletePatientAppointment(AppointmentVm appt)
+	{
+		PatientAppointments.Remove(appt);
+	}
 
     private void RaiseAllCanExecutes()
     {

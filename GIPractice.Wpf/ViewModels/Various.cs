@@ -35,6 +35,13 @@ public sealed class PatientVm : ViewModelBase
     public string? PhoneNumber { get; set; }
     public string? Address { get; set; }
 
+    // Temporary flags for search UX scaffolding.
+    // Later these should be computed from real domain data (diagnoses, pathology workflow, schedules, etc.).
+    public bool HasHadCA { get; set; }
+    public bool HasHadIBD { get; set; }
+    public bool HasPendingBiopsies { get; set; }
+    public bool HasScheduledEndo { get; set; }
+
     private ImageSource? _photoImageSource;
     public ImageSource? PhotoImageSource
     {
