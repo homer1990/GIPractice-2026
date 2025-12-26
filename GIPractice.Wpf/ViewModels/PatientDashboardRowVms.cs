@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace GIPractice.Wpf.ViewModels;
 
@@ -35,6 +35,29 @@ public sealed class VisitVm
     public string Procedures { get; set; } = "";
 }
 
+
+
+// Lower: "ΙΣΤΟΡΙΚΟ" (Encounters)
+public sealed class EncounterHistoryVm
+{
+    public DateTime Start { get; set; }
+    public DateTime? End { get; set; }
+
+    // Generic encounter kind (e.g., Ιατρείο, Κλινική Επίσκεψη, Ενδοσκόπηση)
+    public string EncounterTypeName { get; set; } = "";
+
+    // If this encounter is an endoscopy, set this. UI will show this instead of EncounterTypeName.
+    public string? EndoscopyTypeName { get; set; }
+
+    public string DisplayType => !string.IsNullOrWhiteSpace(EndoscopyTypeName)
+        ? EndoscopyTypeName!
+        : EncounterTypeName;
+
+    public string Notes { get; set; } = "";
+
+    public int? DurationMinutes
+        => End.HasValue ? (int)(End.Value - Start).TotalMinutes : null;
+}
 // Lower: "ΕΝΔΟΣΚΟΠΗΣΕΙΣ"
 public sealed class EndoscopyVm
 {

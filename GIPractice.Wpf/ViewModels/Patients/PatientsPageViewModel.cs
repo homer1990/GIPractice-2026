@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -101,6 +101,10 @@ public sealed class PatientsPageViewModel : ViewModelBase
 
     // Continuity: reuse AppointmentVm from scheduler work
     public ObservableCollection<AppointmentVm> PatientAppointments { get; } = new();
+
+    // Patient history: encounters (real-world happened). If EndoscopyTypeName is set, UI shows that instead of EncounterTypeName.
+    public ObservableCollection<EncounterHistoryVm> PatientHistoryEncounters { get; } = new();
+
 
     public ObservableCollection<EndoscopyVm> PatientEndoscopies { get; } = new();
     public ObservableCollection<PathologyReportVm> PatientPathologyReports { get; } = new();
@@ -254,6 +258,7 @@ public sealed class PatientsPageViewModel : ViewModelBase
         PendingAppointments.Clear();
         PatientVisits.Clear();
         PatientAppointments.Clear();
+        PatientHistoryEncounters.Clear();
         PatientEndoscopies.Clear();
         PatientPathologyReports.Clear();
     }
@@ -294,6 +299,7 @@ public sealed class PatientsPageViewModel : ViewModelBase
         PendingAppointments.Clear();
         PatientVisits.Clear();
         PatientAppointments.Clear();
+        PatientHistoryEncounters.Clear();
         PatientEndoscopies.Clear();
         PatientPathologyReports.Clear();
 
@@ -314,7 +320,25 @@ public sealed class PatientsPageViewModel : ViewModelBase
             PatientPhoneNo = SelectedPatient.PhoneNumber ?? "",
             AppointmentTypeName = "Κολονοσκόπηση"
         });
-    }
+
+        // Patient history / encounters (dummy)
+        PatientHistoryEncounters.Add(new EncounterHistoryVm
+        {
+            Start = DateTime.Today.AddDays(-7).AddHours(11),
+            End = DateTime.Today.AddDays(-7).AddHours(11).AddMinutes(20),
+            EncounterTypeName = "Ιατρείο",
+            Notes = "Κλινική εξέταση"
+        });
+
+        // Endoscopy encounter: show endoscopy type in UI
+        PatientHistoryEncounters.Add(new EncounterHistoryVm
+        {
+            Start = DateTime.Today.AddDays(-30).AddHours(9),
+            End = DateTime.Today.AddDays(-30).AddHours(10),
+            EncounterTypeName = "Ενδοσκόπηση",
+            EndoscopyTypeName = "Γαστροσκόπηση",
+            Notes = "Ήπια γαστρίτιδα"
+        });
 
     private void OpenScheduler()
     {
