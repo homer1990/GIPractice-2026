@@ -2,7 +2,8 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:sys="clr-namespace:System;assembly=System.Runtime"
-    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls">
+    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+    x:Name="Styles">
 
     <!-- Global sizes used by MahApps templates -->
     <sys:Double x:Key="MahApps.Font.Size.Default">18</sys:Double>
