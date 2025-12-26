@@ -1,6 +1,111 @@
 ﻿<ResourceDictionary
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:vm="clr-namespace:ViewModels"
-  xmlns:v="clr-namespace:Views">
+  xmlns:vm="clr-namespace:GIPractice.Wpf.ViewModels"
+  xmlns:v="clr-namespace:GIPractice.Wpf.Views">
+
+  <DataTemplate DataType="{x:Type vm:PatientsSearchViewModel}">
+    <v:PatientsSearchPage />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:PatientsDetailsViewModel}">
+    <v:PatientsDetailsView />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:AppointmentsSearchViewModel}">
+    <v:AppointmentsSearchPage />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:AppointmentsDetailsViewModel}">
+    <v:AppointmentsDetailsView />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:EncountersSearchViewModel}">
+    <v:EncountersSearchPage />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:EncountersDetailsViewModel}">
+    <v:EncountersDetailsView />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:EndoscopySessionsSearchViewModel}">
+    <v:EndoscopySessionsSearchPage />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:EndoscopySessionsDetailsViewModel}">
+    <v:EndoscopySessionsDetailsView />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:BiopsyBottlesSearchViewModel}">
+    <v:BiopsyBottlesSearchPage />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:BiopsyBottlesDetailsViewModel}">
+    <v:BiopsyBottlesDetailsView />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:DispatchProtocolsSearchViewModel}">
+    <v:DispatchProtocolsSearchPage />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:DispatchProtocolsDetailsViewModel}">
+    <v:DispatchProtocolsDetailsView />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:DispatchItemsSearchViewModel}">
+    <v:DispatchItemsSearchPage />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:DispatchItemsDetailsViewModel}">
+    <v:DispatchItemsDetailsView />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:PathologyReportsSearchViewModel}">
+    <v:PathologyReportsSearchPage />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:PathologyReportsDetailsViewModel}">
+    <v:PathologyReportsDetailsView />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:ExamsOrthosSearchViewModel}">
+    <v:ExamsOrthosSearchPage />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:ExamsOrthosDetailsViewModel}">
+    <v:ExamsOrthosDetailsView />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:INFAIsSearchViewModel}">
+    <v:INFAIsSearchPage />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:INFAIsDetailsViewModel}">
+    <v:INFAIsDetailsView />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:RecallTasksSearchViewModel}">
+    <v:RecallTasksSearchPage />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:RecallTasksDetailsViewModel}">
+    <v:RecallTasksDetailsView />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:RescheduleTasksSearchViewModel}">
+    <v:RescheduleTasksSearchPage />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:RescheduleTasksDetailsViewModel}">
+    <v:RescheduleTasksDetailsView />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:SettingsSearchViewModel}">
+    <v:SettingsSearchPage />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vm:SettingsDetailsViewModel}">
+    <v:SettingsDetailsView />
+  </DataTemplate>
+
 </ResourceDictionary>

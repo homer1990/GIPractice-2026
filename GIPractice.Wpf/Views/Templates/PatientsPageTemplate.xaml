@@ -68,7 +68,7 @@
                 <StackPanel Margin="5" Orientation="Vertical">
 
                     <!-- Toolbar -->
-                    <DockPanel Margin="0,0,0,8">
+                    <DockPanel Margin="0,0,0,8" Width="Auto">
                         <Button Width="Auto" Height="Auto" Padding="10" Margin="5"
                                 ToolTip="ΑΝΑΖΗΤΗΣΗ ΑΣΘΕΝΟΥΣ"
                                 Command="{Binding ToggleSearchCommand}">

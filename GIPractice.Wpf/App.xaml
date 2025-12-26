@@ -19,7 +19,6 @@
                 <ResourceDictionary Source="/GIPractice.Wpf;component/Views/Templates/PatientsPageTemplate.xaml" />
                 <ResourceDictionary Source="/GIPractice.Wpf;component/Views/Templates/AutoTemplates.xaml" />
 
-
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Your embedded font (use your assembly name to be explicit) -->
@@ -53,10 +52,8 @@
                 <Setter Property="FontSize" Value="20" />
                 <Setter Property="VerticalAlignment" Value="Center" />
             </Style>
-            <!-- VM -> View mapping -->
-            <DataTemplate DataType="{x:Type vm:PatientsPageViewModel}">
-                <views:PatientSearchView/>
-            </DataTemplate>
+            <!-- VM -> View mapping (Flyouts etc.) -->
+            <!-- NOTE: PatientsPageViewModel is templated in Views/Templates/PatientsPageTemplate.xaml -->
 
             <DataTemplate DataType="{x:Type vm:NewVisitVm}">
                 <views:NewVisitView/>

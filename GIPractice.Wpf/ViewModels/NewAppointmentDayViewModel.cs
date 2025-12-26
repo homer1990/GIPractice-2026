@@ -64,7 +64,8 @@ public sealed class NewAppointmentDayViewModel : ViewModelBase
             if (!SetProperty(ref _selectedDate, v))
                 return;
 
-            RebuildAvailableStartTimes();
+            // (holiday/day off + notes)
+            CurrentDay = _dayStore.GetOrCreate(v);
             // later: reload AppointmentsOfSelectedDate from API for this date
         }
     }
@@ -119,6 +120,8 @@ public sealed class NewAppointmentDayViewModel : ViewModelBase
         AppointmentsOfSelectedDate.CollectionChanged += (_, __) => RebuildAvailableStartTimes();
 
         _dayStore = dayStore ?? new InMemoryCalendarDayMetaStore();
+        // IMPORTANT: initialize CurrentDay so CanSchedule isn't stuck to false
+        CurrentDay = _dayStore.GetOrCreate(_selectedDate);
     }
     private void CurrentDay_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {

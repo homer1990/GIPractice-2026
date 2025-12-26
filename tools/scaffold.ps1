@@ -1,9 +1,20 @@
 param(
-  [string]$ManifestPath = "docs/scaffold/app-map.json",
+  # Default is relative to the repository root
+  [string]$ManifestPath = "tools/docs/scaffold/app-map.json",
   [switch]$Force
 )
 
-function Write-File($path, $content) {
+# Always anchor generated output at the repository root, no matter where the script is executed from.
+# This prevents accidental generation under tools/GIPractice.Wpf when running from the tools folder.
+$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
+
+function Resolve-RepoPath([string]$p) {
+  if ([System.IO.Path]::IsPathRooted($p)) { return $p }
+  return (Join-Path $RepoRoot $p)
+}
+
+function Write-File($relativePath, $content) {
+  $path = Resolve-RepoPath $relativePath
   $dir = Split-Path $path -Parent
   if (!(Test-Path $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
 
@@ -16,7 +27,7 @@ function Write-File($path, $content) {
   Write-Host "WRITE: $path"
 }
 
-$manifest = Get-Content $ManifestPath -Raw | ConvertFrom-Json
+$manifest = Get-Content (Resolve-RepoPath $ManifestPath) -Raw | ConvertFrom-Json
 $ns = $manifest.rootNamespace
 
 # Generate Views/Templates/AutoTemplates.xaml
