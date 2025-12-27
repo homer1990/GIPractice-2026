@@ -1,6 +1,8 @@
 using GIPractice.Api.Scheduling;
+using GIPractice.Api.Patients;
 using GIPractice.Contracts;
 using GIPractice.Contracts.Common;
+using GIPractice.Contracts.Patients;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,13 +13,18 @@ builder.Services.AddControllers()
     {
         o.JsonSerializerOptions.Converters.Add(new StrongIntIdJsonConverterFactory());
     });
+
 builder.Services.AddSingleton<ISchedulingStore, InMemorySchedulingStore>();
 builder.Services.AddScoped<ISchedulingService, SchedulingService>();
+
+builder.Services.AddSingleton<IPatientsStore, InMemoryPatientsStore>();
+builder.Services.AddScoped<IPatientsService, PatientsService>();
 
 builder.Services.ConfigureHttpJsonOptions(o =>
 {
     o.SerializerOptions.Converters.Add(new StrongIntIdJsonConverterFactory());
 });
+
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -31,6 +38,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapControllers();
 
 var summaries = new[]
 {

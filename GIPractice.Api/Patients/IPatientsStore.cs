@@ -1,0 +1,28 @@
+﻿using GIPractice.Contracts.Common;
+using GIPractice.Contracts.Ids;
+using GIPractice.Contracts.Patients;
+
+namespace GIPractice.Api.Patients;
+
+public interface IPatientsStore
+{
+    Task<ResultDto<PagedResultDto<PatientListItemDto>>> SearchAsync(
+        PatientSearchRequestDto request,
+        CancellationToken cancellationToken = default);
+
+    Task<ResultDto<PatientDetailsDto>> GetDetailsAsync(
+        PatientId patientId,
+        CancellationToken cancellationToken = default);
+
+    Task<ResultDto<PatientId>> CreateAsync(
+        PatientUpsertRequestDto request,
+        CancellationToken cancellationToken = default);
+
+    Task<ResultDto<bool>> UpdateAsync(
+        PatientUpsertRequestDto request,
+        CancellationToken cancellationToken = default);
+
+    Task<ResultDto<bool>> DeleteAsync(
+        PatientId patientId,
+        CancellationToken cancellationToken = default);
+}
