@@ -1,6 +1,7 @@
 using GIPractice.Api.Scheduling;
 using GIPractice.Api.Patients;
 using GIPractice.Contracts;
+using GIPractice.Contracts.Scheduling;
 using GIPractice.Contracts.Common;
 using GIPractice.Contracts.Patients;
 

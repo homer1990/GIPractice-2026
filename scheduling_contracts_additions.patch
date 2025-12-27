@@ -1,0 +1,53 @@
+diff --git a/GIPractice.Contracts/Scheduling/AppointmentResolveResponseDto.cs b/GIPractice.Contracts/Scheduling/AppointmentResolveResponseDto.cs
+new file mode 100644
+index 0000000..f19e8c5
+--- /dev/null
++++ b/GIPractice.Contracts/Scheduling/AppointmentResolveResponseDto.cs
+@@ -0,0 +1,6 @@
++﻿using GIPractice.Contracts.Ids;
++
++namespace GIPractice.Contracts.Scheduling;
++
++public sealed record AppointmentResolveResponseDto(
++    EncounterId EncounterId);
+diff --git a/GIPractice.Contracts/Scheduling/ISchedulingService.cs b/GIPractice.Contracts/Scheduling/ISchedulingService.cs
+new file mode 100644
+index 0000000..78465a0
+--- /dev/null
++++ b/GIPractice.Contracts/Scheduling/ISchedulingService.cs
+@@ -0,0 +1,35 @@
++﻿using GIPractice.Contracts.Common;
++using GIPractice.Contracts.Ids;
++
++namespace GIPractice.Contracts.Scheduling;
++
++public interface ISchedulingService
++{
++    Task<ResultDto<ScheduleDayDto>> GetScheduleDayAsync(
++        ScheduleDayRequestDto request,
++        CancellationToken cancellationToken = default);
++
++    Task<ResultDto<GetAvailableStartTimesResponseDto>> GetAvailableStartTimesAsync(
++        GetAvailableStartTimesRequestDto request,
++        CancellationToken cancellationToken = default);
++
++    Task<ResultDto<AppointmentId>> CreateAppointmentAsync(
++        AppointmentUpsertRequestDto request,
++        CancellationToken cancellationToken = default);
++
++    Task<ResultDto<bool>> UpdateAppointmentAsync(
++        AppointmentUpsertRequestDto request,
++        CancellationToken cancellationToken = default);
++
++    Task<ResultDto<bool>> DeleteAppointmentAsync(
++        AppointmentId id,
++        CancellationToken cancellationToken = default);
++
++    Task<ResultDto<bool>> UpsertCalendarDayMetaAsync(
++        CalendarDayMetaUpsertDto request,
++        CancellationToken cancellationToken = default);
++
++    Task<ResultDto<AppointmentResolveResponseDto>> ResolveAppointmentAsync(
++        AppointmentResolveRequestDto request,
++        CancellationToken cancellationToken = default);
++}

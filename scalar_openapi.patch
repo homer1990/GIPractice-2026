@@ -1,0 +1,42 @@
+diff --git a/GIPractice.Api/GIPractice.Api.csproj b/GIPractice.Api/GIPractice.Api.csproj
+index db27df4..677d170 100644
+--- a/GIPractice.Api/GIPractice.Api.csproj
++++ b/GIPractice.Api/GIPractice.Api.csproj
+@@ -8,6 +8,7 @@
+ 
+   <ItemGroup>
+     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
++    <PackageReference Include="Scalar.AspNetCore" Version="2.3.0" />
+   </ItemGroup>
+ 
+   <ItemGroup>
+diff --git a/GIPractice.Api/Program.cs b/GIPractice.Api/Program.cs
+index d3eefa8..8d8a9e8 100644
+--- a/GIPractice.Api/Program.cs
++++ b/GIPractice.Api/Program.cs
+@@ -1,6 +1,7 @@
+ using GIPractice.Api.Scheduling;
+ using GIPractice.Contracts;
+ using GIPractice.Contracts.Common;
++using Scalar.AspNetCore;
+ 
+ var builder = WebApplication.CreateBuilder(args);
+ 
+@@ -11,6 +12,9 @@ builder.Services.AddControllers()
+     {
+         o.JsonSerializerOptions.Converters.Add(new StrongIntIdJsonConverterFactory());
+     });
++
++// Needed for Controller-based OpenAPI generation.
++builder.Services.AddEndpointsApiExplorer();
+ builder.Services.AddSingleton<ISchedulingStore, InMemorySchedulingStore>();
+ builder.Services.AddScoped<ISchedulingService, SchedulingService>();
+ 
+@@ -28,6 +32,7 @@ var app = builder.Build();
+ if (app.Environment.IsDevelopment())
+ {
+     app.MapOpenApi();
++    app.MapScalarApiReference();
+ }
+ 
+ app.UseHttpsRedirection();
