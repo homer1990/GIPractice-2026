@@ -34,19 +34,31 @@ public sealed class SchedulingController : ControllerBase
 
     [HttpDelete("appointments/{id:int}")]
     public Task<IActionResult> Delete([FromRoute] int id, CancellationToken ct)
-        => Wrap(_svc.DeleteAppointmentAsync(id, ct));
+        => Wrap(_svc.DeleteAppointmentAsync(new(id), ct));
 
     [HttpPost("appointments/resolve")]
     public Task<IActionResult> Resolve([FromBody] AppointmentResolveRequestDto dto, CancellationToken ct)
         => Wrap(_svc.ResolveAppointmentAsync(dto, ct));
 
     [HttpPut("day-meta")]
-    public Task<IActionResult> UpsertDayMeta([FromBody] CalendarDayMetaDto dto, CancellationToken ct)
+    public Task<IActionResult> UpsertDayMeta([FromBody] CalendarDayMetaUpsertDto dto, CancellationToken ct)
         => Wrap(_svc.UpsertCalendarDayMetaAsync(dto, ct));
 
     private static async Task<IActionResult> Wrap<T>(Task<GIPractice.Contracts.Common.ResultDto<T>> task)
     {
         var res = await task;
-        return res.IsSuccess ? new OkObjectResult(res) : new BadRequestObjectResult(res);
+
+        if (res.IsSuccess)
+            return new OkObjectResult(res);
+
+        var code = res.Error?.Code;
+        return code switch
+        {
+            "not_found" => new NotFoundObjectResult(res),
+            "conflict" => new ConflictObjectResult(res),
+            "unauthorized" => new UnauthorizedObjectResult(res),
+            "forbidden" => new ObjectResult(res) { StatusCode = StatusCodes.Status403Forbidden },
+            _ => new BadRequestObjectResult(res)
+        };
     }
 }

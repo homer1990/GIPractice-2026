@@ -20,17 +20,23 @@ public sealed class SchedulingService : ISchedulingService
         ScheduleDayRequestDto request,
         CancellationToken cancellationToken = default)
     {
-        var meta = await _store.GetDayMetaAsync(request.Day, cancellationToken)
+        var meta = await _store.GetDayMetaAsync(request.Date, cancellationToken)
                    ?? new CalendarDayMetaDto(
-                       Day: request.Day,
-                       Capabilities: _opt.DefaultCapabilities,
+                       Day: request.Date,
+                       IsHoliday: false,
+                       IsDayOff: false,
                        Notes: null,
+                       Capabilities: _opt.DefaultCapabilities,
                        RowVersion: null);
 
         var types = await _store.GetAppointmentTypesAsync(cancellationToken);
-        var appts = await _store.GetAppointmentsForDayAsync(request.Day, cancellationToken);
+        var appts = await _store.GetAppointmentsForDayAsync(request.Date, cancellationToken);
 
-        return ResultDto<ScheduleDayDto>.Ok(new ScheduleDayDto(meta, types, appts));
+        // TODO: wire these up once the corresponding stores/entities exist
+        var openReschedule = Array.Empty<OpenRescheduleItemDto>();
+        var notifications = Array.Empty<SchedulerNotificationDto>();
+
+        return ResultDto<ScheduleDayDto>.Ok(new ScheduleDayDto(meta, types, appts, openReschedule, notifications));
     }
 
     public async Task<ResultDto<GetAvailableStartTimesResponseDto>> GetAvailableStartTimesAsync(
@@ -40,8 +46,10 @@ public sealed class SchedulingService : ISchedulingService
         var meta = await _store.GetDayMetaAsync(request.Day, cancellationToken)
                    ?? new CalendarDayMetaDto(
                        Day: request.Day,
-                       Capabilities: _opt.DefaultCapabilities,
+                       IsHoliday: false,
+                       IsDayOff: false,
                        Notes: null,
+                       Capabilities: _opt.DefaultCapabilities,
                        RowVersion: null);
 
         var types = await _store.GetAppointmentTypesAsync(cancellationToken);
@@ -122,12 +130,12 @@ public sealed class SchedulingService : ISchedulingService
             StartUtc: request.StartUtc,
             DurationMinutes: request.DurationMinutes,
             AppointmentTypeId: request.AppointmentTypeId,
-            AppointmentTypeName: "(dummy)",
-            Status: AppointmentStatus.Scheduled,
+            AppointmentTypeName: request.AppointmentTypeName,
+            Status: request.Status,
             IsUrgent: request.IsUrgent,
             Notes: request.Notes,
             EncounterId: null,
-            RowVersion: null);
+            RowVersion: request.RowVersion);
 
         var id = await _store.CreateAppointmentAsync(appt, cancellationToken);
         return ResultDto<AppointmentId>.Ok(id);
@@ -140,7 +148,7 @@ public sealed class SchedulingService : ISchedulingService
         if (request.Id is null)
             return ResultDto<bool>.Fail("invalid", "Missing appointment id.");
 
-        var id = new AppointmentId(request.Id.Value);
+        var id = request.Id.Value;
         var existing = await _store.GetAppointmentAsync(id, cancellationToken);
         if (existing is null)
             return ResultDto<bool>.Fail("not_found", "Appointment not found.");
@@ -161,29 +169,43 @@ public sealed class SchedulingService : ISchedulingService
             StartUtc = request.StartUtc,
             DurationMinutes = request.DurationMinutes,
             AppointmentTypeId = request.AppointmentTypeId,
+            AppointmentTypeName = request.AppointmentTypeName,
+            Status = request.Status,
             IsUrgent = request.IsUrgent,
-            Notes = request.Notes
+            Notes = request.Notes,
+            RowVersion = request.RowVersion
         };
 
         var saved = await _store.UpdateAppointmentAsync(updated, cancellationToken);
         return ResultDto<bool>.Ok(saved);
     }
 
-    public Task<ResultDto<bool>> DeleteAppointmentAsync(int appointmentId, CancellationToken cancellationToken = default)
-        => DeleteAppointmentAsync(new AppointmentId(appointmentId), cancellationToken);
-
-    private async Task<ResultDto<bool>> DeleteAppointmentAsync(AppointmentId id, CancellationToken ct)
+    public async Task<ResultDto<bool>> DeleteAppointmentAsync(AppointmentId appointmentId, CancellationToken cancellationToken = default)
     {
-        var ok = await _store.DeleteAppointmentAsync(id, ct);
+        var ok = await _store.DeleteAppointmentAsync(appointmentId, cancellationToken);
         return ResultDto<bool>.Ok(ok);
     }
 
-    public Task<ResultDto<bool>> UpsertCalendarDayMetaAsync(CalendarDayMetaDto request, CancellationToken cancellationToken = default)
-        => UpsertDayMetaCoreAsync(request, cancellationToken);
-
-    private async Task<ResultDto<bool>> UpsertDayMetaCoreAsync(CalendarDayMetaDto meta, CancellationToken ct)
+    public async Task<ResultDto<bool>> UpsertCalendarDayMetaAsync(CalendarDayMetaUpsertDto request, CancellationToken cancellationToken = default)
     {
-        await _store.UpsertDayMetaAsync(meta, ct);
+        var existing = await _store.GetDayMetaAsync(request.Day, cancellationToken);
+
+        var meta = existing is null
+            ? new CalendarDayMetaDto(
+                Day: request.Day,
+                IsHoliday: request.IsHoliday,
+                IsDayOff: request.IsDayOff,
+                Notes: request.Notes,
+                Capabilities: _opt.DefaultCapabilities,
+                RowVersion: null)
+            : existing with
+            {
+                IsHoliday = request.IsHoliday,
+                IsDayOff = request.IsDayOff,
+                Notes = request.Notes
+            };
+
+        await _store.UpsertDayMetaAsync(meta, cancellationToken);
         return ResultDto<bool>.Ok(true);
     }
 
@@ -192,7 +214,8 @@ public sealed class SchedulingService : ISchedulingService
         CancellationToken cancellationToken = default)
     {
         // TODO later: create Encounter record and link it
-        return Task.FromResult(ResultDto<AppointmentResolveResponseDto>.Ok(new AppointmentResolveResponseDto(EncounterId: 1)));
+        return Task.FromResult(ResultDto<AppointmentResolveResponseDto>.Ok(
+            new AppointmentResolveResponseDto(EncounterId: new EncounterId(1))));
     }
 
     private async Task<bool> IsSlotAvailableAsync(
@@ -206,8 +229,10 @@ public sealed class SchedulingService : ISchedulingService
         var meta = await _store.GetDayMetaAsync(day, ct)
                    ?? new CalendarDayMetaDto(
                        Day: day,
-                       Capabilities: _opt.DefaultCapabilities,
+                       IsHoliday: false,
+                       IsDayOff: false,
                        Notes: null,
+                       Capabilities: _opt.DefaultCapabilities,
                        RowVersion: null);
 
         var types = await _store.GetAppointmentTypesAsync(ct);
