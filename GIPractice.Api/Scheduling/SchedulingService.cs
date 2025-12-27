@@ -180,32 +180,33 @@ public sealed class SchedulingService : ISchedulingService
         return ResultDto<bool>.Ok(saved);
     }
 
-    public async Task<ResultDto<bool>> DeleteAppointmentAsync(AppointmentId appointmentId, CancellationToken cancellationToken = default)
+    public async Task<ResultDto<bool>> DeleteAppointmentAsync(AppointmentId id, CancellationToken cancellationToken = default)
     {
-        var ok = await _store.DeleteAppointmentAsync(appointmentId, cancellationToken);
+        var ok = await _store.DeleteAppointmentAsync(id, cancellationToken);
         return ResultDto<bool>.Ok(ok);
     }
 
-    public async Task<ResultDto<bool>> UpsertCalendarDayMetaAsync(CalendarDayMetaUpsertDto request, CancellationToken cancellationToken = default)
+    public async Task<ResultDto<bool>> UpsertCalendarDayMetaAsync(
+        CalendarDayMetaUpsertDto request,
+        CancellationToken cancellationToken = default)
     {
-        var existing = await _store.GetDayMetaAsync(request.Day, cancellationToken);
+        var existing = await _store.GetDayMetaAsync(request.Day, cancellationToken)
+                       ?? new CalendarDayMetaDto(
+                           Day: request.Day,
+                           IsHoliday: false,
+                           IsDayOff: false,
+                           Notes: null,
+                           Capabilities: _opt.DefaultCapabilities,
+                           RowVersion: null);
 
-        var meta = existing is null
-            ? new CalendarDayMetaDto(
-                Day: request.Day,
-                IsHoliday: request.IsHoliday,
-                IsDayOff: request.IsDayOff,
-                Notes: request.Notes,
-                Capabilities: _opt.DefaultCapabilities,
-                RowVersion: null)
-            : existing with
-            {
-                IsHoliday = request.IsHoliday,
-                IsDayOff = request.IsDayOff,
-                Notes = request.Notes
-            };
+        var updated = existing with
+        {
+            IsHoliday = request.IsHoliday,
+            IsDayOff = request.IsDayOff,
+            Notes = request.Notes
+        };
 
-        await _store.UpsertDayMetaAsync(meta, cancellationToken);
+        await _store.UpsertDayMetaAsync(updated, cancellationToken);
         return ResultDto<bool>.Ok(true);
     }
 
@@ -214,8 +215,7 @@ public sealed class SchedulingService : ISchedulingService
         CancellationToken cancellationToken = default)
     {
         // TODO later: create Encounter record and link it
-        return Task.FromResult(ResultDto<AppointmentResolveResponseDto>.Ok(
-            new AppointmentResolveResponseDto(EncounterId: new EncounterId(1))));
+        return Task.FromResult(ResultDto<AppointmentResolveResponseDto>.Ok(new AppointmentResolveResponseDto(new EncounterId(1))));
     }
 
     private async Task<bool> IsSlotAvailableAsync(

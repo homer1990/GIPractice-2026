@@ -1,4 +1,5 @@
 ﻿using GIPractice.Contracts.Scheduling;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GIPractice.Api.Scheduling;

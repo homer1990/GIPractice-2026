@@ -12,5 +12,5 @@ public sealed record ResultDto<T>(
         string code,
         string message,
         IReadOnlyDictionary<string, IReadOnlyList<string>>? details = null)
-        => Fail(new ErrorDto(code, message, details));
+        => new(default, new ErrorDto(code, message, details));
 }
