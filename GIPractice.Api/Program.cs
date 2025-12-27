@@ -3,7 +3,7 @@ using GIPractice.Api.Patients;
 using GIPractice.Contracts;
 using GIPractice.Contracts.Scheduling;
 using GIPractice.Contracts.Common;
-using GIPractice.Contracts.Patients;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +15,8 @@ builder.Services.AddControllers()
         o.JsonSerializerOptions.Converters.Add(new StrongIntIdJsonConverterFactory());
     });
 
+// Needed for Controller-based OpenAPI generation.
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSingleton<ISchedulingStore, InMemorySchedulingStore>();
 builder.Services.AddScoped<ISchedulingService, SchedulingService>();
 
@@ -36,6 +38,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
