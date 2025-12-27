@@ -6,4 +6,5 @@ public sealed record AppointmentTypeDto(
     AppointmentTypeId Id,
     string Name,
     int MeanDurationMinutes,
-    string? ColorHex);
+    string? ColorHex,
+    ClinicCapability RequiredCapabilities);

@@ -27,6 +27,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{485DC98E
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Contracts", "GIPractice.Contracts\GIPractice.Contracts.csproj", "{55A8F6B1-15BE-41FB-801E-5114DCD3D8FF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Api", "GIPractice.Api\GIPractice.Api.csproj", "{100C4C47-C87D-4446-8A1D-C7B9BFBDE7B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,6 +39,10 @@ Global
 		{55A8F6B1-15BE-41FB-801E-5114DCD3D8FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{55A8F6B1-15BE-41FB-801E-5114DCD3D8FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{55A8F6B1-15BE-41FB-801E-5114DCD3D8FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{100C4C47-C87D-4446-8A1D-C7B9BFBDE7B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{100C4C47-C87D-4446-8A1D-C7B9BFBDE7B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{100C4C47-C87D-4446-8A1D-C7B9BFBDE7B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{100C4C47-C87D-4446-8A1D-C7B9BFBDE7B5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
