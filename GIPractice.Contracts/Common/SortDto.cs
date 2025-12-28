@@ -1,5 +1,5 @@
-﻿namespace GIPractice.Contracts.Common;
+namespace GIPractice.Contracts.Common;
 
 public sealed record SortDto(
-    string Field,
+    [Required, MaxLength(64)] string Field,
     bool Desc = false);

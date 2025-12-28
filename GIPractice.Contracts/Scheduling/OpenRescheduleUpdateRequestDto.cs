@@ -1,9 +1,9 @@
-﻿using GIPractice.Contracts.Ids;
+using GIPractice.Contracts.Ids;
 
 namespace GIPractice.Contracts.Scheduling;
 
 public sealed record OpenRescheduleUpdateRequestDto(
-    AppointmentId AppointmentId,
+    [NonZeroId] AppointmentId AppointmentId,
     DateTime? NextContactUtc,
-    string? Notes,
-    OpenRescheduleCloseOutcome Outcome);
+    [MaxLength(2000)] string? Notes,
+    [EnumDataType(typeof(OpenRescheduleCloseOutcome))] OpenRescheduleCloseOutcome Outcome);

@@ -1,7 +1,9 @@
-﻿using GIPractice.Contracts.Ids;
+using System.ComponentModel.DataAnnotations;
+using GIPractice.Contracts.Common.Validation;
+using GIPractice.Contracts.Ids;
 
 namespace GIPractice.Contracts.Biopsies;
 
 public sealed record BiopsyDispatchCloseRequestDto(
-    BiopsyDispatchBundleId Id,
+    [property: NonZeroId] BiopsyDispatchBundleId Id,
     byte[]? RowVersion);

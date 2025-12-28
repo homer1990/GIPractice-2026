@@ -1,14 +1,18 @@
-﻿using GIPractice.Contracts.Ids;
+using GIPractice.Contracts.Ids;
 
 namespace GIPractice.Contracts.Encounters;
 
 public sealed record EncounterUpsertRequestDto(
     EncounterId? Id,
-    PatientId PatientId,
-    EncounterTypeId EncounterTypeId,
-    DateTime StartUtc,
+
+    [NonZeroId] PatientId PatientId,
+    [NonZeroId] EncounterTypeId EncounterTypeId,
+
+    [NotDefault] DateTime StartUtc,
     DateTime? EndUtc,
-    EncounterStatus Status,
+
+    [EnumDataType(typeof(EncounterStatus))] EncounterStatus Status,
     bool IsUrgent,
-    string? Notes,
+
+    [MaxLength(2000)] string? Notes,
     byte[]? RowVersion);

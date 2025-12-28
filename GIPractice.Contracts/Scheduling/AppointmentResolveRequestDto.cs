@@ -1,7 +1,7 @@
-﻿using GIPractice.Contracts.Ids;
+using GIPractice.Contracts.Ids;
 
 namespace GIPractice.Contracts.Scheduling;
 
 public sealed record AppointmentResolveRequestDto(
-    AppointmentId AppointmentId,
-    DateTime ActualStartUtc);
+    [NonZeroId] AppointmentId AppointmentId,
+    [NotDefault] DateTime ActualStartUtc);

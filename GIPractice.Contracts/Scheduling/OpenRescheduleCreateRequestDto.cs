@@ -1,8 +1,8 @@
-﻿using GIPractice.Contracts.Ids;
+using GIPractice.Contracts.Ids;
 
 namespace GIPractice.Contracts.Scheduling;
 
 public sealed record OpenRescheduleCreateRequestDto(
-    AppointmentTypeId AppointmentId,
+    [NonZeroId] AppointmentTypeId AppointmentId,
     DateTime? NextContactUtc,
-    string? Notes);
+    [MaxLength(2000)] string? Notes);

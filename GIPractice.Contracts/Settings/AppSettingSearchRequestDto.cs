@@ -1,9 +1,10 @@
-﻿using GIPractice.Contracts.Common;
+using System.ComponentModel.DataAnnotations;
+using GIPractice.Contracts.Common;
 
 namespace GIPractice.Contracts.Settings;
 
 public sealed record AppSettingSearchRequestDto(
-    string? KeyContains = null,
+    [property: MaxLength(200)] string? KeyContains = null,
     AppSettingScope? Scope = null,
-    string? ScopeKey = null,
+    [property: MaxLength(200)] string? ScopeKey = null,
     PagedRequestDto? Paging = null);

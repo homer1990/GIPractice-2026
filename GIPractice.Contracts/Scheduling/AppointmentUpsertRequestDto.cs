@@ -1,19 +1,22 @@
-﻿using GIPractice.Contracts.Ids;
+using GIPractice.Contracts.Ids;
 
 namespace GIPractice.Contracts.Scheduling;
 
 public sealed record AppointmentUpsertRequestDto(
     AppointmentId? Id,
-    PatientId PatientId,
 
-    DateTime StartUtc,
-    int DurationMinutes,
+    [NonZeroId] PatientId PatientId,
 
-    AppointmentTypeId AppointmentTypeId,
-    string AppointmentTypeName, // denormalized for display (optional but handy)
+    [NotDefault] DateTime StartUtc,
+    [Range(5, 24 * 60)] int DurationMinutes,
+
+    [NonZeroId] AppointmentTypeId AppointmentTypeId,
+
+    // denormalized for display
+    [MaxLength(120)] string AppointmentTypeName,
 
     bool IsUrgent,
-    string? Notes,
+    [MaxLength(2000)] string? Notes,
 
-    AppointmentStatus Status,
+    [EnumDataType(typeof(AppointmentStatus))] AppointmentStatus Status,
     byte[]? RowVersion);

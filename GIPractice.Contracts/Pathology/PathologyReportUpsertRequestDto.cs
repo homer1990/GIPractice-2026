@@ -1,20 +1,23 @@
-﻿using GIPractice.Contracts.Ids;
+using System.ComponentModel.DataAnnotations;
+using GIPractice.Contracts.Common.Validation;
+using GIPractice.Contracts.Ids;
 
 namespace GIPractice.Contracts.Pathology;
 
 public sealed record PathologyReportUpsertRequestDto(
-    PathologyReportId? Id,
-    PatientId PatientId,
-    EndoscopyId EndoscopyId,
-    BiopsyDispatchBundleId? BiopsyDispatchBundleId,
+    [property: NonZeroId] PathologyReportId? Id,
 
-    DateTime? SentUtc,
-    DateTime? ReceivedUtc,
+    [property: NonZeroId] PatientId PatientId,
+    [property: NonZeroId] EndoscopyId EndoscopyId,
+    [property: NonZeroId] BiopsyDispatchBundleId? BiopsyDispatchBundleId,
 
-    string? ParcelId,
+    [property: NotDefault] DateTime? SentUtc,
+    [property: NotDefault] DateTime? ReceivedUtc,
+
+    [property: MaxLength(120)] string? ParcelId,
     bool IsUrgent,
 
-    string? ReportText,
-    PathologyReportStatus Status,
+    [property: MaxLength(20000)] string? ReportText,
+    [property: EnumDataType(typeof(PathologyReportStatus))] PathologyReportStatus Status,
 
     byte[]? RowVersion);

@@ -1,7 +1,7 @@
-﻿namespace GIPractice.Contracts.Scheduling;
+namespace GIPractice.Contracts.Scheduling;
 
 public sealed record CalendarDayMetaUpsertDto(
-    DateOnly Day,
+    [NotDefault] DateOnly Day,
     bool IsHoliday,
     bool IsDayOff,
-    string? Notes);
+    [MaxLength(2000)] string? Notes);

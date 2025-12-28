@@ -1,12 +1,12 @@
-﻿using GIPractice.Contracts.Ids;
+using GIPractice.Contracts.Ids;
 
 namespace GIPractice.Contracts.Scheduling;
 
 public enum SchedulerNotificationCloseOutcome { KeepOpen, Done, Cancelled, ConvertedToAppointment }
 
 public sealed record SchedulerNotificationUpdateRequestDto(
-    SchedulerNotificationId Id,
+    [NonZeroId] SchedulerNotificationId Id,
     DateTime? SnoozedUntilUtc,
-    SchedulerNotificationCloseOutcome Outcome,
-    string? Notes,
+    [EnumDataType(typeof(SchedulerNotificationCloseOutcome))] SchedulerNotificationCloseOutcome Outcome,
+    [MaxLength(2000)] string? Notes,
     byte[]? RowVersion);

@@ -1,5 +1,7 @@
-﻿namespace GIPractice.Contracts.Biopsies;
+using System.ComponentModel.DataAnnotations;
+
+namespace GIPractice.Contracts.Biopsies;
 
 public sealed record BiopsyDispatchCreateRequestDto(
-    string ProtocolNumber,
-    string? Notes = null);
+    [property: Required, MaxLength(100)] string ProtocolNumber,
+    [property: MaxLength(2000)] string? Notes = null);

@@ -1,0 +1,857 @@
+diff --git a/GIPractice.Contracts/Biopsies/BiopsyBottleSearchRequestDto.cs b/GIPractice.Contracts/Biopsies/BiopsyBottleSearchRequestDto.cs
+index 988fecf..3d7d81c 100644
+--- a/GIPractice.Contracts/Biopsies/BiopsyBottleSearchRequestDto.cs
++++ b/GIPractice.Contracts/Biopsies/BiopsyBottleSearchRequestDto.cs
+@@ -1,10 +1,12 @@
+-﻿using GIPractice.Contracts.Common;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common;
++using GIPractice.Contracts.Common.Validation;
+ using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Biopsies;
+ 
+ public sealed record BiopsyBottleSearchRequestDto(
+-    PatientId? PatientId = null,
+-    EndoscopyId? EndoscopyId = null,
++    [property: NonZeroId] PatientId? PatientId = null,
++    [property: NonZeroId] EndoscopyId? EndoscopyId = null,
+     bool? IsUrgent = null,
+     PagedRequestDto? Paging = null);
+diff --git a/GIPractice.Contracts/Biopsies/BiopsyBottleUpsertRequestDto.cs b/GIPractice.Contracts/Biopsies/BiopsyBottleUpsertRequestDto.cs
+index 6ba4f6d..63d99bc 100644
+--- a/GIPractice.Contracts/Biopsies/BiopsyBottleUpsertRequestDto.cs
++++ b/GIPractice.Contracts/Biopsies/BiopsyBottleUpsertRequestDto.cs
+@@ -1,15 +1,19 @@
+-﻿using GIPractice.Contracts.Ids;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common.Validation;
++using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Biopsies;
+ 
+ public sealed record BiopsyBottleUpsertRequestDto(
+-    BiopsyBottleId? Id,
+-    PatientId PatientId,
+-    EndoscopyId EndoscopyId,
++    [property: NonZeroId] BiopsyBottleId? Id,
++
++    [property: NonZeroId] PatientId PatientId,
++    [property: NonZeroId] EndoscopyId EndoscopyId,
++
++    [property: Required, MaxLength(32)] string LabelCode,
++    [property: Required, MaxLength(200)] string SiteDescription,
+ 
+-    string LabelCode,
+-    string SiteDescription,
+     bool IsUrgent,
+-    string? Notes,
++    [property: MaxLength(2000)] string? Notes,
+ 
+     byte[]? RowVersion);
+diff --git a/GIPractice.Contracts/Biopsies/BiopsyDispatchCloseRequestDto.cs b/GIPractice.Contracts/Biopsies/BiopsyDispatchCloseRequestDto.cs
+index 8da63d5..2ad8ce7 100644
+--- a/GIPractice.Contracts/Biopsies/BiopsyDispatchCloseRequestDto.cs
++++ b/GIPractice.Contracts/Biopsies/BiopsyDispatchCloseRequestDto.cs
+@@ -1,7 +1,9 @@
+-﻿using GIPractice.Contracts.Ids;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common.Validation;
++using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Biopsies;
+ 
+ public sealed record BiopsyDispatchCloseRequestDto(
+-    BiopsyDispatchBundleId Id,
++    [property: NonZeroId] BiopsyDispatchBundleId Id,
+     byte[]? RowVersion);
+diff --git a/GIPractice.Contracts/Biopsies/BiopsyDispatchCreateRequestDto.cs b/GIPractice.Contracts/Biopsies/BiopsyDispatchCreateRequestDto.cs
+index b4583be..5452ff4 100644
+--- a/GIPractice.Contracts/Biopsies/BiopsyDispatchCreateRequestDto.cs
++++ b/GIPractice.Contracts/Biopsies/BiopsyDispatchCreateRequestDto.cs
+@@ -1,5 +1,7 @@
+-﻿namespace GIPractice.Contracts.Biopsies;
++using System.ComponentModel.DataAnnotations;
++
++namespace GIPractice.Contracts.Biopsies;
+ 
+ public sealed record BiopsyDispatchCreateRequestDto(
+-    string ProtocolNumber,
+-    string? Notes = null);
++    [property: Required, MaxLength(100)] string ProtocolNumber,
++    [property: MaxLength(2000)] string? Notes = null);
+diff --git a/GIPractice.Contracts/Biopsies/BiopsyDispatchSearchRequest.cs b/GIPractice.Contracts/Biopsies/BiopsyDispatchSearchRequest.cs
+index 4d9d432..80f2a3a 100644
+--- a/GIPractice.Contracts/Biopsies/BiopsyDispatchSearchRequest.cs
++++ b/GIPractice.Contracts/Biopsies/BiopsyDispatchSearchRequest.cs
+@@ -1,10 +1,12 @@
+-﻿using GIPractice.Contracts.Common;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common;
++using GIPractice.Contracts.Common.Validation;
+ 
+ namespace GIPractice.Contracts.Biopsies;
+ 
+ public sealed record BiopsyDispatchSearchRequestDto(
+-    string? ProtocolNumber = null,
++    [property: MaxLength(100)] string? ProtocolNumber = null,
+     bool? IsClosed = null,
+-    DateOnly? CreatedFrom = null,
+-    DateOnly? CreatedTo = null,
++    [property: NotDefault] DateOnly? CreatedFrom = null,
++    [property: NotDefault] DateOnly? CreatedTo = null,
+     PagedRequestDto? Paging = null);
+diff --git a/GIPractice.Contracts/Common/PagedRequestDto.cs b/GIPractice.Contracts/Common/PagedRequestDto.cs
+index ec9429d..06adf07 100644
+--- a/GIPractice.Contracts/Common/PagedRequestDto.cs
++++ b/GIPractice.Contracts/Common/PagedRequestDto.cs
+@@ -1,6 +1,6 @@
+-﻿namespace GIPractice.Contracts.Common;
++namespace GIPractice.Contracts.Common;
+ 
+ public sealed record PagedRequestDto(
+-    int Page = 1,
+-    int PageSize = 50,
++    [Range(1, int.MaxValue)] int Page = 1,
++    [Range(1, 500)] int PageSize = 50,
+     SortDto? Sort = null);
+diff --git a/GIPractice.Contracts/Common/SortDto.cs b/GIPractice.Contracts/Common/SortDto.cs
+index 29994a8..1bd686c 100644
+--- a/GIPractice.Contracts/Common/SortDto.cs
++++ b/GIPractice.Contracts/Common/SortDto.cs
+@@ -1,5 +1,5 @@
+-﻿namespace GIPractice.Contracts.Common;
++namespace GIPractice.Contracts.Common;
+ 
+ public sealed record SortDto(
+-    string Field,
+-    bool Desc = false);
+\ No newline at end of file
++    [Required, MaxLength(64)] string Field,
++    bool Desc = false);
+diff --git a/GIPractice.Contracts/Common/Validation/NonZeroIdAttribute.cs b/GIPractice.Contracts/Common/Validation/NonZeroIdAttribute.cs
+new file mode 100644
+index 0000000..362c1cb
+--- /dev/null
++++ b/GIPractice.Contracts/Common/Validation/NonZeroIdAttribute.cs
+@@ -0,0 +1,54 @@
++using System.ComponentModel.DataAnnotations;
++
++namespace GIPractice.Contracts.Common.Validation;
++
++/// <summary>
++/// Validates that a "strong id" (record struct with an int Value property) is > 0.
++/// Supports int/long directly. Null is treated as valid (use [Required] if you need non-null).
++/// </summary>
++public sealed class NonZeroIdAttribute : ValidationAttribute
++{
++    public NonZeroIdAttribute() : base("The field must be a non-zero id.") { }
++
++    public override bool IsValid(object? value)
++    {
++        if (value is null)
++            return true;
++
++        // unwrap Nullable<T>
++        var type = value.GetType();
++        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
++        {
++            var hasValue = (bool?)type.GetProperty("HasValue")?.GetValue(value);
++            if (hasValue != true)
++                return true;
++
++            value = type.GetProperty("Value")?.GetValue(value);
++            if (value is null)
++                return true;
++
++            type = value.GetType();
++        }
++
++        if (value is int i) return i > 0;
++        if (value is long l) return l > 0;
++        if (value is short s) return s > 0;
++        if (value is uint ui) return ui > 0;
++        if (value is ulong ul) return ul > 0;
++
++        var vprop = type.GetProperty("Value");
++        if (vprop is null)
++            return true;
++
++        var inner = vprop.GetValue(value);
++        return inner switch
++        {
++            int iv => iv > 0,
++            long lv => lv > 0,
++            short sv => sv > 0,
++            uint uiv => uiv > 0,
++            ulong ulv => ulv > 0,
++            _ => true
++        };
++    }
++}
+diff --git a/GIPractice.Contracts/Common/Validation/NotDefaultAttribute.cs b/GIPractice.Contracts/Common/Validation/NotDefaultAttribute.cs
+new file mode 100644
+index 0000000..6af54ae
+--- /dev/null
++++ b/GIPractice.Contracts/Common/Validation/NotDefaultAttribute.cs
+@@ -0,0 +1,39 @@
++using System.ComponentModel.DataAnnotations;
++
++namespace GIPractice.Contracts.Common.Validation;
++
++/// <summary>
++/// Validates that a value-type isn't its default value (e.g. DateTime != default).
++/// Null is treated as valid (use [Required] if you need non-null).
++/// </summary>
++public sealed class NotDefaultAttribute : ValidationAttribute
++{
++    public NotDefaultAttribute() : base("The field must not be the default value.") { }
++
++    public override bool IsValid(object? value)
++    {
++        if (value is null)
++            return true;
++
++        // unwrap Nullable<T>
++        var type = value.GetType();
++        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
++        {
++            var hasValue = (bool?)type.GetProperty("HasValue")?.GetValue(value);
++            if (hasValue != true)
++                return true;
++
++            value = type.GetProperty("Value")?.GetValue(value);
++            if (value is null)
++                return true;
++        }
++
++        return value switch
++        {
++            DateTime dt => dt != default,
++            DateOnly d => d != default,
++            TimeOnly t => t != default,
++            _ => true
++        };
++    }
++}
+diff --git a/GIPractice.Contracts/Encounters/EncounterSearchRequestDto.cs b/GIPractice.Contracts/Encounters/EncounterSearchRequestDto.cs
+index 1e17ed5..32d26b4 100644
+--- a/GIPractice.Contracts/Encounters/EncounterSearchRequestDto.cs
++++ b/GIPractice.Contracts/Encounters/EncounterSearchRequestDto.cs
+@@ -1,13 +1,17 @@
+-﻿using GIPractice.Contracts.Common;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common;
++using GIPractice.Contracts.Common.Validation;
+ using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Encounters;
+ 
+ public sealed record EncounterSearchRequestDto(
+-    PatientId? PatientId = null,
+-    EncounterTypeId? EncounterTypeId = null,
++    [property: NonZeroId] PatientId? PatientId = null,
++    [property: NonZeroId] EncounterTypeId? EncounterTypeId = null,
+     EncounterStatus? Status = null,
+-    DateOnly? DateFrom = null,
+-    DateOnly? DateTo = null,
+-    bool ? IsUrgent = null,
++
++    [property: NotDefault] DateOnly? DateFrom = null,
++    [property: NotDefault] DateOnly? DateTo = null,
++
++    bool? IsUrgent = null,
+     PagedRequestDto? Paging = null);
+diff --git a/GIPractice.Contracts/Encounters/EncounterUpsertRequestDto.cs b/GIPractice.Contracts/Encounters/EncounterUpsertRequestDto.cs
+index 8c84335..e84f52a 100644
+--- a/GIPractice.Contracts/Encounters/EncounterUpsertRequestDto.cs
++++ b/GIPractice.Contracts/Encounters/EncounterUpsertRequestDto.cs
+@@ -1,14 +1,18 @@
+-﻿using GIPractice.Contracts.Ids;
++using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Encounters;
+ 
+ public sealed record EncounterUpsertRequestDto(
+     EncounterId? Id,
+-    PatientId PatientId,
+-    EncounterTypeId EncounterTypeId,
+-    DateTime StartUtc,
++
++    [NonZeroId] PatientId PatientId,
++    [NonZeroId] EncounterTypeId EncounterTypeId,
++
++    [NotDefault] DateTime StartUtc,
+     DateTime? EndUtc,
+-    EncounterStatus Status,
++
++    [EnumDataType(typeof(EncounterStatus))] EncounterStatus Status,
+     bool IsUrgent,
+-    string? Notes,
++
++    [MaxLength(2000)] string? Notes,
+     byte[]? RowVersion);
+diff --git a/GIPractice.Contracts/Endoscopies/EndoscopySearchRequestDto.cs b/GIPractice.Contracts/Endoscopies/EndoscopySearchRequestDto.cs
+index 8eac606..c48e905 100644
+--- a/GIPractice.Contracts/Endoscopies/EndoscopySearchRequestDto.cs
++++ b/GIPractice.Contracts/Endoscopies/EndoscopySearchRequestDto.cs
+@@ -1,14 +1,18 @@
+-﻿using GIPractice.Contracts.Common;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common;
++using GIPractice.Contracts.Common.Validation;
+ using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Endoscopies;
+ 
+ public sealed record EndoscopySearchRequestDto(
+-    PatientId? PatientId = null,
+-    EncounterId? EncounterId = null,
+-    EndoscopyTypeId? EndoscopyTypeId = null,
++    [property: NonZeroId] PatientId? PatientId = null,
++    [property: NonZeroId] EncounterId? EncounterId = null,
++    [property: NonZeroId] EndoscopyTypeId? EndoscopyTypeId = null,
+     EndoscopyStatus? Status = null,
+-    DateOnly? DateFrom = null,
+-    DateOnly? DateTo = null,
++
++    [property: NotDefault] DateOnly? DateFrom = null,
++    [property: NotDefault] DateOnly? DateTo = null,
++
+     bool? IsUrgent = null,
+     PagedRequestDto? Paging = null);
+diff --git a/GIPractice.Contracts/Endoscopies/EndoscopyUpsertRequestDto.cs b/GIPractice.Contracts/Endoscopies/EndoscopyUpsertRequestDto.cs
+index b4433fc..cf9a2b2 100644
+--- a/GIPractice.Contracts/Endoscopies/EndoscopyUpsertRequestDto.cs
++++ b/GIPractice.Contracts/Endoscopies/EndoscopyUpsertRequestDto.cs
+@@ -1,15 +1,21 @@
+-﻿using GIPractice.Contracts.Ids;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common.Validation;
++using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Endoscopies;
+ 
+ public sealed record EndoscopyUpsertRequestDto(
+-    EndoscopyId? Id,
+-    PatientId PatientId,
+-    EncounterId EncounterId,
+-    EndoscopyTypeId EndoscopyTypeId,
+-    DateTime StartUtc,
+-    DateTime? EndUtc,
+-    EndoscopyStatus Status,
++    [property: NonZeroId] EndoscopyId? Id,
++
++    [property: NonZeroId] PatientId PatientId,
++    [property: NonZeroId] EncounterId EncounterId,
++    [property: NonZeroId] EndoscopyTypeId EndoscopyTypeId,
++
++    [property: NotDefault] DateTime StartUtc,
++    [property: NotDefault] DateTime? EndUtc,
++
++    [property: EnumDataType(typeof(EndoscopyStatus))] EndoscopyStatus Status,
+     bool IsUrgent,
+-    string? Notes,
++
++    [property: MaxLength(4000)] string? Notes,
+     byte[]? RowVersion);
+diff --git a/GIPractice.Contracts/GlobalUsings.cs b/GIPractice.Contracts/GlobalUsings.cs
+new file mode 100644
+index 0000000..1870a1b
+--- /dev/null
++++ b/GIPractice.Contracts/GlobalUsings.cs
+@@ -0,0 +1,5 @@
++// Shared annotations for DTO validation.
++// This project is consumed by ASP.NET controllers that use [ApiController] model validation.
++
++global using System.ComponentModel.DataAnnotations;
++global using GIPractice.Contracts.Common.Validation;
+diff --git a/GIPractice.Contracts/Infai/InfaiReportSearchRequestDto.cs b/GIPractice.Contracts/Infai/InfaiReportSearchRequestDto.cs
+index 8d3a689..57d7ec7 100644
+--- a/GIPractice.Contracts/Infai/InfaiReportSearchRequestDto.cs
++++ b/GIPractice.Contracts/Infai/InfaiReportSearchRequestDto.cs
+@@ -1,13 +1,15 @@
+-﻿using GIPractice.Contracts.Common;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common;
++using GIPractice.Contracts.Common.Validation;
+ using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Infai;
+ 
+ public sealed record InfaiReportSearchRequestDto(
+-    PatientId? PatientId = null,
+-    EndoscopyId? EndoscopyId = null,
++    [property: NonZeroId] PatientId? PatientId = null,
++    [property: NonZeroId] EndoscopyId? EndoscopyId = null,
+     InfaiReportStatus? Status = null,
+     bool? IsUrgent = null,
+-    DateOnly? SentFrom = null,
+-    DateOnly? SentTo = null,
++    [property: NotDefault] DateOnly? SentFrom = null,
++    [property: NotDefault] DateOnly? SentTo = null,
+     PagedRequestDto? Paging = null);
+diff --git a/GIPractice.Contracts/Infai/InfaiReportUpsertRequestDto.cs b/GIPractice.Contracts/Infai/InfaiReportUpsertRequestDto.cs
+index 1bd545b..8e4cf6e 100644
+--- a/GIPractice.Contracts/Infai/InfaiReportUpsertRequestDto.cs
++++ b/GIPractice.Contracts/Infai/InfaiReportUpsertRequestDto.cs
+@@ -1,19 +1,22 @@
+-﻿using GIPractice.Contracts.Ids;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common.Validation;
++using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Infai;
+ 
+ public sealed record InfaiReportUpsertRequestDto(
+-    InfaiReportId? Id,
+-    PatientId PatientId,
+-    EndoscopyId EndoscopyId,
++    [property: NonZeroId] InfaiReportId? Id,
+ 
+-    DateTime? SentUtc,
+-    DateTime? ReceivedUtc,
++    [property: NonZeroId] PatientId PatientId,
++    [property: NonZeroId] EndoscopyId EndoscopyId,
+ 
+-    string? ParcelId,
++    [property: NotDefault] DateTime? SentUtc,
++    [property: NotDefault] DateTime? ReceivedUtc,
++
++    [property: MaxLength(120)] string? ParcelId,
+     bool IsUrgent,
+ 
+-    string? ReportText,
+-    InfaiReportStatus Status,
++    [property: MaxLength(20000)] string? ReportText,
++    [property: EnumDataType(typeof(InfaiReportStatus))] InfaiReportStatus Status,
+ 
+     byte[]? RowVersion);
+diff --git a/GIPractice.Contracts/Localization/TranslationSearchRequestDto.cs b/GIPractice.Contracts/Localization/TranslationSearchRequestDto.cs
+index 8763af8..0857b77 100644
+--- a/GIPractice.Contracts/Localization/TranslationSearchRequestDto.cs
++++ b/GIPractice.Contracts/Localization/TranslationSearchRequestDto.cs
+@@ -1,9 +1,10 @@
+-﻿using GIPractice.Contracts.Common;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common;
+ 
+ namespace GIPractice.Contracts.Localization;
+ 
+ public sealed record TranslationSearchRequestDto(
+-    string? KeyContains = null,
+-    string? Culture = null,
+-    string? Module = null,
++    [property: MaxLength(200)] string? KeyContains = null,
++    [property: MaxLength(16)] string? Culture = null,
++    [property: MaxLength(64)] string? Module = null,
+     PagedRequestDto? Paging = null);
+diff --git a/GIPractice.Contracts/Localization/TranslationUpsertRequestDto.cs b/GIPractice.Contracts/Localization/TranslationUpsertRequestDto.cs
+index c35736b..686c26c 100644
+--- a/GIPractice.Contracts/Localization/TranslationUpsertRequestDto.cs
++++ b/GIPractice.Contracts/Localization/TranslationUpsertRequestDto.cs
+@@ -1,9 +1,11 @@
+-﻿namespace GIPractice.Contracts.Localization;
++using System.ComponentModel.DataAnnotations;
++
++namespace GIPractice.Contracts.Localization;
+ 
+ public sealed record TranslationUpsertRequestDto(
+-    string Key,
+-    string Culture,
+-    string Value,
+-    string? Module,
+-    string? Notes,
++    [property: Required, MaxLength(200)] string Key,
++    [property: Required, MaxLength(16)] string Culture,
++    [property: Required, MaxLength(4000)] string Value,
++    [property: MaxLength(64)] string? Module,
++    [property: MaxLength(2000)] string? Notes,
+     byte[]? RowVersion);
+diff --git a/GIPractice.Contracts/Pathology/PathologyReportSearchRequestDto.cs b/GIPractice.Contracts/Pathology/PathologyReportSearchRequestDto.cs
+index 8d89056..98f7c2e 100644
+--- a/GIPractice.Contracts/Pathology/PathologyReportSearchRequestDto.cs
++++ b/GIPractice.Contracts/Pathology/PathologyReportSearchRequestDto.cs
+@@ -1,14 +1,16 @@
+-﻿using GIPractice.Contracts.Common;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common;
++using GIPractice.Contracts.Common.Validation;
+ using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Pathology;
+ 
+ public sealed record PathologyReportSearchRequestDto(
+-    PatientId? PatientId = null,
+-    EndoscopyId? EndoscopyId = null,
+-    BiopsyDispatchBundleId? BiopsyDispatchBundleId = null,
++    [property: NonZeroId] PatientId? PatientId = null,
++    [property: NonZeroId] EndoscopyId? EndoscopyId = null,
++    [property: NonZeroId] BiopsyDispatchBundleId? BiopsyDispatchBundleId = null,
+     PathologyReportStatus? Status = null,
+     bool? IsUrgent = null,
+-    DateOnly? SentFrom = null,
+-    DateOnly? SentTo = null,
++    [property: NotDefault] DateOnly? SentFrom = null,
++    [property: NotDefault] DateOnly? SentTo = null,
+     PagedRequestDto? Paging = null);
+diff --git a/GIPractice.Contracts/Pathology/PathologyReportUpsertRequestDto.cs b/GIPractice.Contracts/Pathology/PathologyReportUpsertRequestDto.cs
+index 7f32960..852e812 100644
+--- a/GIPractice.Contracts/Pathology/PathologyReportUpsertRequestDto.cs
++++ b/GIPractice.Contracts/Pathology/PathologyReportUpsertRequestDto.cs
+@@ -1,20 +1,23 @@
+-﻿using GIPractice.Contracts.Ids;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common.Validation;
++using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Pathology;
+ 
+ public sealed record PathologyReportUpsertRequestDto(
+-    PathologyReportId? Id,
+-    PatientId PatientId,
+-    EndoscopyId EndoscopyId,
+-    BiopsyDispatchBundleId? BiopsyDispatchBundleId,
++    [property: NonZeroId] PathologyReportId? Id,
+ 
+-    DateTime? SentUtc,
+-    DateTime? ReceivedUtc,
++    [property: NonZeroId] PatientId PatientId,
++    [property: NonZeroId] EndoscopyId EndoscopyId,
++    [property: NonZeroId] BiopsyDispatchBundleId? BiopsyDispatchBundleId,
+ 
+-    string? ParcelId,
++    [property: NotDefault] DateTime? SentUtc,
++    [property: NotDefault] DateTime? ReceivedUtc,
++
++    [property: MaxLength(120)] string? ParcelId,
+     bool IsUrgent,
+ 
+-    string? ReportText,
+-    PathologyReportStatus Status,
++    [property: MaxLength(20000)] string? ReportText,
++    [property: EnumDataType(typeof(PathologyReportStatus))] PathologyReportStatus Status,
+ 
+     byte[]? RowVersion);
+diff --git a/GIPractice.Contracts/Patients/PatientSearchRequestDto.cs b/GIPractice.Contracts/Patients/PatientSearchRequestDto.cs
+index 6e90e77..4b7d7e5 100644
+--- a/GIPractice.Contracts/Patients/PatientSearchRequestDto.cs
++++ b/GIPractice.Contracts/Patients/PatientSearchRequestDto.cs
+@@ -1,14 +1,18 @@
+-﻿using GIPractice.Contracts.Common;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common;
+ 
+ namespace GIPractice.Contracts.Patients;
+ 
+ public sealed record PatientSearchRequestDto(
+-    string? FirstName = null,
+-    string? LastName = null,
+-    string? FathersName = null,
+-    string? PersonalNumber = null,
+-    string? Phone = null,
+-    string? Email = null,
++    [property: MaxLength(100)] string? FirstName = null,
++    [property: MaxLength(100)] string? LastName = null,
++    [property: MaxLength(100)] string? FathersName = null,
++
++    // 12-digit Greek Personal Number (Προσωπικός Αριθμός)
++    [property: RegularExpression(@"^\d{12}$")] string? PersonalNumber = null,
++
++    [property: MaxLength(30)] string? Phone = null,
++    [property: EmailAddress, MaxLength(254)] string? Email = null,
+ 
+     // tri-state filters: null = ignore, true = must have, false = must NOT have
+     bool? HasHadCA = null,
+diff --git a/GIPractice.Contracts/Patients/PatientUpsertRequestDto.cs b/GIPractice.Contracts/Patients/PatientUpsertRequestDto.cs
+index ee76e6c..d94e36b 100644
+--- a/GIPractice.Contracts/Patients/PatientUpsertRequestDto.cs
++++ b/GIPractice.Contracts/Patients/PatientUpsertRequestDto.cs
+@@ -1,21 +1,23 @@
+-﻿using GIPractice.Contracts.Ids;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common.Validation;
++using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Patients;
+ 
+ public sealed record PatientUpsertRequestDto(
+-    PatientId? Id,
++    [property: NonZeroId] PatientId? Id,
+ 
+-    string LastName,
+-    string FirstName,
+-    string? FathersName,
++    [property: Required, MaxLength(100)] string LastName,
++    [property: Required, MaxLength(100)] string FirstName,
++    [property: MaxLength(100)] string? FathersName,
+ 
+     DateTime? BirthDate,
+-    string? PersonalNumber,
+-    string? Gender,
++    [property: RegularExpression(@"^\d{12}$")] string? PersonalNumber,
++    [property: MaxLength(30)] string? Gender,
+ 
+-    string? PhoneNumber,
+-    string? Email,
+-    string? Address,
++    [property: MaxLength(30)] string? PhoneNumber,
++    [property: EmailAddress, MaxLength(254)] string? Email,
++    [property: MaxLength(250)] string? Address,
+ 
+     bool HasHadCA,
+     bool HasHadIBD,
+@@ -23,6 +25,6 @@ public sealed record PatientUpsertRequestDto(
+     bool HasScheduledEndo,
+ 
+     byte[]? PhotoBytes,
+-    string? PhotoContentType,
++    [property: MaxLength(100)] string? PhotoContentType,
+ 
+     byte[]? RowVersion);
+diff --git a/GIPractice.Contracts/Scheduling/AppointmentEndRequestDto.cs b/GIPractice.Contracts/Scheduling/AppointmentEndRequestDto.cs
+index bb2a8a0..fe80680 100644
+--- a/GIPractice.Contracts/Scheduling/AppointmentEndRequestDto.cs
++++ b/GIPractice.Contracts/Scheduling/AppointmentEndRequestDto.cs
+@@ -1,7 +1,7 @@
+-﻿using GIPractice.Contracts.Ids;
++using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Scheduling;
+ 
+ public sealed record AppointmentEndRequestDto(
+-    EncounterId EncounterId,
+-    DateTime ActualEndUtc);
++    [NonZeroId] EncounterId EncounterId,
++    [NotDefault] DateTime ActualEndUtc);
+diff --git a/GIPractice.Contracts/Scheduling/AppointmentRescheduleRequestDto.cs b/GIPractice.Contracts/Scheduling/AppointmentRescheduleRequestDto.cs
+index 20db197..dc9d5b1 100644
+--- a/GIPractice.Contracts/Scheduling/AppointmentRescheduleRequestDto.cs
++++ b/GIPractice.Contracts/Scheduling/AppointmentRescheduleRequestDto.cs
+@@ -1,9 +1,9 @@
+-﻿using GIPractice.Contracts.Ids;
++using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Scheduling;
+ 
+ public sealed record AppointmentRescheduleRequestDto(
+-    AppointmentId AppointmentId,
+-    DateTime NewStartUtc,
+-    int NewDurationMinutes,
+-    string? Notes);
++    [NonZeroId] AppointmentId AppointmentId,
++    [NotDefault] DateTime NewStartUtc,
++    [Range(5, 24 * 60)] int NewDurationMinutes,
++    [MaxLength(2000)] string? Notes);
+diff --git a/GIPractice.Contracts/Scheduling/AppointmentResolveRequestDto.cs b/GIPractice.Contracts/Scheduling/AppointmentResolveRequestDto.cs
+index d41f072..f4d3030 100644
+--- a/GIPractice.Contracts/Scheduling/AppointmentResolveRequestDto.cs
++++ b/GIPractice.Contracts/Scheduling/AppointmentResolveRequestDto.cs
+@@ -1,7 +1,7 @@
+-﻿using GIPractice.Contracts.Ids;
++using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Scheduling;
+ 
+ public sealed record AppointmentResolveRequestDto(
+-    AppointmentId AppointmentId,
+-    DateTime ActualStartUtc);
++    [NonZeroId] AppointmentId AppointmentId,
++    [NotDefault] DateTime ActualStartUtc);
+diff --git a/GIPractice.Contracts/Scheduling/AppointmentUpsertRequestDto.cs b/GIPractice.Contracts/Scheduling/AppointmentUpsertRequestDto.cs
+index 925c258..2d9273e 100644
+--- a/GIPractice.Contracts/Scheduling/AppointmentUpsertRequestDto.cs
++++ b/GIPractice.Contracts/Scheduling/AppointmentUpsertRequestDto.cs
+@@ -1,19 +1,22 @@
+-﻿using GIPractice.Contracts.Ids;
++using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Scheduling;
+ 
+ public sealed record AppointmentUpsertRequestDto(
+     AppointmentId? Id,
+-    PatientId PatientId,
+ 
+-    DateTime StartUtc,
+-    int DurationMinutes,
++    [NonZeroId] PatientId PatientId,
+ 
+-    AppointmentTypeId AppointmentTypeId,
+-    string AppointmentTypeName, // denormalized for display (optional but handy)
++    [NotDefault] DateTime StartUtc,
++    [Range(5, 24 * 60)] int DurationMinutes,
++
++    [NonZeroId] AppointmentTypeId AppointmentTypeId,
++
++    // denormalized for display
++    [MaxLength(120)] string AppointmentTypeName,
+ 
+     bool IsUrgent,
+-    string? Notes,
++    [MaxLength(2000)] string? Notes,
+ 
+-    AppointmentStatus Status,
++    [EnumDataType(typeof(AppointmentStatus))] AppointmentStatus Status,
+     byte[]? RowVersion);
+diff --git a/GIPractice.Contracts/Scheduling/CalendarDayMetaUpsertDto.cs b/GIPractice.Contracts/Scheduling/CalendarDayMetaUpsertDto.cs
+index fbc9769..9d9653d 100644
+--- a/GIPractice.Contracts/Scheduling/CalendarDayMetaUpsertDto.cs
++++ b/GIPractice.Contracts/Scheduling/CalendarDayMetaUpsertDto.cs
+@@ -1,7 +1,7 @@
+-﻿namespace GIPractice.Contracts.Scheduling;
++namespace GIPractice.Contracts.Scheduling;
+ 
+ public sealed record CalendarDayMetaUpsertDto(
+-    DateOnly Day,
++    [NotDefault] DateOnly Day,
+     bool IsHoliday,
+     bool IsDayOff,
+-    string? Notes);
++    [MaxLength(2000)] string? Notes);
+diff --git a/GIPractice.Contracts/Scheduling/GetAvailableStartTimesRequestDto.cs b/GIPractice.Contracts/Scheduling/GetAvailableStartTimesRequestDto.cs
+index f26856c..a469dd9 100644
+--- a/GIPractice.Contracts/Scheduling/GetAvailableStartTimesRequestDto.cs
++++ b/GIPractice.Contracts/Scheduling/GetAvailableStartTimesRequestDto.cs
+@@ -1,8 +1,8 @@
+-﻿using GIPractice.Contracts.Ids;
++using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Scheduling;
+ 
+ public sealed record GetAvailableStartTimesRequestDto(
+-    DateOnly Day,
+-    AppointmentTypeId AppointmentTypeId,
+-    int SlotStepMinutes); // e.g. 30
++    [NotDefault] DateOnly Day,
++    [NonZeroId] AppointmentTypeId AppointmentTypeId,
++    [Range(5, 240)] int SlotStepMinutes);
+diff --git a/GIPractice.Contracts/Scheduling/OpenRescheduleCreateRequestDto.cs b/GIPractice.Contracts/Scheduling/OpenRescheduleCreateRequestDto.cs
+index e0c2d5b..066a8b1 100644
+--- a/GIPractice.Contracts/Scheduling/OpenRescheduleCreateRequestDto.cs
++++ b/GIPractice.Contracts/Scheduling/OpenRescheduleCreateRequestDto.cs
+@@ -1,8 +1,8 @@
+-﻿using GIPractice.Contracts.Ids;
++using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Scheduling;
+ 
+ public sealed record OpenRescheduleCreateRequestDto(
+-    AppointmentTypeId AppointmentId,
++    [NonZeroId] AppointmentTypeId AppointmentId,
+     DateTime? NextContactUtc,
+-    string? Notes);
+\ No newline at end of file
++    [MaxLength(2000)] string? Notes);
+diff --git a/GIPractice.Contracts/Scheduling/OpenRescheduleUpdateRequestDto.cs b/GIPractice.Contracts/Scheduling/OpenRescheduleUpdateRequestDto.cs
+index e8f261d..78bbe41 100644
+--- a/GIPractice.Contracts/Scheduling/OpenRescheduleUpdateRequestDto.cs
++++ b/GIPractice.Contracts/Scheduling/OpenRescheduleUpdateRequestDto.cs
+@@ -1,9 +1,9 @@
+-﻿using GIPractice.Contracts.Ids;
++using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Scheduling;
+ 
+ public sealed record OpenRescheduleUpdateRequestDto(
+-    AppointmentId AppointmentId,
++    [NonZeroId] AppointmentId AppointmentId,
+     DateTime? NextContactUtc,
+-    string? Notes,
+-    OpenRescheduleCloseOutcome Outcome);
++    [MaxLength(2000)] string? Notes,
++    [EnumDataType(typeof(OpenRescheduleCloseOutcome))] OpenRescheduleCloseOutcome Outcome);
+diff --git a/GIPractice.Contracts/Scheduling/ScheduleDayRequestDto.cs b/GIPractice.Contracts/Scheduling/ScheduleDayRequestDto.cs
+index 79ece2f..364b14c 100644
+--- a/GIPractice.Contracts/Scheduling/ScheduleDayRequestDto.cs
++++ b/GIPractice.Contracts/Scheduling/ScheduleDayRequestDto.cs
+@@ -1,4 +1,4 @@
+-﻿namespace GIPractice.Contracts.Scheduling;
++namespace GIPractice.Contracts.Scheduling;
+ 
+ public sealed record ScheduleDayRequestDto(
+-    DateOnly Date);
++    [NotDefault] DateOnly Date);
+diff --git a/GIPractice.Contracts/Scheduling/SchedulerNotificationSearchRequestDto.cs b/GIPractice.Contracts/Scheduling/SchedulerNotificationSearchRequestDto.cs
+index 1ca1002..89c78a5 100644
+--- a/GIPractice.Contracts/Scheduling/SchedulerNotificationSearchRequestDto.cs
++++ b/GIPractice.Contracts/Scheduling/SchedulerNotificationSearchRequestDto.cs
+@@ -1,11 +1,13 @@
+-﻿using GIPractice.Contracts.Common;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common;
++using GIPractice.Contracts.Common.Validation;
+ using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Scheduling;
+ 
+ public sealed record SchedulerNotificationSearchRequestDto(
+-    DateOnly? Day = null,                 // if you want “today’s queue”
++    [property: NotDefault] DateOnly? Day = null,
+     bool IncludeClosed = false,
+     SchedulerNotificationKind? Kind = null,
+-    PatientId? PatientId = null,
++    [property: NonZeroId] PatientId? PatientId = null,
+     PagedRequestDto? Paging = null);
+diff --git a/GIPractice.Contracts/Scheduling/SchedulerNotificationUpdateRequestDto.cs b/GIPractice.Contracts/Scheduling/SchedulerNotificationUpdateRequestDto.cs
+index 8b24086..5e92e68 100644
+--- a/GIPractice.Contracts/Scheduling/SchedulerNotificationUpdateRequestDto.cs
++++ b/GIPractice.Contracts/Scheduling/SchedulerNotificationUpdateRequestDto.cs
+@@ -1,12 +1,12 @@
+-﻿using GIPractice.Contracts.Ids;
++using GIPractice.Contracts.Ids;
+ 
+ namespace GIPractice.Contracts.Scheduling;
+ 
+ public enum SchedulerNotificationCloseOutcome { KeepOpen, Done, Cancelled, ConvertedToAppointment }
+ 
+ public sealed record SchedulerNotificationUpdateRequestDto(
+-    SchedulerNotificationId Id,
++    [NonZeroId] SchedulerNotificationId Id,
+     DateTime? SnoozedUntilUtc,
+-    SchedulerNotificationCloseOutcome Outcome,
+-    string? Notes,
+-    byte[]? RowVersion);
+\ No newline at end of file
++    [EnumDataType(typeof(SchedulerNotificationCloseOutcome))] SchedulerNotificationCloseOutcome Outcome,
++    [MaxLength(2000)] string? Notes,
++    byte[]? RowVersion);
+diff --git a/GIPractice.Contracts/Settings/AppSettingSearchRequestDto.cs b/GIPractice.Contracts/Settings/AppSettingSearchRequestDto.cs
+index 3d51d3a..c53b8a9 100644
+--- a/GIPractice.Contracts/Settings/AppSettingSearchRequestDto.cs
++++ b/GIPractice.Contracts/Settings/AppSettingSearchRequestDto.cs
+@@ -1,9 +1,10 @@
+-﻿using GIPractice.Contracts.Common;
++using System.ComponentModel.DataAnnotations;
++using GIPractice.Contracts.Common;
+ 
+ namespace GIPractice.Contracts.Settings;
+ 
+ public sealed record AppSettingSearchRequestDto(
+-    string? KeyContains = null,
++    [property: MaxLength(200)] string? KeyContains = null,
+     AppSettingScope? Scope = null,
+-    string? ScopeKey = null,
++    [property: MaxLength(200)] string? ScopeKey = null,
+     PagedRequestDto? Paging = null);
+diff --git a/GIPractice.Contracts/Settings/AppSettingUpsertRequestDto.cs b/GIPractice.Contracts/Settings/AppSettingUpsertRequestDto.cs
+index 18be9d1..047fb52 100644
+--- a/GIPractice.Contracts/Settings/AppSettingUpsertRequestDto.cs
++++ b/GIPractice.Contracts/Settings/AppSettingUpsertRequestDto.cs
+@@ -1,9 +1,11 @@
+-﻿namespace GIPractice.Contracts.Settings;
++using System.ComponentModel.DataAnnotations;
++
++namespace GIPractice.Contracts.Settings;
+ 
+ public sealed record AppSettingUpsertRequestDto(
+-    string Key,
+-    string Value,
+-    AppSettingScope Scope,
+-    string? ScopeKey,
+-    string? Description,
++    [property: Required, MaxLength(200)] string Key,
++    [property: Required, MaxLength(4000)] string Value,
++    [property: EnumDataType(typeof(AppSettingScope))] AppSettingScope Scope,
++    [property: MaxLength(200)] string? ScopeKey,
++    [property: MaxLength(500)] string? Description,
+     byte[]? RowVersion);

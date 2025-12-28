@@ -1,11 +1,13 @@
-﻿using GIPractice.Contracts.Common;
+using System.ComponentModel.DataAnnotations;
+using GIPractice.Contracts.Common;
+using GIPractice.Contracts.Common.Validation;
 using GIPractice.Contracts.Ids;
 
 namespace GIPractice.Contracts.Scheduling;
 
 public sealed record SchedulerNotificationSearchRequestDto(
-    DateOnly? Day = null,                 // if you want “today’s queue”
+    [property: NotDefault] DateOnly? Day = null,
     bool IncludeClosed = false,
     SchedulerNotificationKind? Kind = null,
-    PatientId? PatientId = null,
+    [property: NonZeroId] PatientId? PatientId = null,
     PagedRequestDto? Paging = null);

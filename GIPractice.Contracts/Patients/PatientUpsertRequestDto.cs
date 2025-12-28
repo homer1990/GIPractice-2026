@@ -1,21 +1,23 @@
-﻿using GIPractice.Contracts.Ids;
+using System.ComponentModel.DataAnnotations;
+using GIPractice.Contracts.Common.Validation;
+using GIPractice.Contracts.Ids;
 
 namespace GIPractice.Contracts.Patients;
 
 public sealed record PatientUpsertRequestDto(
-    PatientId? Id,
+    [property: NonZeroId] PatientId? Id,
 
-    string LastName,
-    string FirstName,
-    string? FathersName,
+    [property: Required, MaxLength(100)] string LastName,
+    [property: Required, MaxLength(100)] string FirstName,
+    [property: MaxLength(100)] string? FathersName,
 
     DateTime? BirthDate,
-    string? PersonalNumber,
-    string? Gender,
+    [property: RegularExpression(@"^\d{12}$")] string? PersonalNumber,
+    [property: MaxLength(30)] string? Gender,
 
-    string? PhoneNumber,
-    string? Email,
-    string? Address,
+    [property: MaxLength(30)] string? PhoneNumber,
+    [property: EmailAddress, MaxLength(254)] string? Email,
+    [property: MaxLength(250)] string? Address,
 
     bool HasHadCA,
     bool HasHadIBD,
@@ -23,6 +25,6 @@ public sealed record PatientUpsertRequestDto(
     bool HasScheduledEndo,
 
     byte[]? PhotoBytes,
-    string? PhotoContentType,
+    [property: MaxLength(100)] string? PhotoContentType,
 
     byte[]? RowVersion);
