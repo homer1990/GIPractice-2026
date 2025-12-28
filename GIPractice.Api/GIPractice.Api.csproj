@@ -8,11 +8,18 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Scalar.AspNetCore" Version="2.3.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\GIPractice.Contracts\GIPractice.Contracts.csproj" />
+    <ProjectReference Include="..\GIPractice.Core\GIPractice.Core.csproj" />
+    <ProjectReference Include="..\GIPractice.Infrastructure\GIPractice.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

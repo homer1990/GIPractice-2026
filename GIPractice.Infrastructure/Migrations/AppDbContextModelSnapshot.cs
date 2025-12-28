@@ -17,7 +17,7 @@ namespace GIPractice.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -393,6 +393,52 @@ namespace GIPractice.Infrastructure.Migrations
                     b.ToTable("Endoscopies", (string)null);
                 });
 
+            modelBuilder.Entity("GIPractice.Core.Entities.FieldName", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DefaultText")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Field")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TableName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TableName", "Field")
+                        .IsUnique();
+
+                    b.ToTable("FieldNames", (string)null);
+                });
+
             modelBuilder.Entity("GIPractice.Core.Entities.Finding", b =>
                 {
                     b.Property<int>("Id")
@@ -625,6 +671,50 @@ namespace GIPractice.Infrastructure.Migrations
                     b.ToTable("Labs");
                 });
 
+            modelBuilder.Entity("GIPractice.Core.Entities.Localization", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CultureName")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
+
+                    b.Property<int>("FieldNameId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FieldNameId", "CultureName")
+                        .IsUnique();
+
+                    b.ToTable("Localizations", (string)null);
+                });
+
             modelBuilder.Entity("GIPractice.Core.Entities.LocalizationString", b =>
                 {
                     b.Property<int>("Id")
@@ -680,180 +770,82 @@ namespace GIPractice.Infrastructure.Migrations
                         {
                             Id = 1,
                             Code = "STOMACH",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5182),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Domain = "Organ",
                             IsDeleted = false,
                             Language = "el",
-                            Text = "Στομάχι",
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5184)
+                            Text = "Στομάχι"
                         },
                         new
                         {
                             Id = 2,
                             Code = "GEJ",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5191),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Domain = "OrganArea",
                             IsDeleted = false,
                             Language = "el",
-                            Text = "Γαστροοισοφαγική συμβολή",
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5191)
+                            Text = "Γαστροοισοφαγική συμβολή"
                         },
                         new
                         {
                             Id = 1001,
                             Code = "Gastroscopy",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5192),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Domain = "EndoscopyType",
                             IsDeleted = false,
                             Language = "el",
-                            Text = "Γαστροσκόπηση",
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5193)
+                            Text = "Γαστροσκόπηση"
                         },
                         new
                         {
                             Id = 1002,
                             Code = "Colonoscopy",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5194),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Domain = "EndoscopyType",
                             IsDeleted = false,
                             Language = "el",
-                            Text = "Κολονοσκόπηση",
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5194)
+                            Text = "Κολονοσκόπηση"
                         },
                         new
                         {
                             Id = 2001,
                             Code = "H_Pylori_UreaBreath",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5195),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Domain = "TestType",
                             IsDeleted = false,
                             Language = "el",
-                            Text = "Δοκιμασία αναπνοής ουρίας για H. pylori",
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5195)
+                            Text = "Δοκιμασία αναπνοής ουρίας για H. pylori"
                         },
                         new
                         {
                             Id = 2002,
                             Code = "FecalOccultBlood",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5196),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Domain = "TestType",
                             IsDeleted = false,
                             Language = "el",
-                            Text = "Απόκρυφο αίμα κοπράνων",
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5196)
+                            Text = "Απόκρυφο αίμα κοπράνων"
                         },
                         new
                         {
                             Id = 2101,
                             Code = "Polypectomy",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5197),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Domain = "OperationType",
                             IsDeleted = false,
                             Language = "el",
-                            Text = "Πολυπεκτομή",
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5197)
+                            Text = "Πολυπεκτομή"
                         },
                         new
                         {
                             Id = 2102,
                             Code = "HemostasisClip",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5198),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Domain = "OperationType",
                             IsDeleted = false,
                             Language = "el",
-                            Text = "Αιμόσταση με κλιπ",
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 214, DateTimeKind.Utc).AddTicks(5199)
+                            Text = "Αιμόσταση με κλιπ"
                         });
-                });
-
-            modelBuilder.Entity("GIPractice.Core.Entities.FieldName", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DefaultText")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("Field")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("TableName")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TableName", "Field")
-                        .IsUnique();
-
-                    b.ToTable("FieldNames");
-                });
-
-            modelBuilder.Entity("GIPractice.Core.Entities.Localization", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CultureName")
-                        .IsRequired()
-                        .HasMaxLength(12)
-                        .HasColumnType("nvarchar(12)");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("FieldNameId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("nvarchar(512)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FieldNameId", "CultureName")
-                        .IsUnique();
-
-                    b.ToTable("Localizations");
                 });
 
             modelBuilder.Entity("GIPractice.Core.Entities.MediaFile", b =>
@@ -1112,73 +1104,65 @@ namespace GIPractice.Infrastructure.Migrations
                         {
                             Id = 1,
                             Code = "ESOPHAGUS",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8059),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Esophagus",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8060)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 2,
                             Code = "STOMACH",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8063),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Stomach",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8063)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 3,
                             Code = "DUODENUM",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8064),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Duodenum",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8065)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 4,
                             Code = "JEJUNUM",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8066),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Jejunum",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8066)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 5,
                             Code = "ILEUM",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8067),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Ileum",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8067)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 6,
                             Code = "COLON",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8068),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Colon",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8068)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 7,
                             Code = "RECTUM",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8069),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Rectum",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8069)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 8,
                             Code = "ANUS",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8070),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Anus",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(8070)
+                            IsDeleted = false
                         });
                 });
 
@@ -1227,199 +1211,177 @@ namespace GIPractice.Infrastructure.Migrations
                         {
                             Id = 1,
                             Code = "ESOPHAGUS_PROX",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1491),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Esophagus proximal third",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1492)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 2,
                             Code = "ESOPHAGUS_MID",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1496),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Esophagus middle third",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1496)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 3,
                             Code = "ESOPHAGUS_DIST",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1498),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Esophagus distal third",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1498)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 4,
                             Code = "GEJ",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1499),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Gastroesophageal junction",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1500)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 5,
                             Code = "STOMACH_FUNDUS",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1501),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Stomach fundus",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1501)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 6,
                             Code = "STOMACH_BODY",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1502),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Stomach body",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1502)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 7,
                             Code = "STOMACH_INCISURA",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1503),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Stomach incisura",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1503)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 8,
                             Code = "STOMACH_ANTRUM",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1504),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Stomach antrum",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1505)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 9,
                             Code = "PYLORUS",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1506),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Pylorus",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1506)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 10,
                             Code = "DUODENUM_BULB",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1507),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Duodenum bulb",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1507)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 11,
                             Code = "DUODENUM_SECOND",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1508),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Duodenum second part",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1508)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 12,
                             Code = "DUODENUM_THIRD",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1509),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Duodenum third part (horizontal)",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1510)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 13,
                             Code = "CECUM",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1511),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Cecum",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1511)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 14,
                             Code = "ILEOCECAL_VALVE",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1512),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Ileocecal valve",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1512)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 15,
                             Code = "COLON_ASC",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1513),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Colon ascending",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1513)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 16,
                             Code = "COLON_HEP_FLEX",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1514),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Colon hepatic flexure",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1514)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 17,
                             Code = "COLON_TRANS",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1515),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Colon transverse",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1515)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 18,
                             Code = "COLON_SPL_FLEX",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1516),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Colon splenic flexure",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1517)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 19,
                             Code = "COLON_DESC",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1518),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Colon descending",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1518)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 20,
                             Code = "COLON_SIGMOID",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1519),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Colon sigmoid",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1519)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 21,
                             Code = "RECTUM_AREA",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1520),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Rectum",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1520)
+                            IsDeleted = false
                         },
                         new
                         {
                             Id = 22,
                             Code = "ANAL_CANAL",
-                            CreatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1521),
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             DefaultName = "Anal canal",
-                            IsDeleted = false,
-                            UpdatedAtUtc = new DateTime(2025, 12, 6, 10, 44, 38, 216, DateTimeKind.Utc).AddTicks(1521)
+                            IsDeleted = false
                         });
                 });
 
@@ -2274,6 +2236,17 @@ namespace GIPractice.Infrastructure.Migrations
                     b.Navigation("Patient");
                 });
 
+            modelBuilder.Entity("GIPractice.Core.Entities.Localization", b =>
+                {
+                    b.HasOne("GIPractice.Core.Entities.FieldName", "FieldName")
+                        .WithMany("Localizations")
+                        .HasForeignKey("FieldNameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FieldName");
+                });
+
             modelBuilder.Entity("GIPractice.Core.Entities.Observation", b =>
                 {
                     b.HasOne("GIPractice.Core.Entities.Endoscopy", "Endoscopy")
@@ -2603,6 +2576,11 @@ namespace GIPractice.Infrastructure.Migrations
                     b.Navigation("Report");
                 });
 
+            modelBuilder.Entity("GIPractice.Core.Entities.FieldName", b =>
+                {
+                    b.Navigation("Localizations");
+                });
+
             modelBuilder.Entity("GIPractice.Core.Entities.Finding", b =>
                 {
                     b.Navigation("Endoscopies");
@@ -2650,16 +2628,6 @@ namespace GIPractice.Infrastructure.Migrations
                     b.Navigation("Treatments");
 
                     b.Navigation("Visits");
-                });
-
-            modelBuilder.Entity("GIPractice.Core.Entities.FieldName", b =>
-                {
-                    b.Navigation("Localizations");
-                });
-
-            modelBuilder.Entity("GIPractice.Core.Entities.Localization", b =>
-                {
-                    b.Navigation("FieldName");
                 });
 
             modelBuilder.Entity("Visit", b =>

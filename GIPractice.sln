@@ -9,10 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Core", "GIPracti
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Api", "GIPractice.Api\GIPractice.Api.csproj", "{93EB661B-1500-40F7-BB90-160205EFF8B1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Wpf", "GIPractice.Wpf\GIPractice.Wpf.csproj", "{1965F8E5-17D6-4A4F-A9A2-55A74EC0CCC2}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Wpf.UserControls", "GIPractice.Wpf.UserControls\GIPractice.Wpf.UserControls.csproj", "{69957ECE-872C-4698-84BC-E55DD60E41F3}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{24620B8B-CB1F-4A14-8748-9D3916B80D71}"
 	ProjectSection(SolutionItems) = preProject
 		00-Solution.md = 00-Solution.md
@@ -35,6 +31,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{485DC98E
 		scaffold.ps1 = scaffold.ps1
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Contracts", "GIPractice.Contracts\GIPractice.Contracts.csproj", "{B36930DE-BA9F-7A91-B57C-F999C978C765}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,14 +51,10 @@ Global
 		{93EB661B-1500-40F7-BB90-160205EFF8B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{93EB661B-1500-40F7-BB90-160205EFF8B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{93EB661B-1500-40F7-BB90-160205EFF8B1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1965F8E5-17D6-4A4F-A9A2-55A74EC0CCC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1965F8E5-17D6-4A4F-A9A2-55A74EC0CCC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1965F8E5-17D6-4A4F-A9A2-55A74EC0CCC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1965F8E5-17D6-4A4F-A9A2-55A74EC0CCC2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{69957ECE-872C-4698-84BC-E55DD60E41F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{69957ECE-872C-4698-84BC-E55DD60E41F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{69957ECE-872C-4698-84BC-E55DD60E41F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{69957ECE-872C-4698-84BC-E55DD60E41F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B36930DE-BA9F-7A91-B57C-F999C978C765}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B36930DE-BA9F-7A91-B57C-F999C978C765}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B36930DE-BA9F-7A91-B57C-F999C978C765}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B36930DE-BA9F-7A91-B57C-F999C978C765}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

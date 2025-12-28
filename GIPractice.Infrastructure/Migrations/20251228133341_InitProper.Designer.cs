@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GIPractice.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251205100730_BiopsyBottleChainOfCustody")]
-    partial class BiopsyBottleChainOfCustody
+    [Migration("20251228133341_InitProper")]
+    partial class InitProper
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -42,17 +42,17 @@ namespace GIPractice.Infrastructure.Migrations
 
             modelBuilder.Entity("BiopsyBottleOrganArea", b =>
                 {
-                    b.Property<int>("BiopsyBottleId")
+                    b.Property<int>("BiopsyBottlesId")
                         .HasColumnType("int");
 
-                    b.Property<int>("OrganAreaId")
+                    b.Property<int>("OrganAreasId")
                         .HasColumnType("int");
 
-                    b.HasKey("BiopsyBottleId", "OrganAreaId");
+                    b.HasKey("BiopsyBottlesId", "OrganAreasId");
 
-                    b.HasIndex("OrganAreaId");
+                    b.HasIndex("OrganAreasId");
 
-                    b.ToTable("BiopsyBottleOrganAreas", (string)null);
+                    b.ToTable("BiopsyBottleOrganArea");
                 });
 
             modelBuilder.Entity("EndoscopyDiagnosis", b =>
@@ -396,6 +396,52 @@ namespace GIPractice.Infrastructure.Migrations
                     b.ToTable("Endoscopies", (string)null);
                 });
 
+            modelBuilder.Entity("GIPractice.Core.Entities.FieldName", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DefaultText")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Field")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TableName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TableName", "Field")
+                        .IsUnique();
+
+                    b.ToTable("FieldNames", (string)null);
+                });
+
             modelBuilder.Entity("GIPractice.Core.Entities.Finding", b =>
                 {
                     b.Property<int>("Id")
@@ -437,6 +483,98 @@ namespace GIPractice.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Findings", (string)null);
+                });
+
+            modelBuilder.Entity("GIPractice.Core.Entities.Identity.ApplicationRole", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
+            modelBuilder.Entity("GIPractice.Core.Entities.Identity.ApplicationUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.ToTable("AspNetUsers", (string)null);
                 });
 
             modelBuilder.Entity("GIPractice.Core.Entities.InfaiTest", b =>
@@ -534,6 +672,183 @@ namespace GIPractice.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Labs");
+                });
+
+            modelBuilder.Entity("GIPractice.Core.Entities.Localization", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CultureName")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
+
+                    b.Property<int>("FieldNameId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FieldNameId", "CultureName")
+                        .IsUnique();
+
+                    b.ToTable("Localizations", (string)null);
+                });
+
+            modelBuilder.Entity("GIPractice.Core.Entities.LocalizationString", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Domain")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Domain", "Code", "Language")
+                        .IsUnique();
+
+                    b.ToTable("LocalizationStrings", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "STOMACH",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Domain = "Organ",
+                            IsDeleted = false,
+                            Language = "el",
+                            Text = "Στομάχι"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Code = "GEJ",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Domain = "OrganArea",
+                            IsDeleted = false,
+                            Language = "el",
+                            Text = "Γαστροοισοφαγική συμβολή"
+                        },
+                        new
+                        {
+                            Id = 1001,
+                            Code = "Gastroscopy",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Domain = "EndoscopyType",
+                            IsDeleted = false,
+                            Language = "el",
+                            Text = "Γαστροσκόπηση"
+                        },
+                        new
+                        {
+                            Id = 1002,
+                            Code = "Colonoscopy",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Domain = "EndoscopyType",
+                            IsDeleted = false,
+                            Language = "el",
+                            Text = "Κολονοσκόπηση"
+                        },
+                        new
+                        {
+                            Id = 2001,
+                            Code = "H_Pylori_UreaBreath",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Domain = "TestType",
+                            IsDeleted = false,
+                            Language = "el",
+                            Text = "Δοκιμασία αναπνοής ουρίας για H. pylori"
+                        },
+                        new
+                        {
+                            Id = 2002,
+                            Code = "FecalOccultBlood",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Domain = "TestType",
+                            IsDeleted = false,
+                            Language = "el",
+                            Text = "Απόκρυφο αίμα κοπράνων"
+                        },
+                        new
+                        {
+                            Id = 2101,
+                            Code = "Polypectomy",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Domain = "OperationType",
+                            IsDeleted = false,
+                            Language = "el",
+                            Text = "Πολυπεκτομή"
+                        },
+                        new
+                        {
+                            Id = 2102,
+                            Code = "HemostasisClip",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Domain = "OperationType",
+                            IsDeleted = false,
+                            Language = "el",
+                            Text = "Αιμόσταση με κλιπ"
+                        });
                 });
 
             modelBuilder.Entity("GIPractice.Core.Entities.MediaFile", b =>
@@ -747,7 +1062,7 @@ namespace GIPractice.Infrastructure.Migrations
                     b.ToTable("Operations", (string)null);
                 });
 
-            modelBuilder.Entity("GIPractice.Core.Entities.OrganArea", b =>
+            modelBuilder.Entity("GIPractice.Core.Entities.Organ", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -756,6 +1071,7 @@ namespace GIPractice.Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Code")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
@@ -765,16 +1081,13 @@ namespace GIPractice.Infrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("DefaultName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("Organ")
-                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("datetime2");
@@ -784,7 +1097,432 @@ namespace GIPractice.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Organs", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "ESOPHAGUS",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Esophagus",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Code = "STOMACH",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Stomach",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Code = "DUODENUM",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Duodenum",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Code = "JEJUNUM",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Jejunum",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Code = "ILEUM",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Ileum",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Code = "COLON",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Colon",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Code = "RECTUM",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Rectum",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Code = "ANUS",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Anus",
+                            IsDeleted = false
+                        });
+                });
+
+            modelBuilder.Entity("GIPractice.Core.Entities.OrganArea", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DefaultName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
                     b.ToTable("OrganAreas", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "ESOPHAGUS_PROX",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Esophagus proximal third",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Code = "ESOPHAGUS_MID",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Esophagus middle third",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Code = "ESOPHAGUS_DIST",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Esophagus distal third",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Code = "GEJ",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Gastroesophageal junction",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Code = "STOMACH_FUNDUS",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Stomach fundus",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Code = "STOMACH_BODY",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Stomach body",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Code = "STOMACH_INCISURA",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Stomach incisura",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Code = "STOMACH_ANTRUM",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Stomach antrum",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Code = "PYLORUS",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Pylorus",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Code = "DUODENUM_BULB",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Duodenum bulb",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Code = "DUODENUM_SECOND",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Duodenum second part",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Code = "DUODENUM_THIRD",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Duodenum third part (horizontal)",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Code = "CECUM",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Cecum",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Code = "ILEOCECAL_VALVE",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Ileocecal valve",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Code = "COLON_ASC",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Colon ascending",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Code = "COLON_HEP_FLEX",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Colon hepatic flexure",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Code = "COLON_TRANS",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Colon transverse",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Code = "COLON_SPL_FLEX",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Colon splenic flexure",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Code = "COLON_DESC",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Colon descending",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Code = "COLON_SIGMOID",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Colon sigmoid",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Code = "RECTUM_AREA",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Rectum",
+                            IsDeleted = false
+                        },
+                        new
+                        {
+                            Id = 22,
+                            Code = "ANAL_CANAL",
+                            CreatedAtUtc = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            DefaultName = "Anal canal",
+                            IsDeleted = false
+                        });
+                });
+
+            modelBuilder.Entity("GIPractice.Core.Entities.OrganAreaOrgan", b =>
+                {
+                    b.Property<int>("OrganId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OrganAreaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("OrganId", "OrganAreaId");
+
+                    b.HasIndex("OrganAreaId");
+
+                    b.ToTable("OrganAreaOrgans", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            OrganId = 1,
+                            OrganAreaId = 1
+                        },
+                        new
+                        {
+                            OrganId = 1,
+                            OrganAreaId = 2
+                        },
+                        new
+                        {
+                            OrganId = 1,
+                            OrganAreaId = 3
+                        },
+                        new
+                        {
+                            OrganId = 1,
+                            OrganAreaId = 4
+                        },
+                        new
+                        {
+                            OrganId = 2,
+                            OrganAreaId = 4
+                        },
+                        new
+                        {
+                            OrganId = 2,
+                            OrganAreaId = 5
+                        },
+                        new
+                        {
+                            OrganId = 2,
+                            OrganAreaId = 6
+                        },
+                        new
+                        {
+                            OrganId = 2,
+                            OrganAreaId = 7
+                        },
+                        new
+                        {
+                            OrganId = 2,
+                            OrganAreaId = 8
+                        },
+                        new
+                        {
+                            OrganId = 2,
+                            OrganAreaId = 9
+                        },
+                        new
+                        {
+                            OrganId = 3,
+                            OrganAreaId = 10
+                        },
+                        new
+                        {
+                            OrganId = 3,
+                            OrganAreaId = 11
+                        },
+                        new
+                        {
+                            OrganId = 3,
+                            OrganAreaId = 12
+                        },
+                        new
+                        {
+                            OrganId = 6,
+                            OrganAreaId = 13
+                        },
+                        new
+                        {
+                            OrganId = 5,
+                            OrganAreaId = 14
+                        },
+                        new
+                        {
+                            OrganId = 6,
+                            OrganAreaId = 14
+                        },
+                        new
+                        {
+                            OrganId = 6,
+                            OrganAreaId = 15
+                        },
+                        new
+                        {
+                            OrganId = 6,
+                            OrganAreaId = 16
+                        },
+                        new
+                        {
+                            OrganId = 6,
+                            OrganAreaId = 17
+                        },
+                        new
+                        {
+                            OrganId = 6,
+                            OrganAreaId = 18
+                        },
+                        new
+                        {
+                            OrganId = 6,
+                            OrganAreaId = 19
+                        },
+                        new
+                        {
+                            OrganId = 6,
+                            OrganAreaId = 20
+                        },
+                        new
+                        {
+                            OrganId = 7,
+                            OrganAreaId = 21
+                        },
+                        new
+                        {
+                            OrganId = 8,
+                            OrganAreaId = 22
+                        });
                 });
 
             modelBuilder.Entity("GIPractice.Core.Entities.Patient", b =>
@@ -1125,7 +1863,7 @@ namespace GIPractice.Infrastructure.Migrations
                     b.ToTable("VersionHistory", (string)null);
                 });
 
-            modelBuilder.Entity("GIPractice.Core.Entities.Visit", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -1133,42 +1871,102 @@ namespace GIPractice.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AppointmentId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
+                    b.Property<string>("ClaimType")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("DateOfVisitUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("PatientId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
+                    b.Property<string>("ClaimValue")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RoleId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AppointmentId")
-                        .IsUnique();
+                    b.HasIndex("RoleId");
 
-                    b.HasIndex("PatientId");
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
 
-                    b.ToTable("Visits", (string)null);
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("RoleId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
                 });
 
             modelBuilder.Entity("PatientDiagnosis", b =>
@@ -1231,6 +2029,53 @@ namespace GIPractice.Infrastructure.Migrations
                     b.ToTable("TreatmentMedicines", (string)null);
                 });
 
+            modelBuilder.Entity("Visit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AppointmentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateOfVisitUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppointmentId")
+                        .IsUnique()
+                        .HasFilter("[AppointmentId] IS NOT NULL");
+
+                    b.HasIndex("PatientId");
+
+                    b.ToTable("Visits", (string)null);
+                });
+
             modelBuilder.Entity("VisitDiagnosis", b =>
                 {
                     b.Property<int>("VisitId")
@@ -1277,13 +2122,13 @@ namespace GIPractice.Infrastructure.Migrations
                 {
                     b.HasOne("GIPractice.Core.Entities.BiopsyBottle", null)
                         .WithMany()
-                        .HasForeignKey("BiopsyBottleId")
+                        .HasForeignKey("BiopsyBottlesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("GIPractice.Core.Entities.OrganArea", null)
                         .WithMany()
-                        .HasForeignKey("OrganAreaId")
+                        .HasForeignKey("OrganAreasId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -1361,7 +2206,7 @@ namespace GIPractice.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GIPractice.Core.Entities.Visit", "Visit")
+                    b.HasOne("Visit", "Visit")
                         .WithMany("Endoscopies")
                         .HasForeignKey("VisitId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1392,6 +2237,17 @@ namespace GIPractice.Infrastructure.Migrations
                     b.Navigation("File");
 
                     b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("GIPractice.Core.Entities.Localization", b =>
+                {
+                    b.HasOne("GIPractice.Core.Entities.FieldName", "FieldName")
+                        .WithMany("Localizations")
+                        .HasForeignKey("FieldNameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FieldName");
                 });
 
             modelBuilder.Entity("GIPractice.Core.Entities.Observation", b =>
@@ -1451,6 +2307,25 @@ namespace GIPractice.Infrastructure.Migrations
                     b.Navigation("File");
 
                     b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("GIPractice.Core.Entities.OrganAreaOrgan", b =>
+                {
+                    b.HasOne("GIPractice.Core.Entities.OrganArea", "OrganArea")
+                        .WithMany("OrganAreaOrgans")
+                        .HasForeignKey("OrganAreaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("GIPractice.Core.Entities.Organ", "Organ")
+                        .WithMany("OrganAreaOrgans")
+                        .HasForeignKey("OrganId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Organ");
+
+                    b.Navigation("OrganArea");
                 });
 
             modelBuilder.Entity("GIPractice.Core.Entities.Report", b =>
@@ -1526,23 +2401,55 @@ namespace GIPractice.Infrastructure.Migrations
                     b.Navigation("Patient");
                 });
 
-            modelBuilder.Entity("GIPractice.Core.Entities.Visit", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
-                    b.HasOne("GIPractice.Core.Entities.Appointment", "Appointment")
-                        .WithOne("Visit")
-                        .HasForeignKey("GIPractice.Core.Entities.Visit", "AppointmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                    b.HasOne("GIPractice.Core.Entities.Identity.ApplicationRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.HasOne("GIPractice.Core.Entities.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.HasOne("GIPractice.Core.Entities.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.HasOne("GIPractice.Core.Entities.Identity.ApplicationRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("GIPractice.Core.Entities.Patient", "Patient")
-                        .WithMany("Visits")
-                        .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                    b.HasOne("GIPractice.Core.Entities.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
 
-                    b.Navigation("Appointment");
-
-                    b.Navigation("Patient");
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.HasOne("GIPractice.Core.Entities.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("PatientDiagnosis", b =>
@@ -1605,6 +2512,24 @@ namespace GIPractice.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Visit", b =>
+                {
+                    b.HasOne("GIPractice.Core.Entities.Appointment", "Appointment")
+                        .WithOne("Visit")
+                        .HasForeignKey("Visit", "AppointmentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("GIPractice.Core.Entities.Patient", "Patient")
+                        .WithMany("Visits")
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Appointment");
+
+                    b.Navigation("Patient");
+                });
+
             modelBuilder.Entity("VisitDiagnosis", b =>
                 {
                     b.HasOne("GIPractice.Core.Entities.Diagnosis", null)
@@ -1613,7 +2538,7 @@ namespace GIPractice.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("GIPractice.Core.Entities.Visit", null)
+                    b.HasOne("Visit", null)
                         .WithMany()
                         .HasForeignKey("VisitId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1654,6 +2579,11 @@ namespace GIPractice.Infrastructure.Migrations
                     b.Navigation("Report");
                 });
 
+            modelBuilder.Entity("GIPractice.Core.Entities.FieldName", b =>
+                {
+                    b.Navigation("Localizations");
+                });
+
             modelBuilder.Entity("GIPractice.Core.Entities.Finding", b =>
                 {
                     b.Navigation("Endoscopies");
@@ -1670,9 +2600,16 @@ namespace GIPractice.Infrastructure.Migrations
                     b.Navigation("Tests");
                 });
 
+            modelBuilder.Entity("GIPractice.Core.Entities.Organ", b =>
+                {
+                    b.Navigation("OrganAreaOrgans");
+                });
+
             modelBuilder.Entity("GIPractice.Core.Entities.OrganArea", b =>
                 {
                     b.Navigation("Observations");
+
+                    b.Navigation("OrganAreaOrgans");
                 });
 
             modelBuilder.Entity("GIPractice.Core.Entities.Patient", b =>
@@ -1696,7 +2633,7 @@ namespace GIPractice.Infrastructure.Migrations
                     b.Navigation("Visits");
                 });
 
-            modelBuilder.Entity("GIPractice.Core.Entities.Visit", b =>
+            modelBuilder.Entity("Visit", b =>
                 {
                     b.Navigation("Endoscopies");
                 });

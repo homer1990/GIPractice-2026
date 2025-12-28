@@ -114,6 +114,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             if (entry.State == EntityState.Added)
             {
                 entry.Entity.CreatedAtUtc = now;
+                entry.Entity.UpdatedAtUtc = now;
                 entry.Entity.CreatedBy ??= systemUser;
             }
 
@@ -123,6 +124,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
                 entry.Entity.UpdatedBy = systemUser;
             }
         }
+    }
+    private static string SerializeScalarSnapshot(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry)
+    {
+        // Only scalar + FK values. No navigations => no cycles.
+        var dict = new Dictionary<string, object?>();
+
+        foreach (var p in entry.Properties)
+            dict[p.Metadata.Name] = p.CurrentValue;
+
+        return JsonSerializer.Serialize(dict);
     }
 
     private async Task AddVersionsAsync(CancellationToken cancellationToken)
@@ -146,7 +157,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             var entityName = entity.GetType().Name;
             var entityId = entity.Id;
 
-            var snapshot = JsonSerializer.Serialize(entity, entity.GetType());
+            var snapshot = SerializeScalarSnapshot(entry);
 
             var currentMax = await VersionHistories
                 .Where(v => v.EntityName == entityName && v.EntityId == entityId)

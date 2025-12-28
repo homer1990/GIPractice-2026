@@ -1,6 +1,8 @@
 ﻿using GIPractice.Core.Abstractions;
 using GIPractice.Core.Entities;
 
+namespace GIPractice.Core.Entities;
+
 public class Visit : BaseEntity
 {
     public DateTime DateOfVisitUtc { get; set; }

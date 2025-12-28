@@ -5,16 +5,10 @@ using Microsoft.Extensions.Options;
 
 namespace GIPractice.Api.Scheduling;
 
-public sealed class SchedulingService : ISchedulingService
+public sealed class SchedulingService(ISchedulingStore store, IOptions<SchedulerOptions> options) : ISchedulingService
 {
-    private readonly ISchedulingStore _store;
-    private readonly SchedulerOptions _opt;
-
-    public SchedulingService(ISchedulingStore store, IOptions<SchedulerOptions> options)
-    {
-        _store = store;
-        _opt = options.Value;
-    }
+    private readonly ISchedulingStore _store = store;
+    private readonly SchedulerOptions _opt = options.Value;
 
     public async Task<ResultDto<ScheduleDayDto>> GetScheduleDayAsync(
         ScheduleDayRequestDto request,

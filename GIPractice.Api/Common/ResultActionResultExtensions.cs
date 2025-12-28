@@ -1,42 +1,30 @@
 ﻿using GIPractice.Contracts.Common;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GIPractice.Api.Common;
 
 public static class ResultActionResultExtensions
 {
-    public static async Task<IActionResult> ToActionResultAsync<T>(
-        this Task<ResultDto<T>> task,
-        HttpContext httpContext)
-        => (await task).ToActionResult(httpContext);
-
-    public static IActionResult ToActionResult<T>(
-        this ResultDto<T> result,
-        HttpContext httpContext)
+    public static IActionResult ToActionResult<T>(this ResultDto<T> res, HttpContext http)
     {
-        if (result.IsSuccess)
-            return new OkObjectResult(result);
+        if (res.IsSuccess)
+            return new OkObjectResult(res);
 
-        // Inject TraceId if missing
-        var traceId = httpContext.TraceIdentifier;
-        if (result.Error is { } err && string.IsNullOrWhiteSpace(err.TraceId))
-        {
-            result = result with { Error = err with { TraceId = traceId } };
-        }
-
-        var code = result.Error?.Code;
-
-        return code switch
-        {
-            ErrorCodes.NotFound => new NotFoundObjectResult(result),
-            ErrorCodes.Conflict => new ConflictObjectResult(result),
-            ErrorCodes.Unauthorized => new UnauthorizedObjectResult(result),
-            ErrorCodes.Forbidden => new ObjectResult(result) { StatusCode = StatusCodes.Status403Forbidden },
-            ErrorCodes.Unexpected => new ObjectResult(result) { StatusCode = StatusCodes.Status500InternalServerError },
-
-            // Validation/invalid/default → 400
-            _ => new BadRequestObjectResult(result)
-        };
+        var status = MapStatusCode(res.Error);
+        return new ObjectResult(res) { StatusCode = status };
     }
+
+    public static async Task<IActionResult> ToActionResultAsync<T>(this Task<ResultDto<T>> task, HttpContext http)
+        => (await task).ToActionResult(http);
+
+    private static int MapStatusCode(ErrorDto? err)
+        => err?.Code switch
+        {
+            "not_found" => StatusCodes.Status404NotFound,
+            "conflict" => StatusCodes.Status409Conflict,
+            "unauthorized" => StatusCodes.Status401Unauthorized,
+            "forbidden" => StatusCodes.Status403Forbidden,
+            "validation" or "invalid" => StatusCodes.Status400BadRequest,
+            _ => StatusCodes.Status400BadRequest
+        };
 }

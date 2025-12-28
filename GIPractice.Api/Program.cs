@@ -1,9 +1,11 @@
-using GIPractice.Api.Scheduling;
+using GIPractice.Api.Biopsies;
 using GIPractice.Api.Patients;
-using GIPractice.Contracts;
-using GIPractice.Contracts.Scheduling;
-using GIPractice.Contracts.Patients;
+using GIPractice.Api.Scheduling;
 using GIPractice.Contracts.Common;
+using GIPractice.Contracts.Patients;
+using GIPractice.Contracts.Scheduling;
+using GIPractice.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,16 +24,19 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSingleton<ISchedulingStore, InMemorySchedulingStore>();
 builder.Services.AddScoped<ISchedulingService, SchedulingService>();
 
-builder.Services.AddSingleton<IPatientsStore, InMemoryPatientsStore>();
+//builder.Services.AddSingleton<IPatientsStore, InMemoryPatientsStore>();
+builder.Services.AddScoped<IPatientsStore, EfPatientsStore>();
 builder.Services.AddScoped<IPatientsService, PatientsService>();
 
 builder.Services.AddSingleton<GIPractice.Api.Encounters.IEncountersStore, GIPractice.Api.Encounters.InMemoryEncountersStore>();
 builder.Services.AddScoped<GIPractice.Contracts.Encounters.IEncountersService, GIPractice.Api.Encounters.EncountersService>();
 
-builder.Services.AddSingleton<GIPractice.Api.Endoscopies.IEndoscopiesStore, GIPractice.Api.Endoscopies.InMemoryEndoscopiesStore>();
+//builder.Services.AddSingleton<GIPractice.Api.Endoscopies.IEndoscopiesStore, GIPractice.Api.Endoscopies.InMemoryEndoscopiesStore>();
+builder.Services.AddScoped<GIPractice.Api.Endoscopies.IEndoscopiesStore, GIPractice.Api.Endoscopies.EfEndoscopiesStore>();
 builder.Services.AddScoped<GIPractice.Contracts.Endoscopies.IEndoscopiesService, GIPractice.Api.Endoscopies.EndoscopiesService>();
 
-builder.Services.AddSingleton<GIPractice.Api.Biopsies.IBiopsiesStore, GIPractice.Api.Biopsies.InMemoryBiopsiesStore>();
+//builder.Services.AddSingleton<GIPractice.Api.Biopsies.IBiopsiesStore, GIPractice.Api.Biopsies.InMemoryBiopsiesStore>();
+builder.Services.AddScoped<IBiopsiesStore, EfBiopsiesStore>();
 builder.Services.AddScoped<GIPractice.Contracts.Biopsies.IBiopsiesService, GIPractice.Api.Biopsies.BiopsiesService>();
 
 builder.Services.AddSingleton<GIPractice.Api.Pathology.IPathologyStore, GIPractice.Api.Pathology.InMemoryPathologyStore>();
@@ -45,6 +50,9 @@ builder.Services.AddScoped<GIPractice.Contracts.Settings.ISettingsService, GIPra
 
 builder.Services.AddSingleton<GIPractice.Api.Localization.ILocalizationStore, GIPractice.Api.Localization.InMemoryLocalizationStore>();
 builder.Services.AddScoped<GIPractice.Contracts.Localization.ILocalizationService, GIPractice.Api.Localization.LocalizationService>();
+
+builder.Services.AddDbContext<AppDbContext>(opt =>
+    opt.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.ConfigureHttpJsonOptions(o =>
 {
