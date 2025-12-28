@@ -2,6 +2,7 @@ using GIPractice.Api.Scheduling;
 using GIPractice.Api.Patients;
 using GIPractice.Contracts;
 using GIPractice.Contracts.Scheduling;
+using GIPractice.Contracts.Patients;d
 using GIPractice.Contracts.Common;
 using Scalar.AspNetCore;
 
