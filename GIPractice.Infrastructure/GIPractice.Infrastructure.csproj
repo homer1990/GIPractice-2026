@@ -19,4 +19,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\GIPractice.Core\GIPractice.Core.csproj" />
+  </ItemGroup>
+
 </Project>
