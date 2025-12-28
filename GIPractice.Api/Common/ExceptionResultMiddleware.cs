@@ -1,10 +1,14 @@
 ﻿using GIPractice.Contracts.Common;
+using Microsoft.Extensions.Hosting;
 using System.Net;
 using System.Text.Json;
 
 namespace GIPractice.Api.Common;
 
-public sealed class ExceptionResultMiddleware(RequestDelegate next)
+public sealed class ExceptionResultMiddleware(
+    RequestDelegate next,
+    ILogger<ExceptionResultMiddleware> log,
+    IHostEnvironment env)
 {
     public async Task Invoke(HttpContext ctx)
     {
@@ -12,7 +16,7 @@ public sealed class ExceptionResultMiddleware(RequestDelegate next)
         {
             await next(ctx);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             if (ctx.Response.HasStarted) throw;
 
@@ -21,10 +25,13 @@ public sealed class ExceptionResultMiddleware(RequestDelegate next)
 
             var traceId = ctx.TraceIdentifier;
 
+            // Always log server exceptions. Details returned to client only in Development.
+            log.LogError(ex, "Unhandled exception. TraceId={TraceId}", traceId);
+
             var dto = ResultDto<object?>.Fail(
                 ErrorCodes.Unexpected,
                 "Unexpected error.",
-                details: null,
+                details: env.IsDevelopment() ? ex.ToString() : null,
                 validationErrors: null,
                 traceId: traceId);
 
