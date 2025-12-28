@@ -6,8 +6,8 @@ using GIPractice.Contracts.Ids;
 namespace GIPractice.Contracts.Scheduling;
 
 public sealed record SchedulerNotificationSearchRequestDto(
-    [property: NotDefault] DateOnly? Day = null,
+    [param: NotDefault] DateOnly? Day = null,
     bool IncludeClosed = false,
     SchedulerNotificationKind? Kind = null,
-    [property: NonZeroId] PatientId? PatientId = null,
+    [param: NonZeroId] PatientId? PatientId = null,
     PagedRequestDto? Paging = null);

@@ -5,19 +5,19 @@ using GIPractice.Contracts.Ids;
 namespace GIPractice.Contracts.Patients;
 
 public sealed record PatientUpsertRequestDto(
-    [property: NonZeroId] PatientId? Id,
+    [param: NonZeroId] PatientId? Id,
 
-    [property: Required, MaxLength(100)] string LastName,
-    [property: Required, MaxLength(100)] string FirstName,
-    [property: MaxLength(100)] string? FathersName,
+    [param: Required, MaxLength(100)] string LastName,
+    [param: Required, MaxLength(100)] string FirstName,
+    [param: MaxLength(100)] string? FathersName,
 
     DateTime? BirthDate,
-    [property: RegularExpression(@"^\d{12}$")] string? PersonalNumber,
-    [property: MaxLength(30)] string? Gender,
+    [param: RegularExpression(@"^\d{12}$")] string? PersonalNumber,
+    [param: MaxLength(30)] string? Gender,
 
-    [property: MaxLength(30)] string? PhoneNumber,
-    [property: EmailAddress, MaxLength(254)] string? Email,
-    [property: MaxLength(250)] string? Address,
+    [param: MaxLength(30)] string? PhoneNumber,
+    [param: EmailAddress, MaxLength(254)] string? Email,
+    [param: MaxLength(250)] string? Address,
 
     bool HasHadCA,
     bool HasHadIBD,
@@ -25,6 +25,6 @@ public sealed record PatientUpsertRequestDto(
     bool HasScheduledEndo,
 
     byte[]? PhotoBytes,
-    [property: MaxLength(100)] string? PhotoContentType,
+    [param: MaxLength(100)] string? PhotoContentType,
 
     byte[]? RowVersion);

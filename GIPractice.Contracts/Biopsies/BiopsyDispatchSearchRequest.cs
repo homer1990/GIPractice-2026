@@ -5,8 +5,8 @@ using GIPractice.Contracts.Common.Validation;
 namespace GIPractice.Contracts.Biopsies;
 
 public sealed record BiopsyDispatchSearchRequestDto(
-    [property: MaxLength(100)] string? ProtocolNumber = null,
+    [param: MaxLength(100)] string? ProtocolNumber = null,
     bool? IsClosed = null,
-    [property: NotDefault] DateOnly? CreatedFrom = null,
-    [property: NotDefault] DateOnly? CreatedTo = null,
+    [param: NotDefault] DateOnly? CreatedFrom = null,
+    [param: NotDefault] DateOnly? CreatedTo = null,
     PagedRequestDto? Paging = null);

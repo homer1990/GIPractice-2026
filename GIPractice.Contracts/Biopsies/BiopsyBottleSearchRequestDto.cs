@@ -6,7 +6,7 @@ using GIPractice.Contracts.Ids;
 namespace GIPractice.Contracts.Biopsies;
 
 public sealed record BiopsyBottleSearchRequestDto(
-    [property: NonZeroId] PatientId? PatientId = null,
-    [property: NonZeroId] EndoscopyId? EndoscopyId = null,
+    [param: NonZeroId] PatientId? PatientId = null,
+    [param: NonZeroId] EndoscopyId? EndoscopyId = null,
     bool? IsUrgent = null,
     PagedRequestDto? Paging = null);

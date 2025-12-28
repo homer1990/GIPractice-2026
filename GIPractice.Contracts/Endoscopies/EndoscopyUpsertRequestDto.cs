@@ -5,17 +5,17 @@ using GIPractice.Contracts.Ids;
 namespace GIPractice.Contracts.Endoscopies;
 
 public sealed record EndoscopyUpsertRequestDto(
-    [property: NonZeroId] EndoscopyId? Id,
+    [param: NonZeroId] EndoscopyId? Id,
 
-    [property: NonZeroId] PatientId PatientId,
-    [property: NonZeroId] EncounterId EncounterId,
-    [property: NonZeroId] EndoscopyTypeId EndoscopyTypeId,
+    [param: NonZeroId] PatientId PatientId,
+    [param: NonZeroId] EncounterId EncounterId,
+    [param: NonZeroId] EndoscopyTypeId EndoscopyTypeId,
 
-    [property: NotDefault] DateTime StartUtc,
-    [property: NotDefault] DateTime? EndUtc,
+    [param: NotDefault] DateTime StartUtc,
+    [param: NotDefault] DateTime? EndUtc,
 
-    [property: EnumDataType(typeof(EndoscopyStatus))] EndoscopyStatus Status,
+    [param: EnumDataType(typeof(EndoscopyStatus))] EndoscopyStatus Status,
     bool IsUrgent,
 
-    [property: MaxLength(4000)] string? Notes,
+    [param: MaxLength(4000)] string? Notes,
     byte[]? RowVersion);

@@ -5,18 +5,18 @@ using GIPractice.Contracts.Ids;
 namespace GIPractice.Contracts.Infai;
 
 public sealed record InfaiReportUpsertRequestDto(
-    [property: NonZeroId] InfaiReportId? Id,
+    [param: NonZeroId] InfaiReportId? Id,
 
-    [property: NonZeroId] PatientId PatientId,
-    [property: NonZeroId] EndoscopyId EndoscopyId,
+    [param: NonZeroId] PatientId PatientId,
+    [param: NonZeroId] EndoscopyId EndoscopyId,
 
-    [property: NotDefault] DateTime? SentUtc,
-    [property: NotDefault] DateTime? ReceivedUtc,
+    [param: NotDefault] DateTime? SentUtc,
+    [param: NotDefault] DateTime? ReceivedUtc,
 
-    [property: MaxLength(120)] string? ParcelId,
+    [param: MaxLength(120)] string? ParcelId,
     bool IsUrgent,
 
-    [property: MaxLength(20000)] string? ReportText,
-    [property: EnumDataType(typeof(InfaiReportStatus))] InfaiReportStatus Status,
+    [param: MaxLength(20000)] string? ReportText,
+    [param: EnumDataType(typeof(InfaiReportStatus))] InfaiReportStatus Status,
 
     byte[]? RowVersion);

@@ -5,15 +5,15 @@ using GIPractice.Contracts.Ids;
 namespace GIPractice.Contracts.Biopsies;
 
 public sealed record BiopsyBottleUpsertRequestDto(
-    [property: NonZeroId] BiopsyBottleId? Id,
+    [param: NonZeroId] BiopsyBottleId? Id,
 
-    [property: NonZeroId] PatientId PatientId,
-    [property: NonZeroId] EndoscopyId EndoscopyId,
+    [param: NonZeroId] PatientId PatientId,
+    [param: NonZeroId] EndoscopyId EndoscopyId,
 
-    [property: Required, MaxLength(32)] string LabelCode,
-    [property: Required, MaxLength(200)] string SiteDescription,
+    [param: Required, MaxLength(32)] string LabelCode,
+    [param: Required, MaxLength(200)] string SiteDescription,
 
     bool IsUrgent,
-    [property: MaxLength(2000)] string? Notes,
+    [param: MaxLength(2000)] string? Notes,
 
     byte[]? RowVersion);

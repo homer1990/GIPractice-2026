@@ -5,5 +5,5 @@ using GIPractice.Contracts.Ids;
 namespace GIPractice.Contracts.Biopsies;
 
 public sealed record BiopsyDispatchCloseRequestDto(
-    [property: NonZeroId] BiopsyDispatchBundleId Id,
+    [param: NonZeroId] BiopsyDispatchBundleId Id,
     byte[]? RowVersion);
