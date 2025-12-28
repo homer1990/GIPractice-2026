@@ -3,4 +3,6 @@
 public sealed record ErrorDto(
     string Code,
     string Message,
-    IReadOnlyDictionary<string, IReadOnlyList<string>>? Details = null);
+    object? Details = null,
+    IReadOnlyDictionary<string, string[]>? ValidationErrors = null,
+    string? TraceId = null);

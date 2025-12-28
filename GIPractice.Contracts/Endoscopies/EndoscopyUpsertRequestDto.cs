@@ -6,15 +6,10 @@ public sealed record EndoscopyUpsertRequestDto(
     EndoscopyId? Id,
     PatientId PatientId,
     EncounterId EncounterId,
-
     EndoscopyTypeId EndoscopyTypeId,
-    string EndoscopyTypeName,
-
     DateTime StartUtc,
     DateTime? EndUtc,
-
+    EndoscopyStatus Status,
     bool IsUrgent,
     string? Notes,
-    string? ReportText,
-
     byte[]? RowVersion);

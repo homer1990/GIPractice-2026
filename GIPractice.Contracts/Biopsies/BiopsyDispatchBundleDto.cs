@@ -1,10 +1,12 @@
 ﻿using GIPractice.Contracts.Ids;
 
-namespace GIPractice.Contracts.Dispatch;
+namespace GIPractice.Contracts.Biopsies;
 
 public sealed record BiopsyDispatchBundleDto(
     BiopsyDispatchBundleId Id,
     DateTime CreatedUtc,
-    string ProtocolNumber,     // your “dispatch protocol” identifier
+    string ProtocolNumber,
     string? Notes,
-    bool IsClosed);
+    bool IsClosed,
+
+    byte[]? RowVersion);

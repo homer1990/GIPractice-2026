@@ -1,16 +1,33 @@
 ﻿namespace GIPractice.Contracts.Common;
 
 public sealed record ResultDto<T>(
-    T? Data,
+    bool IsSuccess,
+    T? Value,
     ErrorDto? Error)
 {
-    public bool IsSuccess => Error is null;
-    public static ResultDto<T> Ok(T data) => new(data, null);
-    public static ResultDto<T> Fail(ErrorDto error) => new(default, error);
+    public static ResultDto<T> Ok(T value)
+        => new(IsSuccess: true, Value: value, Error: null);
+
+    // Allows: ResultDto<T>.Fail(new ErrorDto(...))
+    public static ResultDto<T> Fail(ErrorDto error)
+        => new(IsSuccess: false, Value: default, Error: error);
+
+    // Allows: ResultDto<T>.Fail("not_found")
+    public static ResultDto<T> Fail(string code)
+        => new(IsSuccess: false, Value: default, Error: new ErrorDto(code, code));
+
+    // Allows: ResultDto<T>.Fail("not_found", "Patient not found.")
+    public static ResultDto<T> Fail(string code, string message)
+        => new(IsSuccess: false, Value: default, Error: new ErrorDto(code, message));
 
     public static ResultDto<T> Fail(
         string code,
         string message,
-        IReadOnlyDictionary<string, IReadOnlyList<string>>? details = null)
-        => new(default, new ErrorDto(code, message, details));
+        object? details = null,
+        IReadOnlyDictionary<string, string[]>? validationErrors = null,
+        string? traceId = null)
+        => new(
+            IsSuccess: false,
+            Value: default,
+            Error: new ErrorDto(code, message, details, validationErrors, traceId));
 }

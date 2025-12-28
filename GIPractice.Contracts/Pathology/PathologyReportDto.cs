@@ -6,7 +6,7 @@ public sealed record PathologyReportDto(
     PathologyReportId Id,
     PatientId PatientId,
     EndoscopyId EndoscopyId,
-    DispatchBundleId? DispatchBundleId,
+    BiopsyDispatchBundleId? BiopsyDispatchBundleId,
 
     DateTime? SentUtc,
     DateTime? ReceivedUtc,

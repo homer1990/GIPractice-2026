@@ -1,6 +1,7 @@
 ﻿using GIPractice.Contracts.Scheduling;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using GIPractice.Api.Common;
 
 namespace GIPractice.Api.Scheduling;
 
@@ -14,7 +15,7 @@ public sealed class SchedulingController : ControllerBase
 
     [HttpGet("day/{day}")]
     public Task<IActionResult> GetDay([FromRoute] DateOnly day, CancellationToken ct)
-        => Wrap(_svc.GetScheduleDayAsync(new ScheduleDayRequestDto(day), ct));
+        => _svc.GetScheduleDayAsync(new ScheduleDayRequestDto(day), ct).ToActionResultAsync(HttpContext);
 
     [HttpGet("day/{day}/available")]
     public Task<IActionResult> GetAvailable(
@@ -22,44 +23,26 @@ public sealed class SchedulingController : ControllerBase
         [FromQuery] int appointmentTypeId,
         [FromQuery] int? slotStepMinutes,
         CancellationToken ct)
-        => Wrap(_svc.GetAvailableStartTimesAsync(
-            new GetAvailableStartTimesRequestDto(day, new(appointmentTypeId), slotStepMinutes ?? 30), ct));
+        => _svc.GetAvailableStartTimesAsync(
+            new GetAvailableStartTimesRequestDto(day, new(appointmentTypeId), slotStepMinutes ?? 30), ct).ToActionResultAsync(HttpContext);
 
     [HttpPost("appointments")]
     public Task<IActionResult> Create([FromBody] AppointmentUpsertRequestDto dto, CancellationToken ct)
-        => Wrap(_svc.CreateAppointmentAsync(dto, ct));
+        => _svc.CreateAppointmentAsync(dto, ct).ToActionResultAsync(HttpContext);
 
     [HttpPut("appointments")]
     public Task<IActionResult> Update([FromBody] AppointmentUpsertRequestDto dto, CancellationToken ct)
-        => Wrap(_svc.UpdateAppointmentAsync(dto, ct));
+        => _svc.UpdateAppointmentAsync(dto, ct).ToActionResultAsync(HttpContext);
 
     [HttpDelete("appointments/{id:int}")]
     public Task<IActionResult> Delete([FromRoute] int id, CancellationToken ct)
-        => Wrap(_svc.DeleteAppointmentAsync(new(id), ct));
+        => _svc.DeleteAppointmentAsync(new(id), ct).ToActionResultAsync(HttpContext);
 
     [HttpPost("appointments/resolve")]
     public Task<IActionResult> Resolve([FromBody] AppointmentResolveRequestDto dto, CancellationToken ct)
-        => Wrap(_svc.ResolveAppointmentAsync(dto, ct));
+        => _svc.ResolveAppointmentAsync(dto, ct).ToActionResultAsync(HttpContext);
 
     [HttpPut("day-meta")]
     public Task<IActionResult> UpsertDayMeta([FromBody] CalendarDayMetaUpsertDto dto, CancellationToken ct)
-        => Wrap(_svc.UpsertCalendarDayMetaAsync(dto, ct));
-
-    private static async Task<IActionResult> Wrap<T>(Task<GIPractice.Contracts.Common.ResultDto<T>> task)
-    {
-        var res = await task;
-
-        if (res.IsSuccess)
-            return new OkObjectResult(res);
-
-        var code = res.Error?.Code;
-        return code switch
-        {
-            "not_found" => new NotFoundObjectResult(res),
-            "conflict" => new ConflictObjectResult(res),
-            "unauthorized" => new UnauthorizedObjectResult(res),
-            "forbidden" => new ObjectResult(res) { StatusCode = StatusCodes.Status403Forbidden },
-            _ => new BadRequestObjectResult(res)
-        };
-    }
+        => _svc.UpsertCalendarDayMetaAsync(dto, ct).ToActionResultAsync(HttpContext);
 }

@@ -182,10 +182,10 @@ index 6645c39..f5351b2 100644
  
      DateTime? SentUtc,
      DateTime? ReceivedUtc,
-diff --git a/GIPractice.Contracts/Patients/IPatientService.cs b/GIPractice.Contracts/Patients/IPatientService.cs
+diff --git a/GIPractice.Contracts/Patients/IPatientsService.cs b/GIPractice.Contracts/Patients/IPatientsService.cs
 index ff88713..3a7858c 100644
---- a/GIPractice.Contracts/Patients/IPatientService.cs
-+++ b/GIPractice.Contracts/Patients/IPatientService.cs
+--- a/GIPractice.Contracts/Patients/IPatientsService.cs
++++ b/GIPractice.Contracts/Patients/IPatientsService.cs
 @@ -1,18 +1,19 @@
  ﻿using GIPractice.Contracts.Common;
 +using GIPractice.Contracts.Ids;

@@ -4,10 +4,12 @@ namespace GIPractice.Contracts.Biopsies;
 
 public sealed record BiopsyBottleDto(
     BiopsyBottleId Id,
-    int PatientId,
-    int EndoscopyId,
+    PatientId PatientId,
+    EndoscopyId EndoscopyId,
 
-    string LabelCode,      // what you print/stick
+    string LabelCode,
     string SiteDescription,
     bool IsUrgent,
-    string? Notes);
+    string? Notes,
+
+    byte[]? RowVersion);

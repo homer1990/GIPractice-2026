@@ -2,7 +2,8 @@
 
 public enum EncounterStatus
 {
-    InProgress = 0,
-    Completed = 1,
-    Cancelled = 2
+    Planned = 0,
+    InProgress = 1,
+    Completed = 2,
+    Cancelled = 3
 }

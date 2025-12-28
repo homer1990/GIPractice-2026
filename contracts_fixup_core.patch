@@ -1,0 +1,47 @@
+diff --git a/GIPractice.Contracts/Common/ResultDto.cs b/GIPractice.Contracts/Common/ResultDto.cs
+index ee03a6a..9162591 100644
+--- a/GIPractice.Contracts/Common/ResultDto.cs
++++ b/GIPractice.Contracts/Common/ResultDto.cs
+@@ -1,10 +1,31 @@
+ ﻿namespace GIPractice.Contracts.Common;
+ 
++/// <summary>
++/// Standard service/API result envelope. Success = Data is present and Error is null.
++/// Failure = Data is default/null and Error is present.
++/// </summary>
+ public sealed record ResultDto<T>(
+     T? Data,
+     ErrorDto? Error)
+ {
+     public bool IsSuccess => Error is null;
+-    public static ResultDto<T> Ok(T data) => new(data, null);
+-    public static ResultDto<T> Fail(ErrorDto error) => new(default, error);
++
++    /// <summary>
++    /// Convenience: can be set on either success or failure results.
++    /// </summary>
++    public string? TraceId { get; init; }
++
++    public static ResultDto<T> Ok(T data, string? traceId = null)
++        => new(data, null) { TraceId = traceId };
++
++    public static ResultDto<T> Fail(ErrorDto error, string? traceId = null)
++        => new(default, error) { TraceId = traceId ?? error.TraceId };
++
++    public static ResultDto<T> Fail(
++        string code,
++        string message,
++        IReadOnlyDictionary<string, IReadOnlyList<string>>? details = null,
++        IReadOnlyDictionary<string, IReadOnlyList<string>>? validationErrors = null,
++        string? traceId = null)
++        => Fail(new ErrorDto(code, message, details) { ValidationErrors = validationErrors, TraceId = traceId }, traceId);
+ }
+diff --git a/GIPractice.Contracts/Ids/DispatchBundleId.cs b/GIPractice.Contracts/Ids/DispatchBundleId.cs
+index 19562d1..99132ba 100644
+--- a/GIPractice.Contracts/Ids/DispatchBundleId.cs
++++ b/GIPractice.Contracts/Ids/DispatchBundleId.cs
+@@ -1,3 +1,4 @@
+ ﻿namespace GIPractice.Contracts.Ids;
+ 
++[System.Obsolete("Use BiopsyDispatchBundleId.")]
+ public readonly record struct DispatchBundleId(int Value);

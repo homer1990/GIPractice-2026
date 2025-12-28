@@ -2,7 +2,7 @@ using GIPractice.Api.Scheduling;
 using GIPractice.Api.Patients;
 using GIPractice.Contracts;
 using GIPractice.Contracts.Scheduling;
-using GIPractice.Contracts.Patients;d
+using GIPractice.Contracts.Patients;
 using GIPractice.Contracts.Common;
 using Scalar.AspNetCore;
 
@@ -18,11 +18,33 @@ builder.Services.AddControllers()
 
 // Needed for Controller-based OpenAPI generation.
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSingleton<ISchedulingStore, InMemorySchedulingStore>();
 builder.Services.AddScoped<ISchedulingService, SchedulingService>();
 
 builder.Services.AddSingleton<IPatientsStore, InMemoryPatientsStore>();
 builder.Services.AddScoped<IPatientsService, PatientsService>();
+
+builder.Services.AddSingleton<GIPractice.Api.Encounters.IEncountersStore, GIPractice.Api.Encounters.InMemoryEncountersStore>();
+builder.Services.AddScoped<GIPractice.Contracts.Encounters.IEncountersService, GIPractice.Api.Encounters.EncountersService>();
+
+builder.Services.AddSingleton<GIPractice.Api.Endoscopies.IEndoscopiesStore, GIPractice.Api.Endoscopies.InMemoryEndoscopiesStore>();
+builder.Services.AddScoped<GIPractice.Contracts.Endoscopies.IEndoscopiesService, GIPractice.Api.Endoscopies.EndoscopiesService>();
+
+builder.Services.AddSingleton<GIPractice.Api.Biopsies.IBiopsiesStore, GIPractice.Api.Biopsies.InMemoryBiopsiesStore>();
+builder.Services.AddScoped<GIPractice.Contracts.Biopsies.IBiopsiesService, GIPractice.Api.Biopsies.BiopsiesService>();
+
+builder.Services.AddSingleton<GIPractice.Api.Pathology.IPathologyStore, GIPractice.Api.Pathology.InMemoryPathologyStore>();
+builder.Services.AddScoped<GIPractice.Contracts.Pathology.IPathologyService, GIPractice.Api.Pathology.PathologyService>();
+
+builder.Services.AddSingleton<GIPractice.Api.Infai.IInfaiStore, GIPractice.Api.Infai.InMemoryInfaiStore>();
+builder.Services.AddScoped<GIPractice.Contracts.Infai.IInfaiService, GIPractice.Api.Infai.InfaiService>();
+
+builder.Services.AddSingleton<GIPractice.Api.Settings.ISettingsStore, GIPractice.Api.Settings.InMemorySettingsStore>();
+builder.Services.AddScoped<GIPractice.Contracts.Settings.ISettingsService, GIPractice.Api.Settings.SettingsService>();
+
+builder.Services.AddSingleton<GIPractice.Api.Localization.ILocalizationStore, GIPractice.Api.Localization.InMemoryLocalizationStore>();
+builder.Services.AddScoped<GIPractice.Contracts.Localization.ILocalizationService, GIPractice.Api.Localization.LocalizationService>();
 
 builder.Services.ConfigureHttpJsonOptions(o =>
 {
@@ -31,9 +53,15 @@ builder.Services.ConfigureHttpJsonOptions(o =>
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddSchemaTransformer<GIPractice.Api.Common.StrongIntIdSchemaTransformer>();
+});
+
 
 var app = builder.Build();
+
+app.UseMiddleware<GIPractice.Api.Common.ExceptionResultMiddleware>(); //Exceptions Middleware
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

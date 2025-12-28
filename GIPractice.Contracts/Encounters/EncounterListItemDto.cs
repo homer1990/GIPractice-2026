@@ -5,14 +5,8 @@ namespace GIPractice.Contracts.Encounters;
 public sealed record EncounterListItemDto(
     EncounterId Id,
     PatientId PatientId,
-    AppointmentId? AppointmentId,
-
-    DateTime StartUtc,
-    DateTime? EndUtc,
-
-    int EncounterTypeId,
+    EncounterTypeId EncounterTypeId,
     string EncounterTypeName,
-
-    string? EndoscopyTypeName,
+    DateTime StartUtc,
     EncounterStatus Status,
-    string? Notes);
+    bool IsUrgent);

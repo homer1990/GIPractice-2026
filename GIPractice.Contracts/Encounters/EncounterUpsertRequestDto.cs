@@ -5,13 +5,10 @@ namespace GIPractice.Contracts.Encounters;
 public sealed record EncounterUpsertRequestDto(
     EncounterId? Id,
     PatientId PatientId,
-    AppointmentId? AppointmentId,
-
+    EncounterTypeId EncounterTypeId,
     DateTime StartUtc,
     DateTime? EndUtc,
-
-    int EncounterTypeId,
-    string EncounterTypeName,
+    EncounterStatus Status,
+    bool IsUrgent,
     string? Notes,
-
     byte[]? RowVersion);

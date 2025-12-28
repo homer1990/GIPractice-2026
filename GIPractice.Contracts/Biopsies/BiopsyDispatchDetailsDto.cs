@@ -1,4 +1,4 @@
-﻿namespace GIPractice.Contracts.Dispatch;
+﻿namespace GIPractice.Contracts.Biopsies;
 
 public sealed record BiopsyDispatchDetailsDto(
     BiopsyDispatchBundleDto Bundle,

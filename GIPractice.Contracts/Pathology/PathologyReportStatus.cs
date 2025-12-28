@@ -2,7 +2,9 @@
 
 public enum PathologyReportStatus
 {
-    Pending = 0,
-    Received = 1,
-    InformedPatient = 2
+    Draft = 0,
+    Sent = 1,
+    Received = 2,
+    Finalized = 3,
+    Cancelled = 4
 }
