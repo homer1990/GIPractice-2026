@@ -31,7 +31,7 @@ public sealed class PatientsApiTests(TestApiFactory factory) : IClassFixture<Tes
 
         resp.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var dto = await resp.Content.ReadFromJsonAsync<ResultDto<PagedResultDto<PatientListItemDto>>>();
+        var dto = await resp.Content.ReadFromJsonAsync<ResultDto<PagedResultDto<PatientListItemDto>>>(TestJson.Options);
         dto.Should().NotBeNull();
         dto!.IsSuccess.Should().BeTrue();
         dto.Value.Should().NotBeNull();
