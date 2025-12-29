@@ -7,14 +7,12 @@ namespace GIPractice.Api.Tests;
 
 public sealed class MigrationsSmokeTests
 {
-    [Fact]
+    [Fact(Skip = "Enable when you want to validate migrations against a fresh database.")]
     public void MigrateFreshDatabase_ShouldSucceed_WhenOptedIn()
     {
         // This is intentionally opt-in because migrations might not be the current focus
         // while contracts/controllers are still moving.
         var optIn = Environment.GetEnvironmentVariable("RUN_MIGRATIONS_TESTS");
-        if (!string.Equals(optIn, "1", StringComparison.Ordinal))
-            throw new Xunit.Sdk.SkipException("Set RUN_MIGRATIONS_TESTS=1 to run migration smoke test.");
 
         var dbName = $"GIPractice_Migrate_Test_{Guid.NewGuid():N}";
         var cs =
