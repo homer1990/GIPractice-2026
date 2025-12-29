@@ -7,11 +7,9 @@ using Xunit;
 
 namespace GIPractice.Api.Tests;
 
-public sealed class SchedulingValidationTests : IClassFixture<TestApiFactory>
+public sealed class SchedulingValidationTests(TestApiFactory factory) : IClassFixture<TestApiFactory>
 {
-    private readonly HttpClient _http;
-
-    public SchedulingValidationTests(TestApiFactory factory) => _http = factory.CreateClient();
+    private readonly HttpClient _http = factory.CreateClient();
 
     [Fact]
     public async Task CreateAppointment_DefaultStartUtc_ShouldReturn400()

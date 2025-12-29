@@ -50,7 +50,34 @@ public sealed class TestApiFactory : WebApplicationFactory<ApiEntryPoint>
         db.Database.EnsureDeleted();
         db.Database.EnsureCreated();
 
+        SeedTestData(db);
+
         return host;
+    }
+
+    private static void SeedTestData(AppDbContext db)
+    {
+        // Keep this minimal: seed just enough to satisfy FK constraints and basic searches.
+        // (Tests may still create their own data.)
+
+        if (db.Patients.Any())
+            return;
+
+        var p = new GIPractice.Core.Entities.Patient
+        {
+            LastName = "Seed",
+            FirstName = "Patient",
+            FathersName = "Seeder",
+            PersonalNumber = GIPractice.Core.ValueObjects.PersonalNumber.Create("000000000001"),
+            BirthDay = new DateTime(1980, 1, 1),
+            Gender = GIPractice.Core.Enums.Gender.None,
+            Email = null,
+            PhoneNumber = null,
+            Address = null,
+        };
+
+        db.Patients.Add(p);
+        db.SaveChanges();
     }
 
     protected override void Dispose(bool disposing)

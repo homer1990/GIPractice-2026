@@ -4,6 +4,8 @@ using GIPractice.Contracts.Common.Validation;
 using GIPractice.Contracts.Ids;
 using Xunit;
 
+namespace GIPractice.Contracts.Tests;
+
 public sealed class ValidationTests
 {
     [Fact]

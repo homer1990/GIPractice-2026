@@ -8,6 +8,8 @@ using GIPractice.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
+namespace GIPractice.Api;
+
 public partial class Program
 {
     private static void Main(string[] args)
