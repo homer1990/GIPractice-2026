@@ -1,9 +1,7 @@
-﻿using GIPractice.Contracts.Biopsies;
-using GIPractice.Contracts.Common;
-using GIPractice.Contracts.Ids;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using GIPractice.Api.Common;
+using GIPractice.Contracts.Biopsies;
+using GIPractice.Contracts.Ids;
+using Microsoft.AspNetCore.Mvc;
 
 namespace GIPractice.Api.Biopsies;
 

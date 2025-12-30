@@ -110,10 +110,14 @@ public sealed class EfBiopsiesStore : IBiopsiesStore
             Number = 0
         };
 
-        // Best-effort: interpret SiteDescription as comma-separated OrganArea *codes*
-        if (!string.IsNullOrWhiteSpace(request.SiteDescription))
+        // Best-effort: resolve organ areas by codes.
+        if (request.OrganAreaCodes is { Length: > 0 })
         {
-            var codes = SplitCodes(request.SiteDescription);
+            var codes = request.OrganAreaCodes
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s.Trim())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
             if (codes.Count > 0)
             {
                 var areas = await _db.OrganAreas
@@ -158,12 +162,17 @@ public sealed class EfBiopsiesStore : IBiopsiesStore
         entity.CollectedAtUtc = endo.PerformedAtUtc;
         entity.Label = request.LabelCode ?? "";
 
-        // Update OrganAreas from SiteDescription (codes) best-effort
-        entity.OrganAreas.Clear();
-
-        if (!string.IsNullOrWhiteSpace(request.SiteDescription))
+        // Update OrganAreas only if explicitly provided (null => leave as-is).
+        // If an empty array is sent, this clears organ areas.
+        if (request.OrganAreaCodes is not null)
         {
-            var codes = SplitCodes(request.SiteDescription);
+            entity.OrganAreas.Clear();
+
+            var codes = request.OrganAreaCodes
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s.Trim())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
             if (codes.Count > 0)
             {
                 var areas = await _db.OrganAreas

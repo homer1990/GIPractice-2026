@@ -1,4 +1,4 @@
-﻿using GIPractice.Core.Entities;
+using GIPractice.Core.Entities;
 using GIPractice.Core.Enums;
 using GIPractice.Core.ValueObjects;
 using GIPractice.Infrastructure;
@@ -8,128 +8,115 @@ using Microsoft.EntityFrameworkCore;
 namespace GIPractice.Api.Common;
 
 [ApiController]
-[Route("api/dev/seed")]
-public sealed class DevSeedController : ControllerBase
+[Route("api/dev")]
+public sealed class DevSeedController(AppDbContext db, IWebHostEnvironment env) : ControllerBase
 {
-    private readonly AppDbContext _db;
-    public DevSeedController(AppDbContext db) => _db = db;
-
-    [HttpPost]
+    [HttpPost("seed")]
     public async Task<IActionResult> Seed(CancellationToken ct)
     {
-        if (!HttpContext.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
+        if (!env.IsDevelopment())
             return NotFound();
 
-        // Idempotent seed:
-        // - Ensure there is at least 1 patient
-        // - Ensure that patient has at least 1 visit
-        // - Ensure that visit has at least 1 endoscopy
-        // - Ensure that endoscopy has at least 1 biopsy bottle
-        // This makes tests/dev UX stable even if the DB already has partial data.
+        db.DisableVersioning = true;
 
         // Patient
-        var p = await _db.Patients
-            .OrderBy(x => x.Id)
+        var patient = await db.Patients
+            .OrderBy(p => p.Id)
             .FirstOrDefaultAsync(ct);
 
-        if (p is null)
+        if (patient is null)
         {
-            PersonalNumber.TryCreate("000000000000", out var pn);
-
-            p = new Patient
+            patient = new Patient
             {
-                FirstName = "Test",
+                FirstName = "Seed",
                 LastName = "Patient",
-                FathersName = "Demo",
-                PersonalNumber = pn,
-                BirthDay = new DateTime(1990, 1, 1),
+                FathersName = "Seeder",
+                BirthDay = new DateTime(1980, 1, 1),
                 Gender = Gender.Male,
-                Email = "test@example.com",
-                PhoneNumber = "6900000000",
-                Address = "Athens"
+                PersonalNumber = PersonalNumber.Create("000000000001"),
+                PhoneNumber = null,
+                Email = null
             };
 
-            _db.Patients.Add(p);
-            await _db.SaveChangesAsync(ct);
+            db.Patients.Add(patient);
+            await db.SaveChangesAsync(ct);
         }
 
         // Visit
-        var v = await _db.Visits
-            .Where(x => x.PatientId == p.Id)
-            .OrderByDescending(x => x.DateOfVisitUtc)
+        var visit = await db.Visits
+            .Where(v => v.PatientId == patient.Id)
+            .OrderBy(v => v.Id)
             .FirstOrDefaultAsync(ct);
 
-        if (v is null)
+        if (visit is null)
         {
-            v = new Visit
+            visit = new Visit
             {
-                PatientId = p.Id,
-                DateOfVisitUtc = DateTime.UtcNow.AddDays(-1),
-                Notes = "Seed visit",
-                AppointmentId = null
+                PatientId = patient.Id,
+                DateOfVisitUtc = DateTime.UtcNow.Date,
+                Notes = "Seed visit"
             };
-            _db.Visits.Add(v);
-            await _db.SaveChangesAsync(ct);
+
+            db.Visits.Add(visit);
+            await db.SaveChangesAsync(ct);
         }
 
         // Endoscopy
-        var e = await _db.Endoscopies
-            .Where(x => x.PatientId == p.Id && x.VisitId == v.Id)
-            .OrderByDescending(x => x.PerformedAtUtc)
+        var endoscopy = await db.Endoscopies
+            .Where(e => e.PatientId == patient.Id)
+            .OrderBy(e => e.Id)
             .FirstOrDefaultAsync(ct);
 
-        if (e is null)
+        if (endoscopy is null)
         {
-            e = new Endoscopy
+            endoscopy = new Endoscopy
             {
-                PatientId = p.Id,
-                VisitId = v.Id,
+                PatientId = patient.Id,
+                VisitId = visit.Id,
                 Type = EndoscopyType.Gastroscopy,
-                PerformedAtUtc = DateTime.UtcNow.AddDays(-1),
+                PerformedAtUtc = DateTime.UtcNow,
                 IsUrgent = false,
                 Notes = "Seed endoscopy"
             };
-            _db.Endoscopies.Add(e);
-            await _db.SaveChangesAsync(ct);
+
+            db.Endoscopies.Add(endoscopy);
+            await db.SaveChangesAsync(ct);
         }
 
         // Biopsy bottle
-        var b = await _db.BiopsyBottles
-            .Include(x => x.OrganAreas)
-            .Where(x => x.PatientId == p.Id && x.EndoscopyId == e.Id)
-            .OrderBy(x => x.Id)
+        var bottle = await db.BiopsyBottles
+            .Where(b => b.PatientId == patient.Id && b.EndoscopyId == endoscopy.Id)
+            .OrderBy(b => b.Id)
             .FirstOrDefaultAsync(ct);
 
-        if (b is null)
+        if (bottle is null)
         {
-            b = new BiopsyBottle
+            bottle = new BiopsyBottle
             {
-                PatientId = p.Id,
-                EndoscopyId = e.Id,
-                CollectedAtUtc = e.PerformedAtUtc,
-                Label = "A1",
+                PatientId = patient.Id,
+                EndoscopyId = endoscopy.Id,
+                Label = "A",
                 Number = 1
             };
 
-            // Make SiteDescription non-empty via OrganAreas (Contracts require it).
-            var oa = await _db.OrganAreas.FirstOrDefaultAsync(x => x.Code == "GEJ", ct);
-            if (oa is not null)
-                b.OrganAreas.Add(oa);
+            // Best-effort: attach first organ area if any exist.
+            var oa = await db.OrganAreas
+                .OrderBy(x => x.Id)
+                .FirstOrDefaultAsync(ct);
 
-            _db.BiopsyBottles.Add(b);
-            await _db.SaveChangesAsync(ct);
+            if (oa is not null)
+                bottle.OrganAreas.Add(oa);
+
+            db.BiopsyBottles.Add(bottle);
+            await db.SaveChangesAsync(ct);
         }
-        else if (b.OrganAreas.Count == 0)
+
+        return Ok(new
         {
-            // If a bottle exists but has no areas, attach one so API contracts/tests stay valid.
-            var oa = await _db.OrganAreas.FirstOrDefaultAsync(x => x.Code == "GEJ", ct);
-            if (oa is not null)
-            {
-                b.OrganAreas.Add(oa);
-                await _db.SaveChangesAsync(ct);
-            }
-        }
-
-        return Ok(new { seeded = true, patientId = p.Id, visitId = v.Id, endoscopyId = e.Id, biopsyBottleId = b.Id });
+            PatientId = patient.Id,
+            VisitId = visit.Id,
+            EndoscopyId = endoscopy.Id,
+            BiopsyBottleId = bottle.Id
+        });
     }
 }

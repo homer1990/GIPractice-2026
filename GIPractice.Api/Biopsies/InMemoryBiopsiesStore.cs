@@ -1,4 +1,4 @@
-﻿using GIPractice.Contracts.Biopsies;
+using GIPractice.Contracts.Biopsies;
 using GIPractice.Contracts.Common;
 using GIPractice.Contracts.Ids;
 
@@ -17,7 +17,7 @@ public sealed class InMemoryBiopsiesStore : IBiopsiesStore
         public PatientId PatientId { get; set; }
         public EndoscopyId EndoscopyId { get; set; }
         public string LabelCode { get; set; } = "";
-        public string SiteDescription { get; set; } = "";
+        public string[] OrganAreaCodes { get; set; } = Array.Empty<string>();
         public bool IsUrgent { get; set; }
         public string? Notes { get; set; }
         public byte[] RowVersion { get; set; } = NewRowVersion();
@@ -61,9 +61,14 @@ public sealed class InMemoryBiopsiesStore : IBiopsiesStore
             var total = q.Count();
             var items = q.Skip((page - 1) * pageSize).Take(pageSize)
                 .Select(x => new BiopsyBottleDto(
-                    x.Id, x.PatientId, x.EndoscopyId,
-                    x.LabelCode, x.SiteDescription, x.IsUrgent, x.Notes,
-                    x.RowVersion))
+                    x.Id,
+                    x.PatientId,
+                    x.EndoscopyId,
+                    LabelCode: x.LabelCode,
+                    SiteDescription: x.OrganAreaCodes is { Length: > 0 } ? string.Join(", ", x.OrganAreaCodes) : "",
+                    IsUrgent: x.IsUrgent,
+                    Notes: x.Notes,
+                    RowVersion: x.RowVersion))
                 .ToList();
 
             return Task.FromResult(new PagedResultDto<BiopsyBottleDto>(items, total, page, pageSize));
@@ -78,9 +83,14 @@ public sealed class InMemoryBiopsiesStore : IBiopsiesStore
             if (x is null) return Task.FromResult<BiopsyBottleDto?>(null);
 
             return Task.FromResult<BiopsyBottleDto?>(new BiopsyBottleDto(
-                x.Id, x.PatientId, x.EndoscopyId,
-                x.LabelCode, x.SiteDescription, x.IsUrgent, x.Notes,
-                x.RowVersion));
+                x.Id,
+                x.PatientId,
+                x.EndoscopyId,
+                LabelCode: x.LabelCode,
+                SiteDescription: x.OrganAreaCodes is { Length: > 0 } ? string.Join(", ", x.OrganAreaCodes) : "",
+                IsUrgent: x.IsUrgent,
+                Notes: x.Notes,
+                RowVersion: x.RowVersion));
         }
     }
 
@@ -96,7 +106,7 @@ public sealed class InMemoryBiopsiesStore : IBiopsiesStore
                 PatientId = request.PatientId,
                 EndoscopyId = request.EndoscopyId,
                 LabelCode = request.LabelCode,
-                SiteDescription = request.SiteDescription,
+                OrganAreaCodes = request.OrganAreaCodes ?? Array.Empty<string>(),
                 IsUrgent = request.IsUrgent,
                 Notes = request.Notes,
                 RowVersion = NewRowVersion()
@@ -124,9 +134,12 @@ public sealed class InMemoryBiopsiesStore : IBiopsiesStore
             row.PatientId = request.PatientId;
             row.EndoscopyId = request.EndoscopyId;
             row.LabelCode = request.LabelCode;
-            row.SiteDescription = request.SiteDescription;
             row.IsUrgent = request.IsUrgent;
             row.Notes = request.Notes;
+
+            if (request.OrganAreaCodes is not null)
+                row.OrganAreaCodes = request.OrganAreaCodes;
+
             row.RowVersion = NewRowVersion();
 
             return Task.FromResult(ResultDto<bool>.Ok(true));
@@ -202,9 +215,6 @@ public sealed class InMemoryBiopsiesStore : IBiopsiesStore
     {
         lock (_lock)
         {
-            if (_bundles.Any(x => string.Equals(x.ProtocolNumber, request.ProtocolNumber, StringComparison.OrdinalIgnoreCase)))
-                return Task.FromResult(ResultDto<BiopsyDispatchBundleId>.Fail("conflict", "ProtocolNumber already exists."));
-
             var id = new BiopsyDispatchBundleId(_nextBundleId++);
 
             var row = new BundleRow
