@@ -27,9 +27,10 @@ public sealed class PathologyController : ControllerBase
     public Task<IActionResult> Create([FromBody] PathologyReportUpsertRequestDto dto, CancellationToken ct)
         => _svc.CreateAsync(dto, ct).ToActionResultAsync(HttpContext);
 
-    [HttpPut]
-    public Task<IActionResult> Update([FromBody] PathologyReportUpsertRequestDto dto, CancellationToken ct)
-        => _svc.UpdateAsync(dto, ct).ToActionResultAsync(HttpContext);
+    // Route id always wins. Body Id may be null or wrong; we overwrite it.
+    [HttpPut("{id:int}")]
+    public Task<IActionResult> Update([FromRoute] int id, [FromBody] PathologyReportUpsertRequestDto dto, CancellationToken ct)
+        => _svc.UpdateAsync(dto with { Id = new PathologyReportId(id) }, ct).ToActionResultAsync(HttpContext);
 
     [HttpDelete("{id:int}")]
     public Task<IActionResult> Delete([FromRoute] int id, CancellationToken ct)
