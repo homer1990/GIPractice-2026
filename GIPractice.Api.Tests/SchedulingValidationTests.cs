@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using GIPractice.Contracts.Ids;
 using GIPractice.Contracts.Scheduling;
-using Xunit;
 
 namespace GIPractice.Api.Tests;
 
@@ -26,7 +25,7 @@ public sealed class SchedulingValidationTests(TestApiFactory factory) : IClassFi
             Status: AppointmentStatus.Scheduled,  // adjust enum member if yours differs
             RowVersion: null);
 
-        var resp = await _http.PostAsJsonAsync("/api/scheduling/appointments", req, TestJson.Options);
+        var resp = await _http.PostAsJsonAsync("/api/scheduling/appointments", req);
 
         resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }

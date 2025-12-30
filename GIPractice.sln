@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 18.0.11222.15
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Infrastructure", "GIPractice.Infrastructure\GIPractice.Infrastructure.csproj", "{A448F46E-76B4-4EC1-B1D2-70327146D5D7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B36930DE-BA9F-7A91-B57C-F999C978C765} = {B36930DE-BA9F-7A91-B57C-F999C978C765}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GIPractice.Core", "GIPractice.Core\GIPractice.Core.csproj", "{D13900AE-1C2B-42C2-B019-1830838F0738}"
 EndProject

@@ -11,24 +11,44 @@ public sealed class StrongIntIdJsonConverterFactory : JsonConverterFactory
 
     public override bool CanConvert(Type typeToConvert)
     {
+        // Handle nullable wrappers
+        var t = Nullable.GetUnderlyingType(typeToConvert) ?? typeToConvert;
+
         // Accept types that look like: readonly record struct XxxId(int Value)
         // i.e. have:
         // - public ctor(int)
         // - public int Value { get; }
-        var ctor = typeToConvert.GetConstructor(new[] { typeof(int) });
+        var ctor = t.GetConstructor(new[] { typeof(int) });
         if (ctor is null)
             return false;
 
-        var valueProp = typeToConvert.GetProperty("Value", BindingFlags.Public | BindingFlags.Instance);
+        var valueProp = t.GetProperty("Value", BindingFlags.Public | BindingFlags.Instance);
         return valueProp is { CanRead: true } && valueProp.PropertyType == typeof(int);
     }
 
-    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options) =>
-        Cache.GetOrAdd(typeToConvert, static t =>
+    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+    {
+        var underlying = Nullable.GetUnderlyingType(typeToConvert);
+
+        if (underlying is null)
+        {
+            return Cache.GetOrAdd(typeToConvert, static t =>
+            {
+                var convType = typeof(StrongIntIdJsonConverter<>).MakeGenericType(t);
+                return (JsonConverter)Activator.CreateInstance(convType)!;
+            });
+        }
+
+        // Nullable<TId>: build inner converter for TId, then wrap it.
+        var inner = Cache.GetOrAdd(underlying, static t =>
         {
             var convType = typeof(StrongIntIdJsonConverter<>).MakeGenericType(t);
             return (JsonConverter)Activator.CreateInstance(convType)!;
         });
+
+        var wrapperType = typeof(NullableStrongIntIdJsonConverter<>).MakeGenericType(underlying);
+        return (JsonConverter)Activator.CreateInstance(wrapperType, inner)!;
+    }
 
     private sealed class StrongIntIdJsonConverter<TId> : JsonConverter<TId>
     {
@@ -40,7 +60,6 @@ public sealed class StrongIntIdJsonConverterFactory : JsonConverterFactory
 
         public override TId Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            // Allow both number and string inputs (string is handy if some clients send "123")
             int value = reader.TokenType switch
             {
                 JsonTokenType.Number => reader.GetInt32(),
@@ -55,6 +74,34 @@ public sealed class StrongIntIdJsonConverterFactory : JsonConverterFactory
         {
             var raw = (int)ValueProp.GetValue(value)!;
             writer.WriteNumberValue(raw);
+        }
+    }
+
+    private sealed class NullableStrongIntIdJsonConverter<TId> : JsonConverter<TId?>
+        where TId : struct
+    {
+        private readonly JsonConverter<TId> _inner;
+
+        public NullableStrongIntIdJsonConverter(JsonConverter inner)
+            => _inner = (JsonConverter<TId>)inner;
+
+        public override TId? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.Null)
+                return null;
+
+            return _inner.Read(ref reader, typeof(TId), options);
+        }
+
+        public override void Write(Utf8JsonWriter writer, TId? value, JsonSerializerOptions options)
+        {
+            if (value is null)
+            {
+                writer.WriteNullValue();
+                return;
+            }
+
+            _inner.Write(writer, value.Value, options);
         }
     }
 }

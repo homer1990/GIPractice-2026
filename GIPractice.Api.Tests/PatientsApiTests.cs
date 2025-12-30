@@ -27,11 +27,11 @@ public sealed class PatientsApiTests(TestApiFactory factory) : IClassFixture<Tes
             HasScheduledEndo: null,
             Paging: null);
 
-        var resp = await _http.PostAsJsonAsync("/api/patients/search", req);
+        var resp = await _http.PostJsonAsync("/api/patients/search", req);
 
         resp.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var dto = await resp.Content.ReadFromJsonAsync<ResultDto<PagedResultDto<PatientListItemDto>>>(TestJson.Options);
+        var dto = await resp.Content.ReadJsonAsync<ResultDto<PagedResultDto<PatientListItemDto>>>();
         dto.Should().NotBeNull();
         dto!.IsSuccess.Should().BeTrue();
         dto.Value.Should().NotBeNull();

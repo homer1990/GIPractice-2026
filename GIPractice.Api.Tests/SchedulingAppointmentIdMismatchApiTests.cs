@@ -27,11 +27,11 @@ public sealed class SchedulingAppointmentIdMismatchApiTests(TestApiFactory facto
             Status: AppointmentStatus.Scheduled,
             RowVersion: null);
 
-        var resp = await _http.PutAsJsonAsync("/api/scheduling/appointments/1", dto);
+        var resp = await _http.PutJsonAsync("/api/scheduling/appointments/1", dto);
 
         resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        var body = await resp.Content.ReadFromJsonAsync<ResultDto<bool>>();
+        var body = await resp.Content.ReadJsonAsync<ResultDto<bool>>();
         body.Should().NotBeNull();
         body!.IsSuccess.Should().BeFalse();
         body.Error.Should().NotBeNull();

@@ -1,8 +1,9 @@
+using FluentAssertions;
+using GIPractice.Contracts.Ids;
+using GIPractice.Contracts.Patients;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using FluentAssertions;
-using GIPractice.Contracts.Patients;
 using Xunit;
 
 namespace GIPractice.Api.Tests;
@@ -14,15 +15,15 @@ public sealed class PatientsRouteIdOverrideApiTests(TestApiFactory factory) : IC
     [Fact]
     public async Task UpdatePatient_WhenBodyIdDiffers_RouteIdStillWins()
     {
-        var id = await CreatePatientAsync(lastName: "RouteWins", firstName: "Test");
+        var (id, personalNumber) = await CreatePatientAsync(lastName: "RouteWins", firstName: "Test");
 
         var update = new PatientUpsertRequestDto(
-            Id: new GIPractice.Contracts.Ids.PatientId(id + 9999), // intentionally wrong
+            Id: new PatientId(id + 9999),              // intentionally wrong
             LastName: "RouteWinsUpdated",
             FirstName: "Test",
             FathersName: null,
             BirthDate: null,
-            PersonalNumber: null,
+            PersonalNumber: personalNumber,            // REQUIRED
             Gender: null,
             PhoneNumber: null,
             Email: null,
@@ -35,7 +36,8 @@ public sealed class PatientsRouteIdOverrideApiTests(TestApiFactory factory) : IC
             PhotoContentType: null,
             RowVersion: null);
 
-        var put = await _http.PutAsJsonAsync($"/api/patients/{id}", update);
+        // IMPORTANT: strong IDs must be serialized as numbers
+        var put = await _http.PutAsJsonAsync($"/api/patients/{id}", update, TestJson.Options);
         put.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var got = await _http.GetAsync($"/api/patients/{id}");
@@ -49,16 +51,17 @@ public sealed class PatientsRouteIdOverrideApiTests(TestApiFactory factory) : IC
         value.GetProperty("lastName").GetString().Should().Be("RouteWinsUpdated");
     }
 
-    private async Task<int> CreatePatientAsync(string lastName, string firstName)
+    private async Task<(int Id, string PersonalNumber)> CreatePatientAsync(string lastName, string firstName)
     {
-        // personal number optional for now; keep request minimal.
+        var pn = Random.Shared.NextInt64(0, 1_000_000_000_000L).ToString("000000000000");
+
         var req = new PatientUpsertRequestDto(
             Id: null,
             LastName: lastName,
             FirstName: firstName,
             FathersName: null,
             BirthDate: null,
-            PersonalNumber: null,
+            PersonalNumber: pn,          // REQUIRED
             Gender: null,
             PhoneNumber: null,
             Email: null,
@@ -74,17 +77,18 @@ public sealed class PatientsRouteIdOverrideApiTests(TestApiFactory factory) : IC
         var resp = await _http.PostAsJsonAsync("/api/patients", req);
         resp.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // server serializes strong IDs as numbers; be resilient if it ever becomes { value: n }
         var json = await resp.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(json);
         doc.RootElement.GetProperty("isSuccess").GetBoolean().Should().BeTrue();
 
         var v = doc.RootElement.GetProperty("value");
-        return v.ValueKind switch
+        var id = v.ValueKind switch
         {
             JsonValueKind.Number => v.GetInt32(),
             JsonValueKind.Object => v.GetProperty("value").GetInt32(),
             _ => throw new InvalidOperationException("Unexpected create patient response shape")
         };
+
+        return (id, pn);
     }
 }

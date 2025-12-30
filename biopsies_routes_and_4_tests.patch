@@ -1,0 +1,371 @@
+diff --git a/GIPractice.Api.Tests/BiopsiesBottleApiTests.cs b/GIPractice.Api.Tests/BiopsiesBottleApiTests.cs
+new file mode 100644
+index 0000000..512afce
+--- /dev/null
++++ b/GIPractice.Api.Tests/BiopsiesBottleApiTests.cs
+@@ -0,0 +1,88 @@
++using System.Net;
++using System.Net.Http;
++using System.Net.Http.Json;
++using System.Threading.Tasks;
++using FluentAssertions;
++using GIPractice.Contracts.Biopsies;
++using GIPractice.Contracts.Common;
++using GIPractice.Contracts.Ids;
++using Xunit;
++
++namespace GIPractice.Api.Tests;
++
++public sealed class BiopsiesBottleApiTests : IClassFixture<TestApiFactory>
++{
++    private readonly HttpClient _http;
++
++    public BiopsiesBottleApiTests(TestApiFactory factory)
++    {
++        _http = factory.CreateClient();
++    }
++
++    [Fact]
++    public async Task SearchBottles_ShouldReturn200_AndResultDtoShape()
++    {
++        await DevSeedHelper.SeedAsync(_http);
++
++        var req = new BiopsyBottleSearchRequestDto(
++            PatientId: null,
++            EndoscopyId: null,
++            IsUrgent: null,
++            Paging: new PagedRequestDto(Page: 1, PageSize: 50));
++
++        var resp = await _http.PostAsJsonAsync("/api/biopsies/bottles/search", req, TestJson.Options);
++        resp.StatusCode.Should().Be(HttpStatusCode.OK);
++
++        var body = await resp.Content.ReadFromJsonAsync<ResultDto<PagedResultDto<BiopsyBottleDto>>>(TestJson.Options);
++        body.Should().NotBeNull();
++        body!.IsSuccess.Should().BeTrue();
++        body.Error.Should().BeNull();
++        body.Value.Should().NotBeNull();
++        body.Value!.Items.Should().NotBeEmpty();
++
++        // Ensure strong ids deserialize
++        body.Value.Items[0].Id.Should().NotBe(default(BiopsyBottleId));
++        body.Value.Items[0].PatientId.Should().NotBe(default(PatientId));
++        body.Value.Items[0].EndoscopyId.Should().NotBe(default(EndoscopyId));
++    }
++
++    [Fact]
++    public async Task UpdateBottle_WithRouteId_ShouldSucceed_WhenBodyIdIsNull()
++    {
++        await DevSeedHelper.SeedAsync(_http);
++
++        // get one bottle id
++        var search = await _http.PostAsJsonAsync(
++            "/api/biopsies/bottles/search",
++            new BiopsyBottleSearchRequestDto(Paging: new PagedRequestDto(1, 50)),
++            TestJson.Options);
++
++        var searchBody = await search.Content.ReadFromJsonAsync<ResultDto<PagedResultDto<BiopsyBottleDto>>>(TestJson.Options);
++        var b = searchBody!.Value!.Items[0];
++
++        var get = await _http.GetAsync($"/api/biopsies/bottles/{b.Id.Value}");
++        get.StatusCode.Should().Be(HttpStatusCode.OK);
++        var getBody = await get.Content.ReadFromJsonAsync<ResultDto<BiopsyBottleDto>>(TestJson.Options);
++        var cur = getBody!.Value!;
++
++        var updated = new BiopsyBottleUpsertRequestDto(
++            Id: null, // should be overridden from route
++            PatientId: cur.PatientId,
++            EndoscopyId: cur.EndoscopyId,
++            LabelCode: "UPDATED",
++            SiteDescription: cur.SiteDescription,
++            IsUrgent: cur.IsUrgent,
++            Notes: cur.Notes,
++            RowVersion: cur.RowVersion);
++
++        var put = await _http.PutAsJsonAsync($"/api/biopsies/bottles/{b.Id.Value}", updated, TestJson.Options);
++        put.StatusCode.Should().Be(HttpStatusCode.OK);
++
++        var putBody = await put.Content.ReadFromJsonAsync<ResultDto<bool>>(TestJson.Options);
++        putBody!.IsSuccess.Should().BeTrue();
++
++        var get2 = await _http.GetAsync($"/api/biopsies/bottles/{b.Id.Value}");
++        var get2Body = await get2.Content.ReadFromJsonAsync<ResultDto<BiopsyBottleDto>>(TestJson.Options);
++        get2Body!.Value!.LabelCode.Should().Be("UPDATED");
++    }
++}
+diff --git a/GIPractice.Api.Tests/BiopsiesDispatchApiTests.cs b/GIPractice.Api.Tests/BiopsiesDispatchApiTests.cs
+new file mode 100644
+index 0000000..1b924a0
+--- /dev/null
++++ b/GIPractice.Api.Tests/BiopsiesDispatchApiTests.cs
+@@ -0,0 +1,78 @@
++using System.Net;
++using System.Net.Http;
++using System.Net.Http.Json;
++using System.Threading.Tasks;
++using FluentAssertions;
++using GIPractice.Contracts.Biopsies;
++using GIPractice.Contracts.Common;
++using Xunit;
++
++namespace GIPractice.Api.Tests;
++
++public sealed class BiopsiesDispatchApiTests : IClassFixture<TestApiFactory>
++{
++    private readonly HttpClient _http;
++
++    public BiopsiesDispatchApiTests(TestApiFactory factory)
++    {
++        _http = factory.CreateClient();
++    }
++
++    [Fact]
++    public async Task Dispatch_CreateThenSearch_ShouldReturnBundle()
++    {
++        await DevSeedHelper.SeedAsync(_http);
++
++        var create = await _http.PostAsJsonAsync(
++            "/api/biopsies/dispatch",
++            new BiopsyDispatchCreateRequestDto(ProtocolNumber: "PROTO-001", Notes: "test"),
++            TestJson.Options);
++
++        create.StatusCode.Should().Be(HttpStatusCode.OK);
++
++        var created = await create.Content.ReadFromJsonAsync<ResultDto<GIPractice.Contracts.Ids.BiopsyDispatchBundleId>>(TestJson.Options);
++        created!.IsSuccess.Should().BeTrue();
++
++        var search = await _http.PostAsJsonAsync(
++            "/api/biopsies/dispatch/search",
++            new BiopsyDispatchSearchRequestDto(ProtocolNumber: "PROTO-001", IsClosed: null, CreatedFrom: null, CreatedTo: null, Paging: new PagedRequestDto(1, 50)),
++            TestJson.Options);
++
++        search.StatusCode.Should().Be(HttpStatusCode.OK);
++        var body = await search.Content.ReadFromJsonAsync<ResultDto<PagedResultDto<BiopsyDispatchBundleDto>>>(TestJson.Options);
++        body!.IsSuccess.Should().BeTrue();
++        body.Value!.Items.Should().ContainSingle(x => x.ProtocolNumber == "PROTO-001");
++    }
++
++    [Fact]
++    public async Task Dispatch_Close_ShouldMarkBundleClosed()
++    {
++        await DevSeedHelper.SeedAsync(_http);
++
++        // create
++        var create = await _http.PostAsJsonAsync(
++            "/api/biopsies/dispatch",
++            new BiopsyDispatchCreateRequestDto(ProtocolNumber: "PROTO-002"),
++            TestJson.Options);
++
++        var created = await create.Content.ReadFromJsonAsync<ResultDto<GIPractice.Contracts.Ids.BiopsyDispatchBundleId>>(TestJson.Options);
++        var id = created!.Value!;
++
++        // close via route id (body id can be null)
++        var close = await _http.PutAsJsonAsync(
++            $"/api/biopsies/dispatch/{id.Value}/close",
++            new BiopsyDispatchCloseRequestDto(Id: null, RowVersion: null),
++            TestJson.Options);
++
++        close.StatusCode.Should().Be(HttpStatusCode.OK);
++
++        // search closed
++        var searchClosed = await _http.PostAsJsonAsync(
++            "/api/biopsies/dispatch/search",
++            new BiopsyDispatchSearchRequestDto(ProtocolNumber: "PROTO-002", IsClosed: true, Paging: new PagedRequestDto(1, 50)),
++            TestJson.Options);
++
++        var body = await searchClosed.Content.ReadFromJsonAsync<ResultDto<PagedResultDto<BiopsyDispatchBundleDto>>>(TestJson.Options);
++        body!.Value!.Items.Should().ContainSingle(x => x.ProtocolNumber == "PROTO-002" && x.IsClosed);
++    }
++}
+diff --git a/GIPractice.Api.Tests/DevSeedHelper.cs b/GIPractice.Api.Tests/DevSeedHelper.cs
+new file mode 100644
+index 0000000..31b64da
+--- /dev/null
++++ b/GIPractice.Api.Tests/DevSeedHelper.cs
+@@ -0,0 +1,15 @@
++using System.Net.Http;
++using System.Threading;
++using System.Threading.Tasks;
++
++namespace GIPractice.Api.Tests;
++
++public static class DevSeedHelper
++{
++    public static async Task SeedAsync(HttpClient http, CancellationToken ct = default)
++    {
++        // Dev-only endpoint. It's safe to call multiple times.
++        var resp = await http.PostAsync("/api/dev/seed", content: null, ct);
++        resp.EnsureSuccessStatusCode();
++    }
++}
+diff --git a/GIPractice.Api.Tests/TestJson.cs b/GIPractice.Api.Tests/TestJson.cs
+new file mode 100644
+index 0000000..c09e3ca
+--- /dev/null
++++ b/GIPractice.Api.Tests/TestJson.cs
+@@ -0,0 +1,27 @@
++using System.Text.Json;
++using GIPractice.Contracts.Common;
++
++namespace GIPractice.Api.Tests;
++
++/// <summary>
++/// Central Json options for API tests.
++/// 
++/// Important: the API serializes StrongIntIds (e.g. PatientId) as numbers.
++/// These options enable reading those ids back into record structs.
++/// </summary>
++public static class TestJson
++{
++    public static readonly JsonSerializerOptions Options = Create();
++
++    private static JsonSerializerOptions Create()
++    {
++        var opt = new JsonSerializerOptions(JsonSerializerDefaults.Web)
++        {
++            PropertyNameCaseInsensitive = true
++        };
++
++        opt.Converters.Add(new StrongIntIdJsonConverterFactory());
++
++        return opt;
++    }
++}
+diff --git a/GIPractice.Api/Biopsies/BiopsiesController.cs b/GIPractice.Api/Biopsies/BiopsiesController.cs
+index cfce48f..5f3703d 100644
+--- a/GIPractice.Api/Biopsies/BiopsiesController.cs
++++ b/GIPractice.Api/Biopsies/BiopsiesController.cs
+@@ -28,9 +28,9 @@ public sealed class BiopsiesController : ControllerBase
+     public Task<IActionResult> CreateBottle([FromBody] BiopsyBottleUpsertRequestDto dto, CancellationToken ct)
+         => _svc.CreateBottleAsync(dto, ct).ToActionResultAsync(HttpContext);
+ 
+-    [HttpPut("bottles")]
+-    public Task<IActionResult> UpdateBottle([FromBody] BiopsyBottleUpsertRequestDto dto, CancellationToken ct)
+-        => _svc.UpdateBottleAsync(dto, ct).ToActionResultAsync(HttpContext);
++    [HttpPut("bottles/{id:int}")]
++    public Task<IActionResult> UpdateBottle([FromRoute] int id, [FromBody] BiopsyBottleUpsertRequestDto dto, CancellationToken ct)
++        => _svc.UpdateBottleAsync(dto with { Id = new BiopsyBottleId(id) }, ct).ToActionResultAsync(HttpContext);
+ 
+     [HttpDelete("bottles/{id:int}")]
+     public Task<IActionResult> DeleteBottle([FromRoute] int id, CancellationToken ct)
+@@ -49,7 +49,7 @@ public sealed class BiopsiesController : ControllerBase
+     public Task<IActionResult> CreateDispatch([FromBody] BiopsyDispatchCreateRequestDto dto, CancellationToken ct)
+         => _svc.CreateDispatchBundleAsync(dto, ct).ToActionResultAsync(HttpContext);
+ 
+-    [HttpPut("dispatch/close")]
+-    public Task<IActionResult> CloseDispatch([FromBody] BiopsyDispatchCloseRequestDto dto, CancellationToken ct)
+-        => _svc.CloseDispatchBundleAsync(dto, ct).ToActionResultAsync(HttpContext);
++    [HttpPut("dispatch/{id:int}/close")]
++    public Task<IActionResult> CloseDispatch([FromRoute] int id, [FromBody] BiopsyDispatchCloseRequestDto dto, CancellationToken ct)
++        => _svc.CloseDispatchBundleAsync(dto with { Id = new BiopsyDispatchBundleId(id) }, ct).ToActionResultAsync(HttpContext);
+ }
+diff --git a/GIPractice.Api/Biopsies/EfBiopsiesStore.cs b/GIPractice.Api/Biopsies/EfBiopsiesStore.cs
+index 4e48b2e..646fb43 100644
+--- a/GIPractice.Api/Biopsies/EfBiopsiesStore.cs
++++ b/GIPractice.Api/Biopsies/EfBiopsiesStore.cs
+@@ -12,8 +12,10 @@ public sealed class EfBiopsiesStore : IBiopsiesStore
+     private readonly AppDbContext _db;
+ 
+     // Temporary in-memory for Dispatch Bundles (until you add a real entity/table)
+-    private readonly object _lock = new();
+-    private int _nextBundleId = 1;
++    // IMPORTANT: this store is registered as Scoped. Without static storage, bundles would be lost
++    // between requests. This is intentionally static as a stopgap until a proper EF entity exists.
++    private static readonly object DispatchLock = new();
++    private static int NextBundleId = 1;
+ 
+     private sealed class BundleRow
+     {
+@@ -25,7 +27,7 @@ public sealed class EfBiopsiesStore : IBiopsiesStore
+         public byte[] RowVersion { get; set; } = NewRowVersion();
+     }
+ 
+-    private readonly List<BundleRow> _bundles = new();
++    private static readonly List<BundleRow> Bundles = new();
+ 
+     public EfBiopsiesStore(AppDbContext db) => _db = db;
+ 
+@@ -195,9 +197,9 @@ public sealed class EfBiopsiesStore : IBiopsiesStore
+ 
+     public Task<PagedResultDto<BiopsyDispatchBundleDto>> SearchDispatchBundlesAsync(BiopsyDispatchSearchRequestDto request, CancellationToken ct)
+     {
+-        lock (_lock)
++        lock (DispatchLock)
+         {
+-            IEnumerable<BundleRow> q = _bundles;
++            IEnumerable<BundleRow> q = Bundles;
+ 
+             if (!string.IsNullOrWhiteSpace(request.ProtocolNumber))
+                 q = q.Where(x => x.ProtocolNumber.Contains(request.ProtocolNumber, StringComparison.OrdinalIgnoreCase));
+@@ -230,9 +232,9 @@ public sealed class EfBiopsiesStore : IBiopsiesStore
+ 
+     public Task<BiopsyDispatchDetailsDto?> GetDispatchDetailsAsync(BiopsyDispatchBundleId id, CancellationToken ct)
+     {
+-        lock (_lock)
++        lock (DispatchLock)
+         {
+-            var b = _bundles.FirstOrDefault(x => x.Id.Equals(id));
++            var b = Bundles.FirstOrDefault(x => x.Id.Equals(id));
+             if (b is null) return Task.FromResult<BiopsyDispatchDetailsDto?>(null);
+ 
+             var bundleDto = new BiopsyDispatchBundleDto(
+@@ -247,14 +249,14 @@ public sealed class EfBiopsiesStore : IBiopsiesStore
+ 
+     public Task<ResultDto<BiopsyDispatchBundleId>> CreateDispatchBundleAsync(BiopsyDispatchCreateRequestDto request, CancellationToken ct)
+     {
+-        lock (_lock)
++        lock (DispatchLock)
+         {
+-            if (_bundles.Any(x => string.Equals(x.ProtocolNumber, request.ProtocolNumber, StringComparison.OrdinalIgnoreCase)))
++            if (Bundles.Any(x => string.Equals(x.ProtocolNumber, request.ProtocolNumber, StringComparison.OrdinalIgnoreCase)))
+                 return Task.FromResult(ResultDto<BiopsyDispatchBundleId>.Fail("conflict", "ProtocolNumber already exists."));
+ 
+-            var id = new BiopsyDispatchBundleId(_nextBundleId++);
++            var id = new BiopsyDispatchBundleId(NextBundleId++);
+ 
+-            _bundles.Add(new BundleRow
++            Bundles.Add(new BundleRow
+             {
+                 Id = id,
+                 CreatedUtc = DateTime.UtcNow,
+@@ -270,9 +272,12 @@ public sealed class EfBiopsiesStore : IBiopsiesStore
+ 
+     public Task<ResultDto<bool>> CloseDispatchBundleAsync(BiopsyDispatchCloseRequestDto request, CancellationToken ct)
+     {
+-        lock (_lock)
++        lock (DispatchLock)
+         {
+-            var row = _bundles.FirstOrDefault(x => x.Id.Equals(request.Id));
++            if (request.Id is null)
++                return Task.FromResult(ResultDto<bool>.Fail("validation", "Id is required."));
++
++            var row = Bundles.FirstOrDefault(x => x.Id.Equals(request.Id.Value));
+             if (row is null)
+                 return Task.FromResult(ResultDto<bool>.Fail("not_found", "Dispatch bundle not found."));
+ 
+diff --git a/GIPractice.Api/Biopsies/InMemoryBiopsiesStore.cs b/GIPractice.Api/Biopsies/InMemoryBiopsiesStore.cs
+index b318518..58a1036 100644
+--- a/GIPractice.Api/Biopsies/InMemoryBiopsiesStore.cs
++++ b/GIPractice.Api/Biopsies/InMemoryBiopsiesStore.cs
+@@ -226,7 +226,10 @@ public sealed class InMemoryBiopsiesStore : IBiopsiesStore
+     {
+         lock (_lock)
+         {
+-            var row = _bundles.FirstOrDefault(x => x.Id.Equals(request.Id));
++            if (request.Id is null)
++                return Task.FromResult(ResultDto<bool>.Fail("validation", "Id is required."));
++
++            var row = _bundles.FirstOrDefault(x => x.Id.Equals(request.Id.Value));
+             if (row is null)
+                 return Task.FromResult(ResultDto<bool>.Fail("not_found", "Dispatch bundle not found."));
+ 
+diff --git a/GIPractice.Contracts/Biopsies/BiopsyDispatchCloseRequestDto.cs b/GIPractice.Contracts/Biopsies/BiopsyDispatchCloseRequestDto.cs
+index 755d041..d16f57f 100644
+--- a/GIPractice.Contracts/Biopsies/BiopsyDispatchCloseRequestDto.cs
++++ b/GIPractice.Contracts/Biopsies/BiopsyDispatchCloseRequestDto.cs
+@@ -5,5 +5,5 @@ using GIPractice.Contracts.Ids;
+ namespace GIPractice.Contracts.Biopsies;
+ 
+ public sealed record BiopsyDispatchCloseRequestDto(
+-    [param: NonZeroId] BiopsyDispatchBundleId Id,
++    [param: NonZeroId] BiopsyDispatchBundleId? Id,
+     byte[]? RowVersion);
