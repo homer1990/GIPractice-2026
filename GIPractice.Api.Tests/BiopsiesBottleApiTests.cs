@@ -30,15 +30,14 @@ public sealed class BiopsiesBottleApiTests : IClassFixture<TestApiFactory>
             IsUrgent: null,
             Paging: new PagedRequestDto(Page: 1, PageSize: 50));
 
-        var resp = await _http.PostAsJsonAsync("/api/biopsies/bottles/search", req, TestJson.Options);
+        var resp = await _http.PostJsonAsync("/api/biopsies/bottles/search", req);
         resp.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var body = await resp.Content.ReadFromJsonAsync<ResultDto<PagedResultDto<BiopsyBottleDto>>>(TestJson.Options);
+        var body = await resp.Content.ReadJsonAsync<ResultDto<PagedResultDto<BiopsyBottleDto>>>();
         body.Should().NotBeNull();
         body!.IsSuccess.Should().BeTrue();
         body.Error.Should().BeNull();
         body.Value.Should().NotBeNull();
-        body.Value!.Items.Should().NotBeEmpty();
 
         // Ensure strong ids deserialize
         body.Value.Items[0].Id.Should().NotBe(default(BiopsyBottleId));
@@ -57,12 +56,13 @@ public sealed class BiopsiesBottleApiTests : IClassFixture<TestApiFactory>
             new BiopsyBottleSearchRequestDto(Paging: new PagedRequestDto(1, 50)),
             TestJson.Options);
 
-        var searchBody = await search.Content.ReadFromJsonAsync<ResultDto<PagedResultDto<BiopsyBottleDto>>>(TestJson.Options);
+        var searchBody = await search.Content.ReadJsonAsync<ResultDto<PagedResultDto<BiopsyBottleDto>>>();
+
         var b = searchBody!.Value!.Items[0];
 
         var get = await _http.GetAsync($"/api/biopsies/bottles/{b.Id.Value}");
         get.StatusCode.Should().Be(HttpStatusCode.OK);
-        var getBody = await get.Content.ReadFromJsonAsync<ResultDto<BiopsyBottleDto>>(TestJson.Options);
+        var getBody = await get.Content.ReadJsonAsync<ResultDto<BiopsyBottleDto>>();
         var cur = getBody!.Value!;
 
         var updated = new BiopsyBottleUpsertRequestDto(
@@ -75,14 +75,17 @@ public sealed class BiopsiesBottleApiTests : IClassFixture<TestApiFactory>
             Notes: cur.Notes,
             RowVersion: cur.RowVersion);
 
-        var put = await _http.PutAsJsonAsync($"/api/biopsies/bottles/{b.Id.Value}", updated, TestJson.Options);
+        var put = await _http.PutJsonAsync($"/api/biopsies/bottles/{b.Id.Value}", updated);
+
         put.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var putBody = await put.Content.ReadFromJsonAsync<ResultDto<bool>>(TestJson.Options);
+        var putBody = await put.Content.ReadJsonAsync<ResultDto<bool>>();
+
+
         putBody!.IsSuccess.Should().BeTrue();
 
         var get2 = await _http.GetAsync($"/api/biopsies/bottles/{b.Id.Value}");
-        var get2Body = await get2.Content.ReadFromJsonAsync<ResultDto<BiopsyBottleDto>>(TestJson.Options);
+        var get2Body = await get2.Content.ReadJsonAsync<ResultDto<BiopsyBottleDto>>();
         get2Body!.Value!.LabelCode.Should().Be("UPDATED");
     }
 }
