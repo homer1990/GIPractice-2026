@@ -226,7 +226,10 @@ public sealed class InMemoryBiopsiesStore : IBiopsiesStore
     {
         lock (_lock)
         {
-            var row = _bundles.FirstOrDefault(x => x.Id.Equals(request.Id));
+            if (request.Id is null)
+                return Task.FromResult(ResultDto<bool>.Fail("validation", "Id is required."));
+
+            var row = _bundles.FirstOrDefault(x => x.Id.Equals(request.Id.Value));
             if (row is null)
                 return Task.FromResult(ResultDto<bool>.Fail("not_found", "Dispatch bundle not found."));
 

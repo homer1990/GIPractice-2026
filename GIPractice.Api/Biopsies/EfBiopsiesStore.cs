@@ -12,8 +12,10 @@ public sealed class EfBiopsiesStore : IBiopsiesStore
     private readonly AppDbContext _db;
 
     // Temporary in-memory for Dispatch Bundles (until you add a real entity/table)
-    private readonly object _lock = new();
-    private int _nextBundleId = 1;
+    // IMPORTANT: this store is registered as Scoped. Without static storage, bundles would be lost
+    // between requests. This is intentionally static as a stopgap until a proper EF entity exists.
+    private static readonly object DispatchLock = new();
+    private static int NextBundleId = 1;
 
     private sealed class BundleRow
     {
@@ -25,7 +27,7 @@ public sealed class EfBiopsiesStore : IBiopsiesStore
         public byte[] RowVersion { get; set; } = NewRowVersion();
     }
 
-    private readonly List<BundleRow> _bundles = new();
+    private static readonly List<BundleRow> Bundles = new();
 
     public EfBiopsiesStore(AppDbContext db) => _db = db;
 
@@ -195,9 +197,9 @@ public sealed class EfBiopsiesStore : IBiopsiesStore
 
     public Task<PagedResultDto<BiopsyDispatchBundleDto>> SearchDispatchBundlesAsync(BiopsyDispatchSearchRequestDto request, CancellationToken ct)
     {
-        lock (_lock)
+        lock (DispatchLock)
         {
-            IEnumerable<BundleRow> q = _bundles;
+            IEnumerable<BundleRow> q = Bundles;
 
             if (!string.IsNullOrWhiteSpace(request.ProtocolNumber))
                 q = q.Where(x => x.ProtocolNumber.Contains(request.ProtocolNumber, StringComparison.OrdinalIgnoreCase));
@@ -230,9 +232,9 @@ public sealed class EfBiopsiesStore : IBiopsiesStore
 
     public Task<BiopsyDispatchDetailsDto?> GetDispatchDetailsAsync(BiopsyDispatchBundleId id, CancellationToken ct)
     {
-        lock (_lock)
+        lock (DispatchLock)
         {
-            var b = _bundles.FirstOrDefault(x => x.Id.Equals(id));
+            var b = Bundles.FirstOrDefault(x => x.Id.Equals(id));
             if (b is null) return Task.FromResult<BiopsyDispatchDetailsDto?>(null);
 
             var bundleDto = new BiopsyDispatchBundleDto(
@@ -247,14 +249,14 @@ public sealed class EfBiopsiesStore : IBiopsiesStore
 
     public Task<ResultDto<BiopsyDispatchBundleId>> CreateDispatchBundleAsync(BiopsyDispatchCreateRequestDto request, CancellationToken ct)
     {
-        lock (_lock)
+        lock (DispatchLock)
         {
-            if (_bundles.Any(x => string.Equals(x.ProtocolNumber, request.ProtocolNumber, StringComparison.OrdinalIgnoreCase)))
+            if (Bundles.Any(x => string.Equals(x.ProtocolNumber, request.ProtocolNumber, StringComparison.OrdinalIgnoreCase)))
                 return Task.FromResult(ResultDto<BiopsyDispatchBundleId>.Fail("conflict", "ProtocolNumber already exists."));
 
-            var id = new BiopsyDispatchBundleId(_nextBundleId++);
+            var id = new BiopsyDispatchBundleId(NextBundleId++);
 
-            _bundles.Add(new BundleRow
+            Bundles.Add(new BundleRow
             {
                 Id = id,
                 CreatedUtc = DateTime.UtcNow,
@@ -270,9 +272,12 @@ public sealed class EfBiopsiesStore : IBiopsiesStore
 
     public Task<ResultDto<bool>> CloseDispatchBundleAsync(BiopsyDispatchCloseRequestDto request, CancellationToken ct)
     {
-        lock (_lock)
+        lock (DispatchLock)
         {
-            var row = _bundles.FirstOrDefault(x => x.Id.Equals(request.Id));
+            if (request.Id is null)
+                return Task.FromResult(ResultDto<bool>.Fail("validation", "Id is required."));
+
+            var row = Bundles.FirstOrDefault(x => x.Id.Equals(request.Id.Value));
             if (row is null)
                 return Task.FromResult(ResultDto<bool>.Fail("not_found", "Dispatch bundle not found."));
 

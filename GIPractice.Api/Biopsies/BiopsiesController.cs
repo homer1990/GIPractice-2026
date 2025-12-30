@@ -28,9 +28,9 @@ public sealed class BiopsiesController : ControllerBase
     public Task<IActionResult> CreateBottle([FromBody] BiopsyBottleUpsertRequestDto dto, CancellationToken ct)
         => _svc.CreateBottleAsync(dto, ct).ToActionResultAsync(HttpContext);
 
-    [HttpPut("bottles")]
-    public Task<IActionResult> UpdateBottle([FromBody] BiopsyBottleUpsertRequestDto dto, CancellationToken ct)
-        => _svc.UpdateBottleAsync(dto, ct).ToActionResultAsync(HttpContext);
+    [HttpPut("bottles/{id:int}")]
+    public Task<IActionResult> UpdateBottle([FromRoute] int id, [FromBody] BiopsyBottleUpsertRequestDto dto, CancellationToken ct)
+        => _svc.UpdateBottleAsync(dto with { Id = new BiopsyBottleId(id) }, ct).ToActionResultAsync(HttpContext);
 
     [HttpDelete("bottles/{id:int}")]
     public Task<IActionResult> DeleteBottle([FromRoute] int id, CancellationToken ct)
@@ -49,7 +49,7 @@ public sealed class BiopsiesController : ControllerBase
     public Task<IActionResult> CreateDispatch([FromBody] BiopsyDispatchCreateRequestDto dto, CancellationToken ct)
         => _svc.CreateDispatchBundleAsync(dto, ct).ToActionResultAsync(HttpContext);
 
-    [HttpPut("dispatch/close")]
-    public Task<IActionResult> CloseDispatch([FromBody] BiopsyDispatchCloseRequestDto dto, CancellationToken ct)
-        => _svc.CloseDispatchBundleAsync(dto, ct).ToActionResultAsync(HttpContext);
+    [HttpPut("dispatch/{id:int}/close")]
+    public Task<IActionResult> CloseDispatch([FromRoute] int id, [FromBody] BiopsyDispatchCloseRequestDto dto, CancellationToken ct)
+        => _svc.CloseDispatchBundleAsync(dto with { Id = new BiopsyDispatchBundleId(id) }, ct).ToActionResultAsync(HttpContext);
 }
