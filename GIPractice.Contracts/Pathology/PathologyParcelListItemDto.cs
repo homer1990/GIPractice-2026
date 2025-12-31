@@ -2,7 +2,7 @@
 
 namespace GIPractice.Contracts.Pathology;
 
-public sealed record PathologyParcelDto(
+public sealed record PathologyParcelListItemDto(
     PathologyParcelId Id,
 
     PathologistId PathologistId,
@@ -11,14 +11,8 @@ public sealed record PathologyParcelDto(
     DateTime CreatedAtUtc,
     DateTime? DispatchedAtUtc,
 
-    string? CourierName,
-    string? TrackingNumber,
-    string? Notes,
-
-    int ReportsCount,
-    bool HasUrgent,
     string MonetarySum,
 
     int NoOfBiopsyBottles,
-
-    byte[]? RowVersion);
+    int NoOfEndoscopies
+    );

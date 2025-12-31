@@ -8,6 +8,7 @@ public sealed record PathologyReportUpsertRequestDto(
     [param: NonZeroId] PatientId PatientId,
     [param: NonZeroId] EndoscopyId EndoscopyId,
     [param: NonZeroId] PathologistId PathologistId,
+    [param: NonZeroId] PathologyParcelId? DispatchParcelId, 
 
     [param: NotDefault] DateTime? SentAtUtc,
     [param: NotDefault] DateTime? ReceivedAtUtc,

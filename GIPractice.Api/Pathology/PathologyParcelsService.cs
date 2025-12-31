@@ -13,7 +13,7 @@ public sealed class PathologyParcelsService(
         CancellationToken cancellationToken = default)
         => store.SearchAsync(request, cancellationToken);
 
-    // ✅ required by Contracts: GetAsync(PathologyParcelId, ...)
+    // Older Contracts expect this
     public Task<ResultDto<PathologyParcelDto>> GetAsync(
         PathologyParcelId id,
         CancellationToken cancellationToken = default)
@@ -22,26 +22,31 @@ public sealed class PathologyParcelsService(
             return Task.FromResult(ResultDto<PathologyParcelDto>.Fail(
                 new ErrorDto(ErrorCodes.NotFound, "Parcel not found.")));
 
-        // Reuse store logic via key (keeps a single mapping path)
-        var key = new PathologyParcelKeyDto(parcel.PathologistId, parcel.ParcelCode);
-        return store.GetByKeyAsync(key, cancellationToken);
+        return store.GetByKeyAsync(
+            new PathologyParcelKeyDto(parcel.PathologistId, parcel.ParcelCode),
+            cancellationToken);
     }
 
-    public Task<ResultDto<PathologyParcelDto>> GetByKeyAsync(PathologyParcelKeyDto key, CancellationToken cancellationToken = default)
-    => store.GetByKeyAsync(key, cancellationToken);
+    // Older Contracts expect this
+    public Task<ResultDto<PathologyParcelDto>> GetByKeyAsync(
+        PathologyParcelKeyDto key,
+        CancellationToken cancellationToken = default)
+        => store.GetByKeyAsync(key, cancellationToken);
 
-    public Task<ResultDto<PathologyParcelId>> CreateAsync(PathologyParcelCreateRequestDto request, CancellationToken cancellationToken = default)
+    // Older Contracts expect this
+    public Task<ResultDto<PathologyParcelId>> CreateAsync(
+        PathologyParcelCreateRequestDto request,
+        CancellationToken cancellationToken = default)
         => store.CreateAsync(request, cancellationToken);
 
-    // ✅ your requested addition: UpdateByKeyAsync
+    // Newer keyed update (your preference)
     public Task<ResultDto<bool>> UpdateByKeyAsync(
         PathologyParcelKeyDto key,
         PathologyParcelUpdateRequestDto request,
         CancellationToken cancellationToken = default)
         => store.UpdateByKeyAsync(key, request, cancellationToken);
 
-    // Keep the original UpdateAsync if your contracts still have it.
-    // If UpdateAsync exists in IPathologyParcelsService, implement it here.
+    // If your Contracts *still* have UpdateAsync (non-keyed), keep it as a guard.
     public Task<ResultDto<bool>> UpdateAsync(
         PathologyParcelUpdateRequestDto request,
         CancellationToken cancellationToken = default)

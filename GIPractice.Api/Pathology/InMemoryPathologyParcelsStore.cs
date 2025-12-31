@@ -128,7 +128,7 @@ public sealed class InMemoryPathologyParcelsStore(InMemoryPathologyRepository re
         var assigned = reports.Where(r => r.PathologistId == p.PathologistId && r.DispatchParcelCode == p.ParcelCode).ToArray();
         var count = assigned.Length;
         var urgent = assigned.Any(r => r.IsUrgent);
-
+        
         return new PathologyParcelDto(
             Id: p.Id,
             PathologistId: p.PathologistId,
@@ -140,6 +140,7 @@ public sealed class InMemoryPathologyParcelsStore(InMemoryPathologyRepository re
             Notes: p.Notes,
             ReportsCount: count,
             HasUrgent: urgent,
-            RowVersion: p.RowVersion);
+            RowVersion: p.RowVersion
+            );
     }
 }
