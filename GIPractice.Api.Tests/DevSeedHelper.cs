@@ -1,15 +1,14 @@
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Net;
 
 namespace GIPractice.Api.Tests;
 
 public static class DevSeedHelper
 {
-    public static async Task SeedAsync(HttpClient http, CancellationToken ct = default)
+    public static async Task SeedAsync(HttpClient http, CancellationToken cancellationToken = default)
     {
-        // Dev-only endpoint. It's safe to call multiple times.
-        var resp = await http.PostAsync("/api/dev/seed", content: null, ct);
+        var resp = await http.PostAsync("/api/dev/seed", content: null, cancellationToken);
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+            return;
         resp.EnsureSuccessStatusCode();
     }
 }

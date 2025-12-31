@@ -1,7 +1,11 @@
 using GIPractice.Api.Biopsies;
+using GIPractice.Api.Pathologists;
+using GIPractice.Api.Pathology;
 using GIPractice.Api.Patients;
 using GIPractice.Api.Scheduling;
 using GIPractice.Contracts.Common;
+using GIPractice.Contracts.Pathologists;
+using GIPractice.Contracts.Pathology;
 using GIPractice.Contracts.Patients;
 using GIPractice.Contracts.Scheduling;
 using GIPractice.Infrastructure;
@@ -45,9 +49,6 @@ public partial class Program
         builder.Services.AddScoped<IBiopsiesStore, EfBiopsiesStore>();
         builder.Services.AddScoped<GIPractice.Contracts.Biopsies.IBiopsiesService, BiopsiesService>();
 
-        builder.Services.AddSingleton<GIPractice.Api.Pathology.IPathologyStore, GIPractice.Api.Pathology.InMemoryPathologyStore>();
-        builder.Services.AddScoped<GIPractice.Contracts.Pathology.IPathologyService, GIPractice.Api.Pathology.PathologyService>();
-
         builder.Services.AddSingleton<GIPractice.Api.Infai.IInfaiStore, GIPractice.Api.Infai.InMemoryInfaiStore>();
         builder.Services.AddScoped<GIPractice.Contracts.Infai.IInfaiService, GIPractice.Api.Infai.InfaiService>();
 
@@ -56,6 +57,21 @@ public partial class Program
 
         builder.Services.AddSingleton<GIPractice.Api.Localization.ILocalizationStore, GIPractice.Api.Localization.InMemoryLocalizationStore>();
         builder.Services.AddScoped<GIPractice.Contracts.Localization.ILocalizationService, GIPractice.Api.Localization.LocalizationService>();
+
+        // Pathologists (you already have store/service, keep as singleton)
+        builder.Services.AddSingleton<IPathologistsStore, InMemoryPathologistsStore>();
+        builder.Services.AddSingleton<IPathologistsService, PathologistsService>();
+
+        // Pathology shared repo
+        builder.Services.AddSingleton<InMemoryPathologyRepository>();
+
+        // Pathology reports
+        builder.Services.AddSingleton<IPathologyReportsStore, InMemoryPathologyReportsStore>();
+        builder.Services.AddSingleton<IPathologyReportsService, PathologyReportsService>();
+
+        // Pathology parcels
+        builder.Services.AddSingleton<IPathologyParcelsStore, InMemoryPathologyParcelsStore>();
+        builder.Services.AddSingleton<IPathologyParcelsService, PathologyParcelsService>();
 
         builder.Services.AddDbContext<AppDbContext>(opt =>
             opt.UseSqlServer(builder.Configuration.GetConnectionString("Default")));

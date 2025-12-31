@@ -3,7 +3,7 @@ using GIPractice.Contracts.Ids;
 
 namespace GIPractice.Contracts.Pathology;
 
-public interface IPathologyService
+public interface IPathologyReportsService
 {
     Task<ResultDto<PagedResultDto<PathologyReportListItemDto>>> SearchAsync(
         PathologyReportSearchRequestDto request,

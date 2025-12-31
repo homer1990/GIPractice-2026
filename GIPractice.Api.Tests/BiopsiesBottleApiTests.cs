@@ -83,7 +83,6 @@ public sealed class BiopsiesBottleApiTests : IClassFixture<TestApiFactory>
             PatientId: cur.PatientId,
             EndoscopyId: cur.EndoscopyId,
             LabelCode: "UPDATED",
-            SiteDescription: cur.SiteDescription,
             IsUrgent: cur.IsUrgent,
             Notes: cur.Notes,
             OrganAreaCodes: null,

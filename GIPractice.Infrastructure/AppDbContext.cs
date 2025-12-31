@@ -38,6 +38,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<LocalizationString> LocalizationStrings => Set<LocalizationString>();
     public DbSet<FieldName> FieldNames => Set<FieldName>();
     public DbSet<Localization> Localizations => Set<Localization>();
+    public DbSet<Pathologist> Pathologists => Set<Pathologist>();
+    public DbSet<PathologyParcel> PathologyParcels => Set<PathologyParcel>();
+    public DbSet<PathologyReport> PathologyReports => Set<PathologyReport>();
+
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

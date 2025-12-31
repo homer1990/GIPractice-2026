@@ -1,4 +1,4 @@
-﻿namespace GIPractice.Contracts.Pathology;
+﻿namespace GIPractice.Core.Enums;
 
 public enum PathologyReportStatus
 {

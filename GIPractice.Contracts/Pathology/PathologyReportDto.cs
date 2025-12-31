@@ -4,17 +4,31 @@ namespace GIPractice.Contracts.Pathology;
 
 public sealed record PathologyReportDto(
     PathologyReportId Id,
+
     PatientId PatientId,
     EndoscopyId EndoscopyId,
-    BiopsyDispatchBundleId? BiopsyDispatchBundleId,
+    PathologistId PathologistId,
 
-    DateTime? SentUtc,
-    DateTime? ReceivedUtc,
+    string PathologistRecordId,
 
-    string? ParcelId,
+    string? DispatchParcelCode,
+
+    DateTime? SentAtUtc,
+    DateTime? ReceivedAtUtc,
+
+    string? Notes,
+    string? ClinicalInfo,
+    string? MacroscopyText,
+    string? DiagnosisText,
+
+    PathologyReportStatus Status,
     bool IsUrgent,
 
-    string? ReportText,
-    PathologyReportStatus Status,
+    MediaFileId? DocumentFileId,
+    PathologyDocumentKind DocumentKind,
+    string? DocumentFileName,
+    string? DocumentContentType,
+
+    PathologyReportDocumentDto? Document,
 
     byte[]? RowVersion);
