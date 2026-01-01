@@ -7,11 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GIPractice.Api.Pathology;
 
-public sealed class EfPathologyReportsStore : IPathologyReportsStore
+public sealed class EfPathologyReportsStore(AppDbContext db) : IPathologyReportsStore
 {
-    private readonly AppDbContext _db;
-
-    public EfPathologyReportsStore(AppDbContext db) => _db = db;
+    private readonly AppDbContext _db = db;
 
     private static string MakePathologistRecordId(int pathologistId, int endoscopyId)
         => $"{pathologistId}-{endoscopyId}";
@@ -246,6 +244,6 @@ public sealed class EfPathologyReportsStore : IPathologyReportsStore
     {
         if (string.IsNullOrWhiteSpace(s)) return null;
         s = s.Trim();
-        return s.Length <= max ? s : s.Substring(0, max);
+        return s.Length <= max ? s : s[..max];
     }
 }

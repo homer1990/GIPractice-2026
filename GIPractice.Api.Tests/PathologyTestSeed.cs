@@ -1,100 +1,99 @@
-﻿using FluentAssertions;
-using GIPractice.Contracts.Common;
-using GIPractice.Contracts.Ids;
-using GIPractice.Contracts.Pathologists;
-using GIPractice.Contracts.Pathology;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
-using Xunit;
+﻿using GIPractice.Core.Entities;
+using GIPractice.Core.Enums;
+using GIPractice.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GIPractice.Api.Tests;
 
 public static class PathologyTestSeed
 {
-    public sealed record SeedResult(
-        PathologistId PathologistId,
-        string ParcelCode);
-
-    public static async Task<SeedResult> EnsureAsync(HttpClient http)
+    /// <summary>
+    /// Creates:
+    /// - 1 Pathologist
+    /// - 1 Visit (for an existing seeded patient)
+    /// - 2 Endoscopies under that visit
+    /// - 1 BiopsyBottle per endoscopy (required for parcel assignment)
+    /// Sets Endoscopy.BiopsiesCost for monetary sum tests.
+    /// </summary>
+    public static async Task<(int PathologistId, int Endo1Id, int Endo2Id, decimal Cost1, decimal Cost2)>
+        SeedPathologistAndTwoEndoscopiesAsync(
+            TestApiFactory factory,
+            decimal cost1,
+            decimal cost2,
+            bool urgent1 = false,
+            bool urgent2 = false)
     {
-        // base seed (patient=1, endoscopy=1 etc)
-        await DevSeedHelper.SeedAsync(http);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        // 1) Create Pathologist
-        var createPathologist = await http.PostAsJsonAsync(
-            "/api/pathologists",
-            new PathologistUpsertRequestDto(
-                Id: null,
-                Name: "Seed Pathologist",
-                Address: null,
-                Email: "pathologist@seed.local",
-                PhoneNumber: null,
-                PricingPlanJson: "{}",
-                RowVersion: null));
+        // TestApiFactory seeds at least one patient.
+        var patientId = db.Patients.OrderBy(p => p.Id).Select(p => p.Id).First();
 
-        createPathologist.StatusCode.Should().Be(HttpStatusCode.OK);
+        // Create a fresh visit
+        var visit = new Visit
+        {
+            PatientId = patientId,
+            DateOfVisitUtc = DateTime.UtcNow.Date,
+            Notes = "pathology test visit"
+        };
+        db.Visits.Add(visit);
+        await db.SaveChangesAsync();
 
-        var pathBody = await createPathologist.Content.ReadFromJsonAsync<ResultDto<PathologistId>>();
-        pathBody!.IsSuccess.Should().BeTrue();
-        var pathologistId = pathBody.Value;
+        // Create two endoscopies
+        var endo1 = new Endoscopy
+        {
+            PatientId = patientId,
+            VisitId = visit.Id,
+            Type = EndoscopyType.Gastroscopy,
+            PerformedAtUtc = DateTime.UtcNow,
+            IsUrgent = urgent1,
+            Notes = "pathology seed endo 1",
+            BiopsiesCost = cost1
+        };
 
-        // 2) Create Parcel (server generates ParcelCode or you pass it, depending on your contract)
-        // If your Create returns PathologyParcelDto instead, tweak the read target accordingly.
-        var createParcel = await http.PostAsJsonAsync(
-            "/api/pathology/parcels",
-            new PathologyParcelCreateRequestDto(
-                PathologistId: pathologistId,
-                Notes: "Seed parcel"));
+        var endo2 = new Endoscopy
+        {
+            PatientId = patientId,
+            VisitId = visit.Id,
+            Type = EndoscopyType.Gastroscopy,
+            PerformedAtUtc = DateTime.UtcNow.AddMinutes(5),
+            IsUrgent = urgent2,
+            Notes = "pathology seed endo 2",
+            BiopsiesCost = cost2
+        };
 
-        createParcel.StatusCode.Should().Be(HttpStatusCode.OK);
+        db.Endoscopies.AddRange(endo1, endo2);
+        await db.SaveChangesAsync();
 
-        var parcelBody = await createParcel.Content.ReadFromJsonAsync<ResultDto<PathologyParcelDto>>();
-        parcelBody!.IsSuccess.Should().BeTrue();
-        var parcel = parcelBody.Value!;
-        parcel.PathologistId.Should().Be(pathologistId);
+        // Parcel logic requires biopsy bottles to exist
+        db.BiopsyBottles.AddRange(
+            new BiopsyBottle
+            {
+                PatientId = patientId,
+                EndoscopyId = endo1.Id,
+                CollectedAtUtc = endo1.PerformedAtUtc,
+                Label = "A",
+                Number = 1
+            },
+            new BiopsyBottle
+            {
+                PatientId = patientId,
+                EndoscopyId = endo2.Id,
+                CollectedAtUtc = endo2.PerformedAtUtc,
+                Label = "B",
+                Number = 2
+            });
 
-        // 3) Create Report (minimal)
-        var createReport = await http.PostAsJsonAsync(
-            "/api/pathology/reports",
-            new PathologyReportUpsertRequestDto(
-                Id: null,
-                PatientId: new PatientId(1),
-                EndoscopyId: new EndoscopyId(1),
-                PathologistId: pathologistId,
-                DispatchParcelId: null,
-                SentAtUtc: null,
-                ReceivedAtUtc: null,
-                Notes: "Seed report",
-                ClinicalInfo: null,
-                MacroscopyText: null,
-                DiagnosisText: null,
-                Status: PathologyReportStatus.Dispatched,
-                IsUrgent: false,
-                Document: null,
-                DocumentFileId: null,
-                DocumentKind: PathologyDocumentKind.Unknown,
-                DocumentFileName: null,
-                DocumentContentType: null,
-                RowVersion: null));
+        // Create a pathologist
+        var pathologist = new Pathologist
+        {
+            Name = "Test Pathologist",
+            PricingPlanJson = "{}"
+        };
+        db.Pathologists.Add(pathologist);
 
-        createReport.StatusCode.Should().Be(HttpStatusCode.OK);
+        await db.SaveChangesAsync();
 
-        var reportBody = await createReport.Content.ReadFromJsonAsync<ResultDto<PathologyReportId>>();
-        reportBody!.IsSuccess.Should().BeTrue();
-        var reportId = reportBody.Value;
-
-        // 4) Assign report to parcel
-        var assign = await http.PostAsJsonAsync(
-            $"/api/pathology/parcels/{pathologistId.Value}/{parcel.ParcelCode}/reports/assign",
-            new PathologyParcelAssignReportsRequestDto(new PathologyReportId[] { reportId }));
-
-        assign.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var assignBody = await assign.Content.ReadFromJsonAsync<ResultDto<bool>>();
-        assignBody!.IsSuccess.Should().BeTrue();
-
-        return new SeedResult(pathologistId, parcel.ParcelCode);
+        return (pathologist.Id, endo1.Id, endo2.Id, cost1, cost2);
     }
 }

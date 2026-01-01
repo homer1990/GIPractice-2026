@@ -7,11 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GIPractice.Api.Pathology;
 
-public sealed class EfPathologyParcelsStore : IPathologyParcelsStore
+public sealed class EfPathologyParcelsStore(AppDbContext db) : IPathologyParcelsStore
 {
-    private readonly AppDbContext _db;
-
-    public EfPathologyParcelsStore(AppDbContext db) => _db = db;
+    private readonly AppDbContext _db = db;
 
     public async Task<ResultDto<PagedResultDto<PathologyParcelDto>>> SearchAsync(
         PathologyParcelSearchRequestDto request,
@@ -23,7 +21,7 @@ public sealed class EfPathologyParcelsStore : IPathologyParcelsStore
             return ResultDto<PagedResultDto<PathologyParcelDto>>.Fail("validation", "Page must be >= 1.");
 
         if (paging.PageSize is < 1 or > 500)
-            return ResultDto < PagedResultDto < PathologyParcelDto >>.Fail("validation", "PageSize must be between 1 and 500.");
+            return ResultDto<PagedResultDto<PathologyParcelDto>>.Fail("validation", "PageSize must be between 1 and 500.");
 
         IQueryable<PathologyParcel> q = _db.PathologyParcels.AsNoTracking();
 
@@ -58,12 +56,13 @@ public sealed class EfPathologyParcelsStore : IPathologyParcelsStore
                 CourierName: p.CourierName,
                 TrackingNumber: p.TrackingNumber,
                 Notes: p.Notes,
+                MonetarySum: p.MonetarySum,
                 ReportsCount: p.Reports.Count,
                 HasUrgent: p.Reports.Any(r => r.IsUrgent),
                 RowVersion: p.RowVersion))
             .ToListAsync(ct);
 
-        return ResultDto < PagedResultDto < PathologyParcelDto >>.Ok(
+        return ResultDto<PagedResultDto<PathologyParcelDto>>.Ok(
             new PagedResultDto<PathologyParcelDto>(items, total, paging.Page, paging.PageSize));
     }
 
@@ -84,6 +83,7 @@ public sealed class EfPathologyParcelsStore : IPathologyParcelsStore
                 CourierName: x.CourierName,
                 TrackingNumber: x.TrackingNumber,
                 Notes: x.Notes,
+                MonetarySum: x.MonetarySum,
                 ReportsCount: x.Reports.Count,
                 HasUrgent: x.Reports.Any(r => r.IsUrgent),
                 RowVersion: x.RowVersion))
@@ -108,6 +108,7 @@ public sealed class EfPathologyParcelsStore : IPathologyParcelsStore
                 CourierName: x.CourierName,
                 TrackingNumber: x.TrackingNumber,
                 Notes: x.Notes,
+                MonetarySum: x.MonetarySum,
                 ReportsCount: x.Reports.Count,
                 HasUrgent: x.Reports.Any(r => r.IsUrgent),
                 RowVersion: x.RowVersion))
@@ -143,11 +144,15 @@ public sealed class EfPathologyParcelsStore : IPathologyParcelsStore
 
         try
         {
+            var ids = request.EndoscopyIds.Select(x => x.Value).Distinct().ToArray();
+
             await AttachEndoscopiesToParcelAsync(
                 parcel,
-                request.EndoscopyIds.Select(x => x.Value).ToArray(),
+                ids,
                 disallowIfAlreadyInAnotherParcel: true,
                 ct);
+
+            parcel.MonetarySum = await ComputeMonetarySumForEndoscopiesAsync(ids, ct);
 
             await _db.SaveChangesAsync(ct);
         }
@@ -192,13 +197,17 @@ public sealed class EfPathologyParcelsStore : IPathologyParcelsStore
         {
             foreach (var r in parcel.Reports)
             {
-                if (r.SentAtUtc is null)
-                    r.SentAtUtc = request.DispatchedAtUtc;
+                r.SentAtUtc ??= request.DispatchedAtUtc;
 
                 if (r.Status == GIPractice.Core.Enums.PathologyReportStatus.Draft)
                     r.Status = GIPractice.Core.Enums.PathologyReportStatus.Dispatched;
             }
         }
+
+        // Recalculate monetary sum (refreshes if endoscopy costs changed).
+        parcel.MonetarySum = await ComputeMonetarySumForEndoscopiesAsync(
+            [.. parcel.Reports.Select(r => r.EndoscopyId).Distinct()],
+            ct);
 
         await _db.SaveChangesAsync(ct);
         return ResultDto<bool>.Ok(true);
@@ -220,11 +229,22 @@ public sealed class EfPathologyParcelsStore : IPathologyParcelsStore
 
         try
         {
+            var ids = request.EndoscopyIds.Select(x => x.Value).Distinct().ToArray();
+
             await AttachEndoscopiesToParcelAsync(
                 parcel,
-                request.EndoscopyIds.Select(x => x.Value).ToArray(),
+                ids,
                 disallowIfAlreadyInAnotherParcel: true,
                 ct);
+
+            // DB state doesn't include unsaved tracked reports yet, so compute using (current in DB) + (requested ids)
+            var current = await _db.PathologyReports.AsNoTracking()
+                .Where(r => r.PathologyParcelId == parcel.Id)
+                .Select(r => r.EndoscopyId)
+                .ToListAsync(ct);
+
+            var all = current.Concat(ids).Distinct().ToArray();
+            parcel.MonetarySum = await ComputeMonetarySumForEndoscopiesAsync(all, ct);
 
             await _db.SaveChangesAsync(ct);
         }
@@ -265,6 +285,15 @@ public sealed class EfPathologyParcelsStore : IPathologyParcelsStore
             r.PathologyParcelId = null;
             r.Parcel = null;
         }
+
+        // Recalculate monetary sum (refreshes if endoscopy costs changed).
+        var current = await _db.PathologyReports.AsNoTracking()
+            .Where(r => r.PathologyParcelId == parcel.Id)
+            .Select(r => r.EndoscopyId)
+            .ToListAsync(ct);
+
+        var remaining = current.Except(ids).Distinct().ToArray();
+        parcel.MonetarySum = await ComputeMonetarySumForEndoscopiesAsync(remaining, ct);
 
         await _db.SaveChangesAsync(ct);
         return ResultDto<bool>.Ok(true);
@@ -326,8 +355,7 @@ public sealed class EfPathologyParcelsStore : IPathologyParcelsStore
 
                 if (parcel.DispatchedAtUtc is not null)
                 {
-                    if (r.SentAtUtc is null)
-                        r.SentAtUtc = parcel.DispatchedAtUtc;
+                    r.SentAtUtc ??= parcel.DispatchedAtUtc;
                     if (r.Status == GIPractice.Core.Enums.PathologyReportStatus.Draft)
                         r.Status = GIPractice.Core.Enums.PathologyReportStatus.Dispatched;
                 }
@@ -354,6 +382,20 @@ public sealed class EfPathologyParcelsStore : IPathologyParcelsStore
         }
     }
 
+    private async Task<decimal> ComputeMonetarySumForEndoscopiesAsync(int[] endoscopyIds, CancellationToken ct)
+    {
+        if (endoscopyIds is null || endoscopyIds.Length == 0)
+            return 0m;
+
+        // Sum biopsies cost across all endoscopies in the parcel.
+        // Null cost is treated as 0 (until we add a proper pricing workflow).
+        return await _db.Endoscopies
+            .AsNoTracking()
+            .Where(e => endoscopyIds.Contains(e.Id))
+            .Select(e => e.BiopsiesCost ?? 0m)
+            .SumAsync(ct);
+    }
+
     private async Task<string> GenerateParcelCodeAsync(int pathologistId, CancellationToken ct)
     {
         var baseCode = DateTime.UtcNow.ToString("yyyyMMddHHmmssfff");
@@ -373,6 +415,6 @@ public sealed class EfPathologyParcelsStore : IPathologyParcelsStore
     {
         if (string.IsNullOrWhiteSpace(s)) return null;
         s = s.Trim();
-        return s.Length <= max ? s : s.Substring(0, max);
+        return s.Length <= max ? s : s[..max];
     }
 }

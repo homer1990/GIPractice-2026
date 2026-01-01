@@ -1,96 +1,152 @@
-﻿using System.Net;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
-using FluentAssertions;
+﻿using FluentAssertions;
 using GIPractice.Contracts.Common;
+using GIPractice.Contracts.Ids;
 using GIPractice.Contracts.Pathology;
+using Microsoft.Extensions.DependencyInjection;
+using System.Net;
 using Xunit;
-using GIPractice.Api.Tests;
 
 namespace GIPractice.Api.Tests;
 
-public sealed class PathologyParcelsApiTests : IClassFixture<TestApiFactory>
+public sealed class PathologyParcelsApiTests(TestApiFactory factory) : IClassFixture<TestApiFactory>
 {
-    private readonly HttpClient _http;
-
-    public PathologyParcelsApiTests(TestApiFactory factory) => _http = factory.CreateClient();
+    private readonly HttpClient _http = factory.CreateClient();
+    private readonly TestApiFactory _factory = factory;
 
     [Fact]
-    public async Task Parcel_Create_ThenGetByKey_ShouldWork()
+    public async Task Create_ShouldCalculateMonetarySum_FromEndoscopyBiopsiesCost()
     {
-        var seed = await PathologyTestSeed.EnsureAsync(_http);
+        await DevSeedHelper.SeedAsync(_http);
 
-        var get = await _http.GetAsync($"/api/pathology/parcels/{seed.PathologistId.Value}/{seed.ParcelCode}");
+        var (pathologistId, endo1Id, endo2Id, cost1, cost2) =
+            await PathologyTestSeed.SeedPathologistAndTwoEndoscopiesAsync(_factory, 50m, 70m);
+
+        var create = new PathologyParcelCreateRequestDto(
+            PathologistId: new PathologistId(pathologistId),
+            EndoscopyIds: [new EndoscopyId(endo1Id), new EndoscopyId(endo2Id)],
+            DispatchedAtUtc: null,
+            CourierName: null,
+            TrackingNumber: null,
+            Notes: "test");
+
+        var resp = await _http.PostJsonAsync("/api/pathology/parcels", create);
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var body = await resp.Content.ReadJsonAsync<ResultDto<PathologyParcelId>>();
+        body!.IsSuccess.Should().BeTrue();
+        body.Value.Should().NotBeNull();
+
+        var parcelId = body.Value!.Value;
+
+        var get = await _http.GetAsync($"/api/pathology/parcels/{parcelId}");
         get.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var body = await get.Content.ReadFromJsonAsync<ResultDto<PathologyParcelDto>>();
-        body!.IsSuccess.Should().BeTrue();
-        body.Value!.ParcelCode.Should().Be(seed.ParcelCode);
+        var getBody = await get.Content.ReadJsonAsync<ResultDto<PathologyParcelDto>>();
+        getBody!.IsSuccess.Should().BeTrue();
+        getBody.Value!.MonetarySum.Should().Be(cost1 + cost2);
     }
 
     [Fact]
-    public async Task Parcel_Search_ShouldReturn200_AndList()
+    public async Task Assign_And_Unassign_ShouldUpdateMonetarySum()
     {
-        var seed = await PathologyTestSeed.EnsureAsync(_http);
+        await DevSeedHelper.SeedAsync(_http);
 
-        var resp = await _http.PostAsJsonAsync(
-            "/api/pathology/parcels/search",
-            new PathologyParcelSearchRequestDto(PathologistId: seed.PathologistId, Paging: new PagedRequestDto(1, 50)));
+        var (pathologistId, endo1Id, endo2Id, cost1, cost2) =
+            await PathologyTestSeed.SeedPathologistAndTwoEndoscopiesAsync(_factory, 40m, 25m);
 
-        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var create = new PathologyParcelCreateRequestDto(
+            PathologistId: new PathologistId(pathologistId),
+            EndoscopyIds: [new EndoscopyId(endo1Id)],
+            DispatchedAtUtc: null,
+            CourierName: null,
+            TrackingNumber: null,
+            Notes: null);
 
-        var body = await resp.Content.ReadFromJsonAsync<ResultDto<PagedResultDto<PathologyParcelListItemDto>>>();
-        body!.IsSuccess.Should().BeTrue();
-        body.Value!.Items.Should().Contain(x => x.ParcelCode == seed.ParcelCode);
+        var createResp = await _http.PostJsonAsync("/api/pathology/parcels", create);
+        createResp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var createBody = await createResp.Content.ReadJsonAsync<ResultDto<PathologyParcelId>>();
+        createBody!.IsSuccess.Should().BeTrue();
+        var parcelId = createBody.Value!.Value;
+
+        var parcel = (await (await _http.GetAsync($"/api/pathology/parcels/{parcelId}"))
+            .Content.ReadJsonAsync<ResultDto<PathologyParcelDto>>())!.Value!;
+        parcel.MonetarySum.Should().Be(cost1);
+
+        var keyUrl = $"/api/pathology/parcels/{pathologistId}/{parcel.ParcelCode}";
+
+        // Assign route: POST .../items
+        var assignReq = new PathologyParcelAssignEndoscopiesRequestDto([new EndoscopyId(endo2Id)]);
+        var assignResp = await _http.PostJsonAsync($"{keyUrl}/items", assignReq);
+        assignResp.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await assignResp.Content.ReadJsonAsync<ResultDto<bool>>())!.IsSuccess.Should().BeTrue();
+
+        var afterAssign = (await (await _http.GetAsync(keyUrl))
+            .Content.ReadJsonAsync<ResultDto<PathologyParcelDto>>())!.Value!;
+        afterAssign.MonetarySum.Should().Be(cost1 + cost2);
+
+        // Unassign route: POST .../items/unassign
+        var unassignReq = new PathologyParcelAssignEndoscopiesRequestDto([new EndoscopyId(endo1Id)]);
+        var unassignResp = await _http.PostJsonAsync($"{keyUrl}/items/unassign", unassignReq);
+        unassignResp.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await unassignResp.Content.ReadJsonAsync<ResultDto<bool>>())!.IsSuccess.Should().BeTrue();
+
+        var afterUnassign = (await (await _http.GetAsync(keyUrl))
+            .Content.ReadJsonAsync<ResultDto<PathologyParcelDto>>())!.Value!;
+        afterUnassign.MonetarySum.Should().Be(cost2);
     }
 
     [Fact]
-    public async Task Parcel_UnassignReports_ShouldClearReportParcel()
+    public async Task UpdateByKey_ShouldRecalculateMonetarySum_WhenEndoscopyCostChanges()
     {
-        var seed = await PathologyTestSeed.EnsureAsync(_http);
+        await DevSeedHelper.SeedAsync(_http);
 
-        // Find the report we assigned (search by parcel)
-        var searchReports = await _http.PostAsJsonAsync(
-            "/api/pathology/reports/search",
-            new PathologyReportSearchRequestDto(DispatchParcelCode: seed.ParcelCode, Paging: new PagedRequestDto(1, 50)));
+        var (pathologistId, endo1Id, _, cost1, _) =
+            await PathologyTestSeed.SeedPathologistAndTwoEndoscopiesAsync(_factory, 10m, 0m);
 
-        var searchBody = await searchReports.Content.ReadFromJsonAsync<ResultDto<PagedResultDto<PathologyReportListItemDto>>>();
-        searchBody!.IsSuccess.Should().BeTrue();
-        searchBody.Value!.Items.Count.Should().BeGreaterThan(0);
+        var create = new PathologyParcelCreateRequestDto(
+            PathologistId: new PathologistId(pathologistId),
+            EndoscopyIds: [new EndoscopyId(endo1Id)],
+            DispatchedAtUtc: null,
+            CourierName: null,
+            TrackingNumber: null,
+            Notes: null);
 
-        var reportId = searchBody.Value.Items[0].Id;
+        var createResp = await _http.PostJsonAsync("/api/pathology/parcels", create);
+        createResp.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // Unassign
-        var unassign = await _http.PostAsJsonAsync(
-            $"/api/pathology/parcels/{seed.PathologistId.Value}/{seed.ParcelCode}/reports/unassign",
-            new PathologyParcelAssignReportsRequestDto(new[] { reportId }));
+        var createBody = await createResp.Content.ReadJsonAsync<ResultDto<PathologyParcelId>>();
+        createBody!.IsSuccess.Should().BeTrue();
+        var parcelId = createBody.Value!.Value;
 
-        unassign.StatusCode.Should().Be(HttpStatusCode.OK);
+        var get1 = (await (await _http.GetAsync($"/api/pathology/parcels/{parcelId}"))
+            .Content.ReadJsonAsync<ResultDto<PathologyParcelDto>>())!.Value!;
+        get1.MonetarySum.Should().Be(cost1);
 
-        // Verify report no longer returned by parcel search
-        var searchReports2 = await _http.PostAsJsonAsync(
-            "/api/pathology/reports/search",
-            new PathologyReportSearchRequestDto(DispatchParcelCode: seed.ParcelCode, Paging: new PagedRequestDto(1, 50)));
+        var newCost = 99m;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<GIPractice.Infrastructure.AppDbContext>();
+            var endo = await db.Endoscopies.FindAsync(endo1Id);
+            endo!.BiopsiesCost = newCost;
+            await db.SaveChangesAsync();
+        }
 
-        var body2 = await searchReports2.Content.ReadFromJsonAsync<ResultDto<PagedResultDto<PathologyReportListItemDto>>>();
-        body2!.IsSuccess.Should().BeTrue();
-        body2.Value!.Items.Should().BeEmpty();
-    }
+        var keyUrl = $"/api/pathology/parcels/{pathologistId}/{get1.ParcelCode}";
+        var updateReq = new PathologyParcelUpdateRequestDto(
+            Id: get1.Id,
+            DispatchedAtUtc: get1.DispatchedAtUtc,
+            CourierName: get1.CourierName,
+            TrackingNumber: get1.TrackingNumber,
+            Notes: get1.Notes,
+            RowVersion: get1.RowVersion);
 
-    [Fact]
-    public async Task Report_SearchByParcel_ShouldReturnAssigned()
-    {
-        var seed = await PathologyTestSeed.EnsureAsync(_http);
+        var put = await _http.PutJsonAsync(keyUrl, updateReq);
+        put.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await put.Content.ReadJsonAsync<ResultDto<bool>>())!.IsSuccess.Should().BeTrue();
 
-        var resp = await _http.PostAsJsonAsync(
-            "/api/pathology/reports/search",
-            new PathologyReportSearchRequestDto(DispatchParcelCode: seed.ParcelCode, Paging: new PagedRequestDto(1, 50)));
-
-        resp.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var body = await resp.Content.ReadFromJsonAsync<ResultDto<PagedResultDto<PathologyReportListItemDto>>>();
-        body!.IsSuccess.Should().BeTrue();
-        body.Value!.Items.Count.Should().BeGreaterThan(0);
+        var get2 = (await (await _http.GetAsync(keyUrl))
+            .Content.ReadJsonAsync<ResultDto<PathologyParcelDto>>())!.Value!;
+        get2.MonetarySum.Should().Be(newCost);
     }
 }
