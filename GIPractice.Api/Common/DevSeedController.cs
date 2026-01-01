@@ -2,6 +2,7 @@ using GIPractice.Core.Entities;
 using GIPractice.Core.Enums;
 using GIPractice.Core.ValueObjects;
 using GIPractice.Infrastructure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,7 @@ namespace GIPractice.Api.Common;
 
 [ApiController]
 [Route("api/dev")]
+[AllowAnonymous]
 public sealed class DevSeedController(AppDbContext db, IWebHostEnvironment env) : ControllerBase
 {
     [HttpPost("seed")]

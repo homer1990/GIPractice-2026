@@ -2,6 +2,6 @@
 
 namespace GIPractice.Core.Entities.Identity;
 
-public class ApplicationRole : IdentityRole
+public sealed class ApplicationRole : IdentityRole
 {
 }
