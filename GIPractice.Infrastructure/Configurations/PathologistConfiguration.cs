@@ -16,13 +16,5 @@ public sealed class PathologistConfig : IEntityTypeConfiguration<Pathologist>
         b.Property(x => x.PricingPlanJson).IsRequired();
 
         b.Property(x => x.RowVersion).IsRowVersion();
-
-        b.HasMany(x => x.Parcels)
-            .WithOne(x => x.Pathologist)
-            .HasForeignKey(x => x.PathologistId);
-
-        b.HasMany(x => x.Reports)
-            .WithOne(x => x.Pathologist)
-            .HasForeignKey(x => x.PathologistId);
     }
 }

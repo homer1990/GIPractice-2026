@@ -28,7 +28,7 @@ public sealed class PathologyParcelConfig : IEntityTypeConfiguration<PathologyPa
         b.HasIndex(x => new { x.PathologistId, x.ParcelCode }).IsUnique();
 
         b.HasOne(x => x.Pathologist)
-            .WithMany()
+            .WithMany(x => x.Parcels)
             .HasForeignKey(x => x.PathologistId)
             .OnDelete(DeleteBehavior.Restrict);
 
