@@ -41,14 +41,13 @@ public sealed class PathologistsApiTests(TestApiFactory factory) : IClassFixture
 
         var rv1 = get1.Value!.RowVersion;
 
-        var update = new PathologistUpsertRequestDto(
-            Id: new PathologistId(id + 9999), // route wins
-            Name: create.Name + " Updated",
-            Address: "Addr2",
-            Email: "test2@example.com",
-            PhoneNumber: "2100000001",
-            PricingPlanJson: "{}",
-            RowVersion: rv1);
+        var update = create with
+        {
+            Id = new PathologistId(id + 9999), // route wins
+            Name = create.Name + " Updated",
+            Email = "test2@example.com",
+            RowVersion = rv1
+        };
 
         var put = await _http.PutJsonAsync($"/api/pathologists/{id}", update);
         put.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -58,7 +57,7 @@ public sealed class PathologistsApiTests(TestApiFactory factory) : IClassFixture
         get2.Name.Should().EndWith("Updated");
         get2.RowVersion.Should().NotBeNull();
 
-        // Re-using old RowVersion should conflict
+        // Re-use old RowVersion should conflict
         var conflictUpdate = update with { RowVersion = rv1 };
         var put2 = await _http.PutJsonAsync($"/api/pathologists/{id}", conflictUpdate);
         put2.StatusCode.Should().Be(HttpStatusCode.Conflict);

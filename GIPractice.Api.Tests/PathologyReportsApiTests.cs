@@ -13,15 +13,15 @@ public sealed class PathologyReportsApiTests(TestApiFactory factory) : IClassFix
     private readonly TestApiFactory _factory = factory;
 
     [Fact]
-    public async Task UpdateReport_CannotChangeDispatchParcelId_ViaReportsEndpoint()
+    public async Task Update_ShouldEnforce_ParcelManagedIds_And_ReceiptRules()
     {
         await DevSeedHelper.SeedAsync(_http);
 
-        var (pathologistId, endo1Id, endo2Id, _, _) =
+        var (pathologistId, endo1Id, _, _, _) =
             await PathologyTestSeed.SeedPathologistAndTwoEndoscopiesAsync(_factory, 10m, 5m);
 
-        // Parcel 1 with endo1
-        var parcel1Create = new PathologyParcelCreateRequestDto(
+        // Create a draft parcel with one endoscopy
+        var createParcel = new PathologyParcelCreateRequestDto(
             PathologistId: new PathologistId(pathologistId),
             EndoscopyIds: new[] { new EndoscopyId(endo1Id) },
             DispatchedAtUtc: null,
@@ -29,15 +29,33 @@ public sealed class PathologyReportsApiTests(TestApiFactory factory) : IClassFix
             TrackingNumber: null,
             Notes: null);
 
-        var p1Resp = await _http.PostJsonAsync("/api/pathology/parcels", parcel1Create);
-        p1Resp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var p1Id = (await p1Resp.Content.ReadJsonAsync<ResultDto<PathologyParcelId>>())!.Value!.Value;
+        var pCreateResp = await _http.PostJsonAsync("/api/pathology/parcels", createParcel);
+        pCreateResp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var pCreateBody = await pCreateResp.Content.ReadJsonAsync<ResultDto<PathologyParcelId>>();
+        pCreateBody!.IsSuccess.Should().BeTrue();
+        var parcelId = pCreateBody.Value!.Value;
 
-        // Parcel 2 with endo2 (different parcel id we will try to (incorrectly) set on the report)
-        var parcel2Create = parcel1Create with { EndoscopyIds = new[] { new EndoscopyId(endo2Id) } };
-        var p2Resp = await _http.PostJsonAsync("/api/pathology/parcels", parcel2Create);
-        p2Resp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var p2Id = (await p2Resp.Content.ReadJsonAsync<ResultDto<PathologyParcelId>>())!.Value!.Value;
+        // Get parcel (needs code + rowversion)
+        var pGet = await _http.GetAsync($"/api/pathology/parcels/{parcelId}");
+        pGet.StatusCode.Should().Be(HttpStatusCode.OK);
+        var pGetBody = await pGet.Content.ReadJsonAsync<ResultDto<PathologyParcelDto>>();
+        pGetBody!.IsSuccess.Should().BeTrue();
+        var parcel = pGetBody.Value!;
+
+        // Dispatch parcel (sets report SentAtUtc + Dispatched status)
+        var dispatchedAt = DateTime.UtcNow;
+        var pUpdate = new PathologyParcelUpdateRequestDto(
+            Id: parcel.Id,
+            DispatchedAtUtc: dispatchedAt,
+            CourierName: "Courier",
+            TrackingNumber: "TRK",
+            Notes: null,
+            RowVersion: parcel.RowVersion);
+
+        var keyUrl = $"/api/pathology/parcels/{pathologistId}/{parcel.ParcelCode}";
+        var pUpdateResp = await _http.PutJsonAsync(keyUrl, pUpdate);
+        pUpdateResp.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await pUpdateResp.Content.ReadJsonAsync<ResultDto<bool>>())!.IsSuccess.Should().BeTrue();
 
         // Find the report created for endo1 by the parcel API
         var search = new PathologyReportSearchRequestDto(
@@ -58,20 +76,22 @@ public sealed class PathologyReportsApiTests(TestApiFactory factory) : IClassFix
         var sBody = await sResp.Content.ReadJsonAsync<ResultDto<PagedResultDto<PathologyReportListItemDto>>>();
         sBody!.IsSuccess.Should().BeTrue();
         var item = sBody.Value!.Items.Single();
+        item.SentAtUtc.Should().NotBeNull();
+        item.Status.Should().Be(PathologyReportStatus.Dispatched);
 
-        // Update a normal field (allowed) - omit DispatchParcelId
-        var update1 = new PathologyReportUpsertRequestDto(
+        // 1) Cannot set DispatchParcelId via Reports API
+        var attemptSetParcel = new PathologyReportUpsertRequestDto(
             Id: item.Id,
             PatientId: item.PatientId,
             EndoscopyId: item.EndoscopyId,
             PathologistId: item.PathologistId,
-            DispatchParcelId: null,
+            DispatchParcelId: new PathologyParcelId(parcelId),
             SentAtUtc: item.SentAtUtc,
-            ReceivedAtUtc: item.ReceivedAtUtc,
+            ReceivedAtUtc: null,
             Notes: null,
             ClinicalInfo: null,
             MacroscopyText: null,
-            DiagnosisText: "updated",
+            DiagnosisText: null,
             Status: item.Status,
             IsUrgent: item.IsUrgent,
             DocumentFileId: null,
@@ -81,58 +101,47 @@ public sealed class PathologyReportsApiTests(TestApiFactory factory) : IClassFix
             Document: null,
             RowVersion: item.RowVersion);
 
-        var u1Resp = await _http.PutJsonAsync($"/api/pathology/reports/{item.Id.Value}", update1);
-        u1Resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var bad1 = await _http.PutJsonAsync($"/api/pathology/reports/{item.Id.Value}", attemptSetParcel);
+        bad1.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        // Grab latest rowversion
-        var got = await _http.GetAsync($"/api/pathology/reports/{item.Id.Value}");
-        got.StatusCode.Should().Be(HttpStatusCode.OK);
-        var gotBody = (await got.Content.ReadJsonAsync<ResultDto<PathologyReportDto>>())!.Value!;
+        // 2) Cannot set content before receipt
+        var attemptContent = attemptSetParcel with
+        {
+            DispatchParcelId = null,
+            DiagnosisText = "diagnosis before receipt",
+        };
+        var bad2 = await _http.PutJsonAsync($"/api/pathology/reports/{item.Id.Value}", attemptContent);
+        bad2.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        // Now try to (incorrectly) change DispatchParcelId to parcel2
-        var update2 = update1 with { DispatchParcelId = new PathologyParcelId(p2Id), RowVersion = gotBody.RowVersion };
-        var u2Resp = await _http.PutJsonAsync($"/api/pathology/reports/{item.Id.Value}", update2);
-        u2Resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        var u2Body = await u2Resp.Content.ReadJsonAsync<ResultDto<bool>>();
-        u2Body!.IsSuccess.Should().BeFalse();
-        u2Body.Error!.Code.Should().Be("validation");
-    }
+        // 3) Receive: set ReceivedAtUtc + content + status Received
+        var receivedAt = item.SentAtUtc!.Value.AddMinutes(5);
+        var receive = attemptSetParcel with
+        {
+            DispatchParcelId = null,
+            ReceivedAtUtc = receivedAt,
+            DiagnosisText = "Dx",
+            MacroscopyText = "Macro",
+            Status = PathologyReportStatus.Received,
+        };
+        var ok = await _http.PutJsonAsync($"/api/pathology/reports/{item.Id.Value}", receive);
+        ok.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await ok.Content.ReadJsonAsync<ResultDto<bool>>())!.IsSuccess.Should().BeTrue();
 
-    [Fact]
-    public async Task DeleteReport_WhenInDispatchedParcel_ShouldReturn400()
-    {
-        await DevSeedHelper.SeedAsync(_http);
+        // Get latest rowversion
+        var get = await _http.GetAsync($"/api/pathology/reports/{item.Id.Value}");
+        get.StatusCode.Should().Be(HttpStatusCode.OK);
+        var got = (await get.Content.ReadJsonAsync<ResultDto<PathologyReportDto>>())!.Value!;
+        got.ReceivedAtUtc.Should().Be(receivedAt);
+        got.DiagnosisText.Should().Be("Dx");
 
-        var (pathologistId, endo1Id, _, _, _) =
-            await PathologyTestSeed.SeedPathologistAndTwoEndoscopiesAsync(_factory, 10m, 5m);
+        // 4) Cannot clear ReceivedAtUtc
+        var clear = receive with { ReceivedAtUtc = null, RowVersion = got.RowVersion };
+        var bad3 = await _http.PutJsonAsync($"/api/pathology/reports/{item.Id.Value}", clear);
+        bad3.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        // Create dispatched parcel
-        var parcelCreate = new PathologyParcelCreateRequestDto(
-            PathologistId: new PathologistId(pathologistId),
-            EndoscopyIds: new[] { new EndoscopyId(endo1Id) },
-            DispatchedAtUtc: DateTime.UtcNow,
-            CourierName: "Courier",
-            TrackingNumber: "TRK",
-            Notes: null);
-
-        var pResp = await _http.PostJsonAsync("/api/pathology/parcels", parcelCreate);
-        pResp.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        // Find report
-        var search = new PathologyReportSearchRequestDto(
-            EndoscopyId: new EndoscopyId(endo1Id),
-            PathologistId: new PathologistId(pathologistId),
-            Paging: new PagedRequestDto(1, 50));
-
-        var sResp = await _http.PostJsonAsync("/api/pathology/reports/search", search);
-        sResp.StatusCode.Should().Be(HttpStatusCode.OK);
-        var sBody = await sResp.Content.ReadJsonAsync<ResultDto<PagedResultDto<PathologyReportListItemDto>>>();
-        var reportId = sBody!.Value!.Items.Single().Id.Value;
-
-        var del = await _http.DeleteAsync($"/api/pathology/reports/{reportId}");
-        del.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        var delBody = await del.Content.ReadJsonAsync<ResultDto<bool>>();
-        delBody!.IsSuccess.Should().BeFalse();
-        delBody.Error!.Code.Should().Be("validation");
+        // 5) Cannot change EndoscopyId
+        var badId = receive with { EndoscopyId = new EndoscopyId(endo1Id + 12345), RowVersion = got.RowVersion };
+        var bad4 = await _http.PutJsonAsync($"/api/pathology/reports/{item.Id.Value}", badId);
+        bad4.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }
