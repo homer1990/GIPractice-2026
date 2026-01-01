@@ -74,7 +74,7 @@ public partial class Program
         builder.Services.AddScoped<IPathologyParcelsStore, EfPathologyParcelsStore>();
         builder.Services.AddScoped<IPathologyParcelsService, PathologyParcelsService>();
 
-        // Pathologists (EF-backed)
+        // Pathologists
         builder.Services.AddScoped<IPathologistsStore, EfPathologistsStore>();
         builder.Services.AddScoped<IPathologistsService, PathologistsService>();
 

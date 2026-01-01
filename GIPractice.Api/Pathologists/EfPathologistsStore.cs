@@ -8,23 +8,21 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GIPractice.Api.Pathologists;
 
-public sealed class EfPathologistsStore : IPathologistsStore
+public sealed class EfPathologistsStore(AppDbContext db) : IPathologistsStore
 {
-    private readonly AppDbContext _db;
-
-    public EfPathologistsStore(AppDbContext db) => _db = db;
+    private readonly AppDbContext _db = db;
 
     public async Task<ResultDto<PagedResultDto<PathologistListItemDto>>> SearchAsync(
         PathologistSearchRequestDto request,
         CancellationToken ct = default)
     {
-        var paging = request.Paging ?? new PagedRequestDto();
+        var paging = request.Paging ?? new PagedRequestDto(1, 50);
 
         if (paging.Page < 1)
-            return ResultDto<PagedResultDto<PathologistListItemDto>>.Fail("invalid", "Page must be >= 1.");
+            return ResultDto<PagedResultDto<PathologistListItemDto>>.Fail("validation", "Page must be >= 1.");
 
         if (paging.PageSize is < 1 or > 500)
-            return ResultDto<PagedResultDto<PathologistListItemDto>>.Fail("invalid", "PageSize must be between 1 and 500.");
+            return ResultDto<PagedResultDto<PathologistListItemDto>>.Fail("validation", "PageSize must be between 1 and 500.");
 
         IQueryable<Pathologist> q = _db.Pathologists.AsNoTracking();
 
@@ -75,28 +73,29 @@ public sealed class EfPathologistsStore : IPathologistsStore
     public async Task<ResultDto<PathologistId>> CreateAsync(PathologistUpsertRequestDto request, CancellationToken ct = default)
     {
         if (request.Id is not null)
-            return ResultDto<PathologistId>.Fail("invalid", "Id must be null when creating a pathologist.");
+            return ResultDto<PathologistId>.Fail("validation", "Id must be null when creating a pathologist.");
 
-        if (string.IsNullOrWhiteSpace(request.Name))
+        var name = TrimMax(request.Name, 200);
+        if (string.IsNullOrWhiteSpace(name))
             return ResultDto<PathologistId>.Fail("validation", "Name is required.");
 
-        if (string.IsNullOrWhiteSpace(request.PricingPlanJson))
+        var pricing = request.PricingPlanJson?.Trim();
+        if (string.IsNullOrWhiteSpace(pricing))
             return ResultDto<PathologistId>.Fail("validation", "PricingPlanJson is required.");
 
-        if (!IsValidJson(request.PricingPlanJson))
+        if (!IsValidJson(pricing))
             return ResultDto<PathologistId>.Fail("validation", "PricingPlanJson must be valid JSON.");
 
         var entity = new Pathologist
         {
-            Name = TrimMax(request.Name, 200),
+            Name = name,
             Address = TrimMaxNullable(request.Address, 500),
             Email = TrimMaxNullable(request.Email, 200),
             PhoneNumber = TrimMaxNullable(request.PhoneNumber, 50),
-            PricingPlanJson = request.PricingPlanJson.Trim(),
+            PricingPlanJson = pricing
         };
 
         _db.Pathologists.Add(entity);
-
         await _db.SaveChangesAsync(ct);
 
         return ResultDto<PathologistId>.Ok(new PathologistId(entity.Id));
@@ -105,31 +104,31 @@ public sealed class EfPathologistsStore : IPathologistsStore
     public async Task<ResultDto<bool>> UpdateAsync(PathologistUpsertRequestDto request, CancellationToken ct = default)
     {
         if (request.Id is null)
-            return ResultDto<bool>.Fail("invalid", "Id is required when updating a pathologist.");
+            return ResultDto<bool>.Fail("validation", "Id is required when updating a pathologist.");
 
-        var id = request.Id.Value.Value;
-
-        var entity = await _db.Pathologists.FirstOrDefaultAsync(x => x.Id == id, ct);
+        var entity = await _db.Pathologists.FirstOrDefaultAsync(x => x.Id == request.Id.Value.Value, ct);
         if (entity is null)
             return ResultDto<bool>.Fail("not_found", "Pathologist not found.");
 
         if (request.RowVersion is not null && !request.RowVersion.SequenceEqual(entity.RowVersion))
             return ResultDto<bool>.Fail("conflict", "RowVersion conflict.");
 
-        if (string.IsNullOrWhiteSpace(request.Name))
+        var name = TrimMax(request.Name, 200);
+        if (string.IsNullOrWhiteSpace(name))
             return ResultDto<bool>.Fail("validation", "Name is required.");
 
-        if (string.IsNullOrWhiteSpace(request.PricingPlanJson))
+        var pricing = request.PricingPlanJson?.Trim();
+        if (string.IsNullOrWhiteSpace(pricing))
             return ResultDto<bool>.Fail("validation", "PricingPlanJson is required.");
 
-        if (!IsValidJson(request.PricingPlanJson))
+        if (!IsValidJson(pricing))
             return ResultDto<bool>.Fail("validation", "PricingPlanJson must be valid JSON.");
 
-        entity.Name = TrimMax(request.Name, 200);
+        entity.Name = name;
         entity.Address = TrimMaxNullable(request.Address, 500);
         entity.Email = TrimMaxNullable(request.Email, 200);
         entity.PhoneNumber = TrimMaxNullable(request.PhoneNumber, 50);
-        entity.PricingPlanJson = request.PricingPlanJson.Trim();
+        entity.PricingPlanJson = pricing;
 
         await _db.SaveChangesAsync(ct);
         return ResultDto<bool>.Ok(true);
@@ -141,6 +140,7 @@ public sealed class EfPathologistsStore : IPathologistsStore
         if (entity is null)
             return ResultDto<bool>.Fail("not_found", "Pathologist not found.");
 
+        // Guard: cannot delete if referenced.
         var hasParcels = await _db.PathologyParcels.AsNoTracking().AnyAsync(x => x.PathologistId == id.Value, ct);
         if (hasParcels)
             return ResultDto<bool>.Fail("validation", "Cannot delete pathologist: parcels exist.");
@@ -167,7 +167,7 @@ public sealed class EfPathologistsStore : IPathologistsStore
         }
     }
 
-    private static string TrimMax(string s, int max)
+    private static string TrimMax(string? s, int max)
     {
         s = (s ?? string.Empty).Trim();
         return s.Length <= max ? s : s[..max];
@@ -177,7 +177,6 @@ public sealed class EfPathologistsStore : IPathologistsStore
     {
         if (string.IsNullOrWhiteSpace(s))
             return null;
-
         s = s.Trim();
         return s.Length <= max ? s : s[..max];
     }

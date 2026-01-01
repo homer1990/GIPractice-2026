@@ -132,11 +132,9 @@ public sealed class PathologistsApiTests(TestApiFactory factory) : IClassFixture
     {
         await DevSeedHelper.SeedAsync(_http);
 
-        // Seed a pathologist and endoscopies directly in DB (fast + deterministic)
         var (pathologistId, endo1Id, _, _, _) =
             await PathologyTestSeed.SeedPathologistAndTwoEndoscopiesAsync(_factory, 10m, 5m);
 
-        // Create a parcel that references the pathologist
         var createParcel = new PathologyParcelCreateRequestDto(
             PathologistId: new PathologistId(pathologistId),
             EndoscopyIds: new[] { new EndoscopyId(endo1Id) },

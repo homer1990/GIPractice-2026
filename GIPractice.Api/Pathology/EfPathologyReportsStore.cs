@@ -21,10 +21,10 @@ public sealed class EfPathologyReportsStore(AppDbContext db) : IPathologyReports
         var paging = request.Paging ?? new PagedRequestDto(1, 50);
 
         if (paging.Page < 1)
-            return ResultDto < PagedResultDto < PathologyReportListItemDto >>.Fail("validation", "Page must be >= 1.");
+            return ResultDto<PagedResultDto<PathologyReportListItemDto>>.Fail("validation", "Page must be >= 1.");
 
         if (paging.PageSize is < 1 or > 500)
-            return ResultDto < PagedResultDto < PathologyReportListItemDto >>.Fail("validation", "PageSize must be between 1 and 500.");
+            return ResultDto<PagedResultDto<PathologyReportListItemDto>>.Fail("validation", "PageSize must be between 1 and 500.");
 
         IQueryable<PathologyReport> q = _db.PathologyReports.AsNoTracking();
 
@@ -82,7 +82,7 @@ public sealed class EfPathologyReportsStore(AppDbContext db) : IPathologyReports
                 RowVersion: x.RowVersion))
             .ToListAsync(ct);
 
-        return ResultDto < PagedResultDto < PathologyReportListItemDto >>.Ok(
+        return ResultDto<PagedResultDto<PathologyReportListItemDto>>.Ok(
             new PagedResultDto<PathologyReportListItemDto>(rows, total, paging.Page, paging.PageSize));
     }
 
@@ -105,10 +105,9 @@ public sealed class EfPathologyReportsStore(AppDbContext db) : IPathologyReports
         if (request.Id is not null)
             return ResultDto<PathologyReportId>.Fail("invalid", "Id must be null when creating a pathology report.");
 
-        // In Option 1, report↔parcel membership is managed exclusively via the parcels API
-        // (so monetary sum + chain-of-custody stay consistent).
+        // Option 1 contract: parcel membership is managed only by the Parcels API.
         if (request.DispatchParcelId is not null)
-            return ResultDto<PathologyReportId>.Fail("validation", "DispatchParcelId cannot be set when creating a report. Use the parcels endpoints to assign endoscopies.");
+            return ResultDto<PathologyReportId>.Fail("validation", "DispatchParcelId cannot be set via Reports API. Use Parcels endpoints.");
 
         // Enforce uniqueness (PathologistId, EndoscopyId) pre-check
         var exists = await _db.PathologyReports
@@ -164,23 +163,56 @@ public sealed class EfPathologyReportsStore(AppDbContext db) : IPathologyReports
         if (request.RowVersion is not null && !request.RowVersion.SequenceEqual(entity.RowVersion))
             return ResultDto<bool>.Fail("conflict", "RowVersion conflict.");
 
-        // Report identity is immutable.
-        if (entity.PatientId != request.PatientId.Value
-            || entity.EndoscopyId != request.EndoscopyId.Value
-            || entity.PathologistId != request.PathologistId.Value)
-            return ResultDto<bool>.Fail("validation", "Cannot change PatientId/EndoscopyId/PathologistId of an existing report.");
+        // Option 1 contract: IDs are immutable for existing reports.
+        if (entity.PatientId != request.PatientId.Value)
+            return ResultDto<bool>.Fail("validation", "PatientId is immutable.");
+        if (entity.EndoscopyId != request.EndoscopyId.Value)
+            return ResultDto<bool>.Fail("validation", "EndoscopyId is immutable.");
+        if (entity.PathologistId != request.PathologistId.Value)
+            return ResultDto<bool>.Fail("validation", "PathologistId is immutable.");
 
-        // Parcel assignment is immutable here; it is managed by PathologyParcels endpoints.
+        // Parcel membership cannot be set/changed via Reports API.
         if (request.DispatchParcelId is not null)
+            return ResultDto<bool>.Fail("validation", "DispatchParcelId cannot be set via Reports API. Use Parcels endpoints.");
+
+        // SentAtUtc is controlled by parcel dispatch.
+        if (request.SentAtUtc != entity.SentAtUtc)
+            return ResultDto<bool>.Fail("validation", "SentAtUtc is controlled by parcel dispatch.");
+
+        // ReceivedAtUtc invariants
+        if (entity.ReceivedAtUtc is not null && request.ReceivedAtUtc is null)
+            return ResultDto<bool>.Fail("validation", "ReceivedAtUtc cannot be cleared.");
+
+        if (request.ReceivedAtUtc is not null)
         {
-            var requestedParcelId = request.DispatchParcelId.Value.Value;
-            if (entity.PathologyParcelId != requestedParcelId)
-                return ResultDto<bool>.Fail("validation", "Cannot change DispatchParcelId via reports endpoint. Use the parcels endpoints.");
+            if (entity.SentAtUtc is null)
+                return ResultDto<bool>.Fail("validation", "Cannot set ReceivedAtUtc before SentAtUtc.");
+            if (request.ReceivedAtUtc.Value < entity.SentAtUtc.Value)
+                return ResultDto<bool>.Fail("validation", "ReceivedAtUtc cannot be earlier than SentAtUtc.");
         }
 
-        // (FK trio already validated immutable above)
+        // Content is only allowed after receipt.
+        if (request.ReceivedAtUtc is null)
+        {
+            if (!string.IsNullOrWhiteSpace(request.MacroscopyText)
+                || !string.IsNullOrWhiteSpace(request.DiagnosisText)
+                || request.DocumentFileId is not null
+                || request.DocumentKind != PathologyDocumentKind.Unknown)
+            {
+                return ResultDto<bool>.Fail("validation", "Report content can only be set after receipt.");
+            }
+        }
 
-        entity.SentAtUtc = request.SentAtUtc;
+        // Status invariants
+        if (request.Status == PathologyReportStatus.Dispatched && entity.SentAtUtc is null)
+            return ResultDto<bool>.Fail("validation", "Cannot set status Dispatched without SentAtUtc.");
+
+        if (request.Status == PathologyReportStatus.Received && request.ReceivedAtUtc is null)
+            return ResultDto<bool>.Fail("validation", "Cannot set status Received without ReceivedAtUtc.");
+
+        if (request.Status == PathologyReportStatus.Completed && request.ReceivedAtUtc is null)
+            return ResultDto<bool>.Fail("validation", "Cannot set status Completed without ReceivedAtUtc.");
+
         entity.ReceivedAtUtc = request.ReceivedAtUtc;
 
         entity.Notes = TrimMaxNullable(request.Notes, 2000);
@@ -200,7 +232,7 @@ public sealed class EfPathologyReportsStore(AppDbContext db) : IPathologyReports
         }
         catch (DbUpdateException)
         {
-            return ResultDto<bool>.Fail("conflict", "Could not update pathology report (possible duplicate pathologist + endoscopy).");
+            return ResultDto<bool>.Fail("conflict", "Could not update pathology report.");
         }
 
         return ResultDto<bool>.Ok(true);
