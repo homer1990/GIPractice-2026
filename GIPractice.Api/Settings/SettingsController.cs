@@ -1,13 +1,16 @@
-﻿using GIPractice.Contracts.Common;
+﻿using GIPractice.Api.Common;
+using GIPractice.Contracts.Auth;
+using GIPractice.Contracts.Common;
 using GIPractice.Contracts.Settings;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using GIPractice.Api.Common;
 
 namespace GIPractice.Api.Settings;
 
 [ApiController]
 [Route("api/settings")]
+[Authorize(Roles = AppRoles.Admin)]
 public sealed class SettingsController : ControllerBase
 {
     private readonly ISettingsService _svc;

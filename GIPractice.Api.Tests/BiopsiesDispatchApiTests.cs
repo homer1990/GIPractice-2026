@@ -15,7 +15,7 @@ public sealed class BiopsiesDispatchApiTests : IClassFixture<TestApiFactory>
 
     public BiopsiesDispatchApiTests(TestApiFactory factory)
     {
-        _http = factory.CreateClient();
+        _http = factory.CreateAuthenticatedClient();
     }
 
     [Fact]

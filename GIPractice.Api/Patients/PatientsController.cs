@@ -1,13 +1,16 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using GIPractice.Api.Auth;
 using GIPractice.Api.Common;
 using GIPractice.Contracts.Ids;
 using GIPractice.Contracts.Patients;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace GIPractice.Api.Patients;
 
 [ApiController]
 [Route("api/patients")]
+[Authorize(Roles = RoleSets.Staff)]
 public sealed class PatientsController(IPatientsService svc) : ControllerBase
 {
     private readonly IPatientsService _svc = svc;

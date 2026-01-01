@@ -1,13 +1,16 @@
-﻿using GIPractice.Api.Common;
+﻿using GIPractice.Api.Auth;
+using GIPractice.Api.Common;
 using GIPractice.Contracts.Ids;
 using GIPractice.Contracts.Pathologists;
 using GIPractice.Contracts.Pathology;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GIPractice.Api.Pathologists;
 
 [ApiController]
 [Route("api/pathologists")]
+[Authorize(Roles = RoleSets.Clinician)]
 public sealed class PathologistsController(IPathologistsService svc) : ControllerBase
 {
     [HttpPost("search")]

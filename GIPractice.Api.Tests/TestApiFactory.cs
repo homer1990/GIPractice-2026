@@ -1,8 +1,14 @@
-﻿using GIPractice.Infrastructure;
+using System.Collections.Generic;
+using System.Linq;
+using GIPractice.Contracts.Auth;
+using GIPractice.Core.Entities.Identity;
+using GIPractice.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -14,14 +20,32 @@ public sealed class TestApiFactory : WebApplicationFactory<ApiEntryPoint>
 {
     private string? _dbName;
 
+    public HttpClient CreateAuthenticatedClient(WebApplicationFactoryClientOptions? options = null)
+    {
+        var client = base.CreateClient(options ?? new WebApplicationFactoryClientOptions());
+        AuthTestHelper.AuthenticateAsAdminAsync(client).GetAwaiter().GetResult();
+        return client;
+    }
+
+    public HttpClient CreateAnonymousClient(WebApplicationFactoryClientOptions? options = null)
+        => base.CreateClient(options ?? new WebApplicationFactoryClientOptions());
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // Use Development so you don't accidentally skip middleware/routes via env guards.
         builder.UseEnvironment("Development");
+
+        // CRITICAL: disable bootstrap hosted service for tests (it hits DB during startup)
+        builder.ConfigureAppConfiguration((_, cfg) =>
+        {
+            cfg.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["BootstrapAdmin:Enabled"] = "false"
+            });
+        });
 
         builder.ConfigureServices(services =>
         {
-            // Remove DbContext registrations + configuration delegates coming from Program.cs
+            // Replace DbContext with per-test-db
             services.RemoveAll<AppDbContext>();
             services.RemoveAll<DbContextOptions<AppDbContext>>();
             services.RemoveAll<IConfigureOptions<DbContextOptions<AppDbContext>>>();
@@ -38,10 +62,10 @@ public sealed class TestApiFactory : WebApplicationFactory<ApiEntryPoint>
 
     protected override IHost CreateHost(IHostBuilder builder)
     {
-        // Let WebApplicationFactory build/start the host normally
+        // Let WebApplicationFactory build/start normally (no builder.Build()/host.Start() here)
         var host = base.CreateHost(builder);
 
-        // NOW do DB init (no BuildServiceProvider inside ConfigureServices)
+        // Now create DB + seed data (bootstrap is disabled so startup didn't touch DB)
         using var scope = host.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
@@ -49,15 +73,13 @@ public sealed class TestApiFactory : WebApplicationFactory<ApiEntryPoint>
         db.Database.EnsureCreated();
 
         SeedTestData(db);
+        SeedIdentity(scope.ServiceProvider);
 
         return host;
     }
 
     private static void SeedTestData(AppDbContext db)
     {
-        // Keep this minimal: seed just enough to satisfy FK constraints and basic searches.
-        // (Tests may still create their own data.)
-
         if (db.Patients.Any())
             return;
 
@@ -76,6 +98,47 @@ public sealed class TestApiFactory : WebApplicationFactory<ApiEntryPoint>
 
         db.Patients.Add(p);
         db.SaveChanges();
+    }
+
+    private static void SeedIdentity(IServiceProvider services)
+    {
+        var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+
+        foreach (var role in AppRoles.All)
+        {
+            if (!roleManager.RoleExistsAsync(role).GetAwaiter().GetResult())
+            {
+                var r = roleManager.CreateAsync(new ApplicationRole { Name = role }).GetAwaiter().GetResult();
+                if (!r.Succeeded)
+                    throw new InvalidOperationException("Role seed failed: " +
+                                                        string.Join("; ", r.Errors.Select(e => e.Description)));
+            }
+        }
+
+        var admin = userManager.FindByNameAsync("admin").GetAwaiter().GetResult();
+        if (admin is null)
+        {
+            admin = new ApplicationUser
+            {
+                UserName = "admin",
+                DisplayName = "Administrator",
+                IsActive = true
+            };
+
+            var created = userManager.CreateAsync(admin, "admin").GetAwaiter().GetResult();
+            if (!created.Succeeded)
+                throw new InvalidOperationException("Admin seed failed: " +
+                                                    string.Join("; ", created.Errors.Select(e => e.Description)));
+        }
+
+        if (!userManager.IsInRoleAsync(admin, AppRoles.Admin).GetAwaiter().GetResult())
+        {
+            var added = userManager.AddToRoleAsync(admin, AppRoles.Admin).GetAwaiter().GetResult();
+            if (!added.Succeeded)
+                throw new InvalidOperationException("Admin role seed failed: " +
+                                                    string.Join("; ", added.Errors.Select(e => e.Description)));
+        }
     }
 
     protected override void Dispose(bool disposing)

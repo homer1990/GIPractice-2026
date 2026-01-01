@@ -10,7 +10,7 @@ namespace GIPractice.Api.Tests;
 
 public sealed class PatientsRouteIdOverrideApiTests(TestApiFactory factory) : IClassFixture<TestApiFactory>
 {
-    private readonly HttpClient _http = factory.CreateClient();
+    private readonly HttpClient _http = factory.CreateAuthenticatedClient();
 
     [Fact]
     public async Task UpdatePatient_WhenBodyIdDiffers_RouteIdStillWins()

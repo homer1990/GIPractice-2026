@@ -1,13 +1,16 @@
-﻿using GIPractice.Contracts.Common;
+﻿using GIPractice.Api.Auth;
+using GIPractice.Api.Common;
+using GIPractice.Contracts.Common;
 using GIPractice.Contracts.Localization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using GIPractice.Api.Common;
 
 namespace GIPractice.Api.Localization;
 
 [ApiController]
 [Route("api/localization")]
+[Authorize(Roles = RoleSets.ReadOnlyOrBetter)]
 public sealed class LocalizationController : ControllerBase
 {
     private readonly ILocalizationService _svc;

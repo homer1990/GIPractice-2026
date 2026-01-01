@@ -8,7 +8,7 @@ namespace GIPractice.Api.Tests;
 
 public sealed class PatientsValidationApiTests(TestApiFactory factory) : IClassFixture<TestApiFactory>
 {
-    private readonly HttpClient _http = factory.CreateClient();
+    private readonly HttpClient _http = factory.CreateAuthenticatedClient();
 
     [Fact]
     public async Task CreatePatient_EmptyLastName_ShouldReturn400()

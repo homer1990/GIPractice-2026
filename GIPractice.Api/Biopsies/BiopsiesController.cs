@@ -1,12 +1,15 @@
+using GIPractice.Api.Auth;
 using GIPractice.Api.Common;
 using GIPractice.Contracts.Biopsies;
 using GIPractice.Contracts.Ids;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GIPractice.Api.Biopsies;
 
 [ApiController]
 [Route("api/biopsies")]
+[Authorize(Roles = RoleSets.Staff)]
 public sealed class BiopsiesController : ControllerBase
 {
     private readonly IBiopsiesService _svc;

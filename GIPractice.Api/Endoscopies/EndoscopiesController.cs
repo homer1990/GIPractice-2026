@@ -1,14 +1,17 @@
-﻿using GIPractice.Contracts.Common;
+﻿using GIPractice.Api.Auth;
+using GIPractice.Api.Common;
+using GIPractice.Contracts.Common;
 using GIPractice.Contracts.Endoscopies;
 using GIPractice.Contracts.Ids;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using GIPractice.Api.Common;
 
 namespace GIPractice.Api.Endoscopies;
 
 [ApiController]
 [Route("api/endoscopies")]
+[Authorize(Roles = RoleSets.Staff)]
 public sealed class EndoscopiesController : ControllerBase
 {
     private readonly IEndoscopiesService _svc;

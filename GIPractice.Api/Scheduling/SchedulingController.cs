@@ -1,14 +1,18 @@
-﻿using System.ComponentModel.DataAnnotations;
-using GIPractice.Api.Common;
+﻿using GIPractice.Api.Common;
+using GIPractice.Api.Auth;
+using GIPractice.Contracts.Auth;
 using GIPractice.Contracts.Common;
 using GIPractice.Contracts.Ids;
 using GIPractice.Contracts.Scheduling;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace GIPractice.Api.Scheduling;
 
 [ApiController]
 [Route("api/scheduling")]
+[Authorize(Roles = RoleSets.Staff)]
 public sealed class SchedulingController(ISchedulingService svc) : ControllerBase
 {
     private readonly ISchedulingService _svc = svc;

@@ -1,12 +1,15 @@
-﻿using GIPractice.Api.Common;
+﻿using GIPractice.Api.Auth;
+using GIPractice.Api.Common;
 using GIPractice.Contracts.Ids;
 using GIPractice.Contracts.Pathology;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GIPractice.Api.Pathology;
 
 [ApiController]
 [Route("api/pathology/parcels")]
+[Authorize(Roles = RoleSets.Clinician)]
 public sealed class PathologyParcelsController(IPathologyParcelsStore store) : ControllerBase
 {
     [HttpPost("search")]

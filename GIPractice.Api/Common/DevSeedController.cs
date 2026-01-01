@@ -1,3 +1,4 @@
+using GIPractice.Contracts.Auth;
 using GIPractice.Core.Entities;
 using GIPractice.Core.Enums;
 using GIPractice.Core.ValueObjects;
@@ -10,7 +11,7 @@ namespace GIPractice.Api.Common;
 
 [ApiController]
 [Route("api/dev")]
-[AllowAnonymous]
+[Authorize(Roles = AppRoles.Admin)]
 public sealed class DevSeedController(AppDbContext db, IWebHostEnvironment env) : ControllerBase
 {
     [HttpPost("seed")]
