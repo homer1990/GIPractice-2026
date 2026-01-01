@@ -28,6 +28,7 @@ public partial class Program
             .AddJsonOptions(o =>
             {
                 o.JsonSerializerOptions.Converters.Add(new StrongIntIdJsonConverterFactory());
+                o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
             });
 
         // Needed for Controller-based OpenAPI generation.
@@ -79,6 +80,7 @@ public partial class Program
         builder.Services.ConfigureHttpJsonOptions(o =>
         {
             o.SerializerOptions.Converters.Add(new StrongIntIdJsonConverterFactory());
+            o.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
         });
 
         // Add services to the container.

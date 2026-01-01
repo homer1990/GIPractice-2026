@@ -96,12 +96,29 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         AddAuditInfo();
 
         // But allow seeder to turn OFF version history
-        if (!DisableVersioning)
+        if (DisableVersioning)
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+
+        // IMPORTANT: For Added entities, Id is not assigned yet (often 0).
+        // If we version them before SaveChanges, VersionHistory rows collide on (EntityName, EntityId, Version).
+        // Solution: version Modified/Deleted before save, and version Added after save (when Ids exist).
+
+        var added = ChangeTracker
+            .Entries<BaseEntity>()
+            .Where(e => e.State == EntityState.Added)
+            .ToList();
+
+        await AddVersionsForNonAddedAsync(cancellationToken);
+
+        var result = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+
+        if (added.Count > 0)
         {
-            await AddVersionsAsync(cancellationToken);
+            await AddVersionsForAddedAsync(added, cancellationToken);
+            await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
         }
 
-        return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        return result;
     }
 
     private void AddAuditInfo()
@@ -140,12 +157,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         return JsonSerializer.Serialize(dict);
     }
 
-    private async Task AddVersionsAsync(CancellationToken cancellationToken)
+    private async Task AddVersionsForNonAddedAsync(CancellationToken cancellationToken)
     {
         var tracked = ChangeTracker
             .Entries<BaseEntity>()
-            .Where(e => e.State is EntityState.Added
-                               or EntityState.Modified
+            .Where(e => e.State is EntityState.Modified
                                or EntityState.Deleted)
             .ToList();
 
@@ -172,7 +188,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
 
             var changeType = entry.State switch
             {
-                EntityState.Added => VersionChangeType.Created,
                 EntityState.Modified => VersionChangeType.Updated,
                 EntityState.Deleted => VersionChangeType.Deleted,
                 _ => VersionChangeType.Updated
@@ -198,6 +213,48 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
                 entry.State = EntityState.Modified;
                 entity.IsDeleted = true;
             }
+        }
+    }
+
+    private async Task AddVersionsForAddedAsync(
+        IReadOnlyList<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<BaseEntity>> added,
+        CancellationToken cancellationToken)
+    {
+        if (added.Count == 0)
+            return;
+
+        var now = DateTime.UtcNow;
+        const string systemUser = "system";
+
+        foreach (var entry in added)
+        {
+            var entity = entry.Entity;
+            var entityName = entity.GetType().Name;
+            var entityId = entity.Id; // now assigned
+
+            var snapshot = SerializeScalarSnapshot(entry);
+
+            var currentMax = await VersionHistories
+                .Where(v => v.EntityName == entityName && v.EntityId == entityId)
+                .Select(v => (int?)v.Version)
+                .MaxAsync(cancellationToken);
+
+            var nextVersion = (currentMax ?? 0) + 1;
+
+            var createdBy = entity.UpdatedBy ?? entity.CreatedBy ?? systemUser;
+
+            var vh = new VersionHistory
+            {
+                EntityName = entityName,
+                EntityId = entityId,
+                Version = nextVersion,
+                ChangeType = VersionChangeType.Created,
+                SnapshotJson = snapshot,
+                CreatedAtUtc = now,
+                CreatedBy = createdBy
+            };
+
+            await VersionHistories.AddAsync(vh, cancellationToken);
         }
     }
 }
