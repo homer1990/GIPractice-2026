@@ -74,6 +74,10 @@ public partial class Program
         builder.Services.AddScoped<IPathologyParcelsStore, EfPathologyParcelsStore>();
         builder.Services.AddScoped<IPathologyParcelsService, PathologyParcelsService>();
 
+        // Pathologists (EF-backed)
+        builder.Services.AddScoped<IPathologistsStore, EfPathologistsStore>();
+        builder.Services.AddScoped<IPathologistsService, PathologistsService>();
+
         builder.Services.AddDbContext<AppDbContext>(opt =>
             opt.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 

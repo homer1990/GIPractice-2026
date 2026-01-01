@@ -23,4 +23,8 @@
     <ProjectReference Include="..\GIPractice.Core\GIPractice.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>

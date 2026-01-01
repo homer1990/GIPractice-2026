@@ -105,6 +105,11 @@ public sealed class EfPathologyReportsStore(AppDbContext db) : IPathologyReports
         if (request.Id is not null)
             return ResultDto<PathologyReportId>.Fail("invalid", "Id must be null when creating a pathology report.");
 
+        // In Option 1, report↔parcel membership is managed exclusively via the parcels API
+        // (so monetary sum + chain-of-custody stay consistent).
+        if (request.DispatchParcelId is not null)
+            return ResultDto<PathologyReportId>.Fail("validation", "DispatchParcelId cannot be set when creating a report. Use the parcels endpoints to assign endoscopies.");
+
         // Enforce uniqueness (PathologistId, EndoscopyId) pre-check
         var exists = await _db.PathologyReports
             .AnyAsync(r => r.PathologistId == request.PathologistId.Value && r.EndoscopyId == request.EndoscopyId.Value, ct);
@@ -159,18 +164,21 @@ public sealed class EfPathologyReportsStore(AppDbContext db) : IPathologyReports
         if (request.RowVersion is not null && !request.RowVersion.SequenceEqual(entity.RowVersion))
             return ResultDto<bool>.Fail("conflict", "RowVersion conflict.");
 
-        // Allow updating the FK trio, but keep uniqueness constraint check.
-        var pid = request.PathologistId.Value;
-        var eid = request.EndoscopyId.Value;
-        var uniqueTaken = await _db.PathologyReports
-            .AnyAsync(r => r.Id != entity.Id && r.PathologistId == pid && r.EndoscopyId == eid, ct);
+        // Report identity is immutable.
+        if (entity.PatientId != request.PatientId.Value
+            || entity.EndoscopyId != request.EndoscopyId.Value
+            || entity.PathologistId != request.PathologistId.Value)
+            return ResultDto<bool>.Fail("validation", "Cannot change PatientId/EndoscopyId/PathologistId of an existing report.");
 
-        if (uniqueTaken)
-            return ResultDto<bool>.Fail("conflict", "Another report already exists for this pathologist + endoscopy.");
+        // Parcel assignment is immutable here; it is managed by PathologyParcels endpoints.
+        if (request.DispatchParcelId is not null)
+        {
+            var requestedParcelId = request.DispatchParcelId.Value.Value;
+            if (entity.PathologyParcelId != requestedParcelId)
+                return ResultDto<bool>.Fail("validation", "Cannot change DispatchParcelId via reports endpoint. Use the parcels endpoints.");
+        }
 
-        entity.PatientId = request.PatientId.Value;
-        entity.EndoscopyId = eid;
-        entity.PathologistId = pid;
+        // (FK trio already validated immutable above)
 
         entity.SentAtUtc = request.SentAtUtc;
         entity.ReceivedAtUtc = request.ReceivedAtUtc;
