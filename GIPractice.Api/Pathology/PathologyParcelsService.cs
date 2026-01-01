@@ -4,64 +4,53 @@ using GIPractice.Contracts.Pathology;
 
 namespace GIPractice.Api.Pathology;
 
-public sealed class PathologyParcelsService(
-    IPathologyParcelsStore store,
-    InMemoryPathologyRepository repo) : IPathologyParcelsService
+public sealed class PathologyParcelsService(IPathologyParcelsStore store) : IPathologyParcelsService
 {
     public Task<ResultDto<PagedResultDto<PathologyParcelDto>>> SearchAsync(
         PathologyParcelSearchRequestDto request,
         CancellationToken cancellationToken = default)
         => store.SearchAsync(request, cancellationToken);
 
-    // Older Contracts expect this
-    public Task<ResultDto<PathologyParcelDto>> GetAsync(
-        PathologyParcelId id,
-        CancellationToken cancellationToken = default)
-    {
-        if (!repo.TryGetParcelById(id, out var parcel))
-            return Task.FromResult(ResultDto<PathologyParcelDto>.Fail(
-                new ErrorDto(ErrorCodes.NotFound, "Parcel not found.")));
-
-        return store.GetByKeyAsync(
-            new PathologyParcelKeyDto(parcel.PathologistId, parcel.ParcelCode),
-            cancellationToken);
-    }
-
-    // Older Contracts expect this
     public Task<ResultDto<PathologyParcelDto>> GetByKeyAsync(
         PathologyParcelKeyDto key,
         CancellationToken cancellationToken = default)
         => store.GetByKeyAsync(key, cancellationToken);
 
-    // Older Contracts expect this
+    public Task<ResultDto<PathologyParcelDto>> GetAsync(
+        PathologyParcelId id,
+        CancellationToken cancellationToken = default)
+        => store.GetAsync(id, cancellationToken);
+
     public Task<ResultDto<PathologyParcelId>> CreateAsync(
         PathologyParcelCreateRequestDto request,
         CancellationToken cancellationToken = default)
         => store.CreateAsync(request, cancellationToken);
 
-    // Newer keyed update (your preference)
-    public Task<ResultDto<bool>> UpdateByKeyAsync(
-        PathologyParcelKeyDto key,
+    public async Task<ResultDto<bool>> UpdateAsync(
         PathologyParcelUpdateRequestDto request,
         CancellationToken cancellationToken = default)
-        => store.UpdateByKeyAsync(key, request, cancellationToken);
+    {
+        var current = await store.GetAsync(request.Id, cancellationToken);
 
-    // If your Contracts *still* have UpdateAsync (non-keyed), keep it as a guard.
-    public Task<ResultDto<bool>> UpdateAsync(
-        PathologyParcelUpdateRequestDto request,
-        CancellationToken cancellationToken = default)
-        => Task.FromResult(ResultDto<bool>.Fail(
-            new ErrorDto(ErrorCodes.Validation, "Use UpdateByKeyAsync (keyed route) endpoint.")));
+        if (!current.IsSuccess)
+            return ResultDto<bool>.Fail(current.Error ?? new ErrorDto(ErrorCodes.Unexpected, "Unknown error."));
 
-    public Task<ResultDto<bool>> AssignReportsAsync(
+        if (current.Value is null)
+            return ResultDto<bool>.Fail(ErrorCodes.NotFound, "Parcel not found.");
+
+        var key = new PathologyParcelKeyDto(current.Value.PathologistId, current.Value.ParcelCode);
+        return await store.UpdateByKeyAsync(key, request, cancellationToken);
+    }
+
+    public Task<ResultDto<bool>> AssignEndoscopiesAsync(
         PathologyParcelKeyDto key,
-        PathologyParcelAssignReportsRequestDto request,
+        PathologyParcelAssignEndoscopiesRequestDto request,
         CancellationToken cancellationToken = default)
-        => store.AssignReportsAsync(key, request, cancellationToken);
+        => store.AssignEndoscopiesAsync(key, request, cancellationToken);
 
-    public Task<ResultDto<bool>> UnassignReportsAsync(
+    public Task<ResultDto<bool>> UnassignEndoscopiesAsync(
         PathologyParcelKeyDto key,
-        PathologyParcelAssignReportsRequestDto request,
+        PathologyParcelAssignEndoscopiesRequestDto request,
         CancellationToken cancellationToken = default)
-        => store.UnassignReportsAsync(key, request, cancellationToken);
+        => store.UnassignEndoscopiesAsync(key, request, cancellationToken);
 }

@@ -25,13 +25,13 @@ public interface IPathologyParcelsService
         PathologyParcelUpdateRequestDto request,
         CancellationToken cancellationToken = default);
 
-    Task<ResultDto<bool>> AssignReportsAsync(
+    Task<ResultDto<bool>> AssignEndoscopiesAsync(
         PathologyParcelKeyDto key,
-        PathologyParcelAssignReportsRequestDto request,
+        PathologyParcelAssignEndoscopiesRequestDto request,
         CancellationToken cancellationToken = default);
 
-    Task<ResultDto<bool>> UnassignReportsAsync(
+    Task<ResultDto<bool>> UnassignEndoscopiesAsync(
         PathologyParcelKeyDto key,
-        PathologyParcelAssignReportsRequestDto request,
+        PathologyParcelAssignEndoscopiesRequestDto request,
         CancellationToken cancellationToken = default);
 }
