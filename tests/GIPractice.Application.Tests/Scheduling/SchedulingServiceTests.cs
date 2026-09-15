@@ -81,7 +81,7 @@ public sealed class SchedulingServiceTests
             appointment,
             new EncounterPlan(
                 new EndoscopyPlan(EndoscopyType.Colonoscopy),
-                new ClinicalExamPlan(clinicalNotes: "HEINE examination performed during the session"),
+                new ClinicalExamPlan(ClinicalNotes: "HEINE examination performed during the session"),
                 new PrescriptionPlan("Prescription issued after endoscopy")),
             now.AddHours(1).AddMinutes(7));
 
@@ -108,7 +108,7 @@ public sealed class SchedulingServiceTests
             patient,
             new EncounterPlan(
                 new EndoscopyPlan(EndoscopyType.Rectoscopy),
-                new ClinicalExamPlan(clinicalNotes: "HEINE examination")),
+                new ClinicalExamPlan(ClinicalNotes: "HEINE examination")),
             now);
 
         var details = store.GetEncounterDetails(encounter);
