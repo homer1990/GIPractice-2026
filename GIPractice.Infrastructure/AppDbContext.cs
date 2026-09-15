@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 using System.Text.Json;
 using GIPractice.Core.Abstractions;
 using GIPractice.Core.Entities;
-using GIPractice.Core.Entities.Identity;
+using GIPractice.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -123,8 +123,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             var affected = base.SaveChanges(false);
             var histories = BuildVersionHistory(candidates);
 
-            // Generated keys now exist. Mark the domain write as accepted before the
-            // second save so it is not written twice.
             ChangeTracker.AcceptAllChanges();
 
             if (histories.Count > 0)
@@ -322,7 +320,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         IReadOnlyCollection<VersionCandidate> candidates,
         IReadOnlyDictionary<(string EntityName, int EntityId), int> existingVersions)
     {
-        var nextVersions = new Dictionary<(string EntityName, int EntityId), int>(existingVersions);
+        var nextVersions = existingVersions.ToDictionary(pair => pair.Key, pair => pair.Value);
         var now = DateTime.UtcNow;
         const string systemUser = "system";
         var rows = new List<VersionHistory>(candidates.Count);
@@ -339,8 +337,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 : 1;
             nextVersions[key] = nextVersion;
 
-            // Store only mapped scalar values. Serializing the entity graph can pull in
-            // unrelated navigation objects and produce enormous/cyclic audit snapshots.
             var snapshot = candidate.Entry.Properties.ToDictionary(
                 property => property.Metadata.Name,
                 property => property.CurrentValue);
