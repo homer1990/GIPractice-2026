@@ -20,7 +20,10 @@ public interface ISchedulingSession
     Task UpdateAppointmentAsync(Appointment appointment, CancellationToken cancellationToken);
 
     Task<Encounter?> GetEncounterAsync(EncounterId encounterId, CancellationToken cancellationToken);
-    Task InsertEncounterAsync(Encounter encounter, IEncounterDetail detail, CancellationToken cancellationToken);
+    Task InsertEncounterAsync(
+        Encounter encounter,
+        IReadOnlyCollection<IEncounterDetail> details,
+        CancellationToken cancellationToken);
     Task UpdateEncounterAsync(Encounter encounter, CancellationToken cancellationToken);
 
     Task<bool> IsAppointmentLinkedAsync(AppointmentId appointmentId, CancellationToken cancellationToken);
