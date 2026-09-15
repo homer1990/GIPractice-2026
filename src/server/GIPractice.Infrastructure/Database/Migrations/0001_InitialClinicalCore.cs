@@ -18,7 +18,7 @@ public sealed class InitialClinicalCore : Migration
         Create.Table("appointments")
             .WithColumn("id").AsString(36).NotNullable().PrimaryKey()
             .WithColumn("patient_id").AsString(36).NotNullable()
-            .WithColumn("kind").AsInt16().NotNullable()
+            .WithColumn("appointment_type").AsInt16().NotNullable()
             .WithColumn("scheduled_start_utc").AsDateTime().NotNullable()
             .WithColumn("duration_minutes").AsInt32().NotNullable()
             .WithColumn("status").AsInt16().NotNullable()
@@ -28,10 +28,10 @@ public sealed class InitialClinicalCore : Migration
         Create.Table("encounters")
             .WithColumn("id").AsString(36).NotNullable().PrimaryKey()
             .WithColumn("patient_id").AsString(36).NotNullable()
-            .WithColumn("kind").AsInt16().NotNullable()
             .WithColumn("started_at_utc").AsDateTime().NotNullable()
             .WithColumn("ended_at_utc").AsDateTime().Nullable()
             .WithColumn("status").AsInt16().NotNullable()
+            .WithColumn("requires_exclusive_slot").AsBoolean().NotNullable()
             .WithColumn("is_urgent").AsBoolean().NotNullable()
             .WithColumn("notes").AsString().Nullable();
 
@@ -52,6 +52,10 @@ public sealed class InitialClinicalCore : Migration
             .WithColumn("encounter_id").AsString(36).NotNullable().PrimaryKey()
             .WithColumn("has_serious_findings").AsBoolean().NotNullable()
             .WithColumn("clinical_notes").AsString().Nullable();
+
+        Create.Table("prescriptions")
+            .WithColumn("encounter_id").AsString(36).NotNullable().PrimaryKey()
+            .WithColumn("notes").AsString().Nullable();
 
         Create.Table("infai_tests")
             .WithColumn("encounter_id").AsString(36).NotNullable().PrimaryKey()
@@ -91,6 +95,10 @@ public sealed class InitialClinicalCore : Migration
             .FromTable("clinical_exams").ForeignColumn("encounter_id")
             .ToTable("encounters").PrimaryColumn("id");
 
+        Create.ForeignKey("fk_prescriptions_encounter")
+            .FromTable("prescriptions").ForeignColumn("encounter_id")
+            .ToTable("encounters").PrimaryColumn("id");
+
         Create.ForeignKey("fk_infai_tests_encounter")
             .FromTable("infai_tests").ForeignColumn("encounter_id")
             .ToTable("encounters").PrimaryColumn("id");
@@ -127,6 +135,7 @@ public sealed class InitialClinicalCore : Migration
     {
         Delete.Table("practice_state");
         Delete.Table("infai_tests");
+        Delete.Table("prescriptions");
         Delete.Table("clinical_exams");
         Delete.Table("endoscopies");
         Delete.Table("visits");
