@@ -18,7 +18,7 @@ internal sealed class AppointmentRow
 {
     [PrimaryKey, Column("id"), NotNull] public string Id { get; set; } = null!;
     [Column("patient_id"), NotNull] public string PatientId { get; set; } = null!;
-    [Column("kind"), NotNull] public short Kind { get; set; }
+    [Column("appointment_type"), NotNull] public short AppointmentType { get; set; }
     [Column("scheduled_start_utc"), NotNull] public DateTime ScheduledStartUtc { get; set; }
     [Column("duration_minutes"), NotNull] public int DurationMinutes { get; set; }
     [Column("status"), NotNull] public short Status { get; set; }
@@ -31,10 +31,10 @@ internal sealed class EncounterRow
 {
     [PrimaryKey, Column("id"), NotNull] public string Id { get; set; } = null!;
     [Column("patient_id"), NotNull] public string PatientId { get; set; } = null!;
-    [Column("kind"), NotNull] public short Kind { get; set; }
     [Column("started_at_utc"), NotNull] public DateTime StartedAtUtc { get; set; }
     [Column("ended_at_utc")] public DateTime? EndedAtUtc { get; set; }
     [Column("status"), NotNull] public short Status { get; set; }
+    [Column("requires_exclusive_slot"), NotNull] public bool RequiresExclusiveSlot { get; set; }
     [Column("is_urgent"), NotNull] public bool IsUrgent { get; set; }
     [Column("notes")] public string? Notes { get; set; }
 }
@@ -67,6 +67,13 @@ internal sealed class ClinicalExamRow
     [PrimaryKey, Column("encounter_id"), NotNull] public string EncounterId { get; set; } = null!;
     [Column("has_serious_findings"), NotNull] public bool HasSeriousFindings { get; set; }
     [Column("clinical_notes")] public string? ClinicalNotes { get; set; }
+}
+
+[Table("prescriptions")]
+internal sealed class PrescriptionRow
+{
+    [PrimaryKey, Column("encounter_id"), NotNull] public string EncounterId { get; set; } = null!;
+    [Column("notes")] public string? Notes { get; set; }
 }
 
 [Table("infai_tests")]
