@@ -21,8 +21,17 @@ internal sealed class FakeSchedulingSessionFactory : ISchedulingSessionFactory
     public AppointmentStatus GetAppointmentStatus(AppointmentId appointmentId) =>
         _state.Appointments[appointmentId].Status;
 
+    public AppointmentType GetAppointmentType(AppointmentId appointmentId) =>
+        _state.Appointments[appointmentId].Type;
+
+    public DateTimeOffset GetAppointmentStart(AppointmentId appointmentId) =>
+        _state.Appointments[appointmentId].ScheduledStartUtc;
+
     public EncounterId? GetLinkedEncounter(AppointmentId appointmentId) =>
         _state.Links.TryGetValue(appointmentId, out var encounterId) ? encounterId : null;
+
+    public IReadOnlyList<IEncounterDetail> GetEncounterDetails(EncounterId encounterId) =>
+        _state.Details[encounterId];
 
     public async Task<T> ExecuteAsync<T>(
         Func<ISchedulingSession, CancellationToken, Task<T>> action,
@@ -39,7 +48,7 @@ internal sealed class FakeSchedulingSessionFactory : ISchedulingSessionFactory
         public HashSet<PatientId> Patients { get; } = [];
         public Dictionary<AppointmentId, Appointment> Appointments { get; } = [];
         public Dictionary<EncounterId, Encounter> Encounters { get; } = [];
-        public Dictionary<EncounterId, IEncounterDetail> Details { get; } = [];
+        public Dictionary<EncounterId, IReadOnlyList<IEncounterDetail>> Details { get; } = [];
         public Dictionary<AppointmentId, EncounterId> Links { get; } = [];
         public EncounterId? ActiveEncounterId { get; set; }
 
@@ -55,7 +64,7 @@ internal sealed class FakeSchedulingSessionFactory : ISchedulingSessionFactory
                 clone.Encounters.Add(pair.Key, CloneEncounter(pair.Value));
 
             foreach (var pair in Details)
-                clone.Details.Add(pair.Key, pair.Value);
+                clone.Details.Add(pair.Key, pair.Value.ToArray());
 
             foreach (var pair in Links)
                 clone.Links.Add(pair.Key, pair.Value);
@@ -68,7 +77,7 @@ internal sealed class FakeSchedulingSessionFactory : ISchedulingSessionFactory
             var clone = new Appointment(
                 source.Id,
                 source.PatientId,
-                source.Kind,
+                source.Type,
                 source.ScheduledStartUtc,
                 source.DurationMinutes,
                 source.IsUrgent,
@@ -102,8 +111,8 @@ internal sealed class FakeSchedulingSessionFactory : ISchedulingSessionFactory
             var clone = new Encounter(
                 source.Id,
                 source.PatientId,
-                source.Kind,
                 source.StartedAtUtc,
+                source.RequiresExclusiveSlot,
                 source.AppointmentId,
                 source.IsUrgent,
                 source.Notes);
@@ -151,11 +160,11 @@ internal sealed class FakeSchedulingSessionFactory : ISchedulingSessionFactory
 
         public Task InsertEncounterAsync(
             Encounter encounter,
-            IEncounterDetail detail,
+            IReadOnlyCollection<IEncounterDetail> details,
             CancellationToken cancellationToken)
         {
             state.Encounters.Add(encounter.Id, encounter);
-            state.Details.Add(encounter.Id, detail);
+            state.Details.Add(encounter.Id, details.ToArray());
             return Task.CompletedTask;
         }
 
