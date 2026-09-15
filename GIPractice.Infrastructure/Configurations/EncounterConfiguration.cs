@@ -30,24 +30,27 @@ public sealed class EncounterConfiguration : IEntityTypeConfiguration<Encounter>
             .HasForeignKey<Encounter>(e => e.AppointmentId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // Encounter and its detail row form one aggregate, but deletion in this
+        // application is soft deletion. Database cascades would bypass the audit trail,
+        // so physical deletes are deliberately restricted.
         b.HasOne(e => e.Visit)
             .WithOne(v => v.Encounter)
             .HasForeignKey<Visit>(v => v.EncounterId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         b.HasOne(e => e.Endoscopy)
             .WithOne(x => x.Encounter)
             .HasForeignKey<Endoscopy>(x => x.EncounterId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         b.HasOne(e => e.Exam)
             .WithOne(x => x.Encounter)
             .HasForeignKey<Exam>(x => x.EncounterId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         b.HasOne(e => e.Infai)
             .WithOne(x => x.Encounter)
             .HasForeignKey<InfaiTest>(x => x.EncounterId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
