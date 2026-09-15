@@ -8,9 +8,8 @@ public interface IEncounterDetail
 public enum VisitKind
 {
     Consultation = 1,
-    Prescription = 2,
-    PreparationInstructions = 3,
-    FollowUp = 4,
+    PreparationInstructions = 2,
+    FollowUp = 3,
     Other = 99
 }
 
@@ -79,6 +78,31 @@ public sealed class ClinicalExam : IEncounterDetail
         var normalized = notes.Trim();
         if (normalized.Length > 16000) throw new ArgumentOutOfRangeException(nameof(notes));
         ClinicalNotes = normalized;
+    }
+}
+
+public sealed class Prescription : IEncounterDetail
+{
+    public EncounterId EncounterId { get; }
+    public string? Notes { get; private set; }
+
+    public Prescription(EncounterId encounterId, string? notes = null)
+    {
+        EncounterId = encounterId;
+        SetNotes(notes);
+    }
+
+    public void SetNotes(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes))
+        {
+            Notes = null;
+            return;
+        }
+
+        var normalized = notes.Trim();
+        if (normalized.Length > 8000) throw new ArgumentOutOfRangeException(nameof(notes));
+        Notes = normalized;
     }
 }
 
