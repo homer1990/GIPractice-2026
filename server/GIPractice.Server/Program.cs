@@ -1,5 +1,3 @@
-using GIPractice.Server;
-
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
@@ -11,5 +9,3 @@ app.MapGet("/version", () => Results.Ok(new
 }));
 
 app.Run();
-
-namespace GIPractice.Server;
