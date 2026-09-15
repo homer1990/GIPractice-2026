@@ -1,50 +1,86 @@
+using System.Text;
+using GIPractice.Api.Hosting;
+using GIPractice.Infrastructure;
+using GIPractice.Infrastructure.Database;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using GIPractice.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// DbContext
+builder.Host
+    .UseWindowsService(options => options.ServiceName = "GIPractice API")
+    .UseSystemd();
+
+var databaseProvider = builder.Configuration["Database:Provider"] ?? "SqlServer";
+var connectionStringName = builder.Configuration["Database:ConnectionStringName"] ?? "DefaultConnection";
+var connectionString = builder.Configuration.GetConnectionString(connectionStringName)
+    ?? throw new InvalidOperationException($"Connection string '{connectionStringName}' is not configured.");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        sql => sql.MigrationsAssembly("GIPractice.Infrastructure")));
+    DatabaseProviderConfigurator.Configure(options, databaseProvider, connectionString));
 
-// AutoMapper
-builder.Services.AddAutoMapper(typeof(Program));
+var jwtSigningKey = builder.Configuration["Jwt:SigningKey"];
+var jwtConfigured = !string.IsNullOrWhiteSpace(jwtSigningKey);
 
-// Controllers + JSON
+if (jwtConfigured)
+{
+    var issuer = builder.Configuration["Jwt:Issuer"] ?? "GIPractice.Api";
+    var audience = builder.Configuration["Jwt:Audience"] ?? "GIPractice.Client";
+
+    builder.Services
+        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = issuer,
+                ValidateAudience = true,
+                ValidAudience = audience,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSigningKey!)),
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.FromMinutes(1)
+            };
+        });
+}
+else if (!builder.Environment.IsDevelopment())
+{
+    throw new InvalidOperationException(
+        "Jwt:SigningKey is required outside Development. Supply it through environment/secret configuration; never commit it to source.");
+}
+
+builder.Services.AddAuthorization();
+
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
-        // Force model validation errors into ProblemDetails
         options.InvalidModelStateResponseFactory = context =>
         {
             var problem = new ValidationProblemDetails(context.ModelState)
             {
                 Status = StatusCodes.Status400BadRequest,
-                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+                Type = "https://www.rfc-editor.org/rfc/rfc9110#name-400-bad-request",
                 Title = "One or more validation errors occurred.",
                 Instance = context.HttpContext.Request.Path
             };
-
             problem.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
-
             return new BadRequestObjectResult(problem);
         };
     })
-    .AddJsonOptions(opts => { opts.JsonSerializerOptions.WriteIndented = true; });
+    .AddJsonOptions(options => options.JsonSerializerOptions.WriteIndented = builder.Environment.IsDevelopment());
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+builder.Services.AddSwaggerGen(options =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "GIPractice API",
-        Version = "v1"
-    });
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "GIPractice API", Version = "v1" });
 
-    // Define the Bearer auth scheme
+    if (!jwtConfigured)
+        return;
+
     var securityScheme = new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -53,35 +89,23 @@ builder.Services.AddSwaggerGen(c =>
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
         BearerFormat = "JWT",
-        Reference = new OpenApiReference
-        {
-            Type = ReferenceType.SecurityScheme,
-            Id = "Bearer"
-        }
+        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
     };
 
-    c.AddSecurityDefinition("Bearer", securityScheme);
-
-    // Require Bearer for all operations (so Swagger shows the padlock + Authorize)
-    var securityRequirement = new OpenApiSecurityRequirement
+    options.AddSecurityDefinition("Bearer", securityScheme);
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         { securityScheme, Array.Empty<string>() }
-    };
-
-    c.AddSecurityRequirement(securityRequirement);
+    });
 });
 
-
 var app = builder.Build();
-// Seed roles and default admin user
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var db = services.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();
-}
 
-// Static file serving so /media/... works
+// Schema changes are deliberately explicit. A daemon must never mutate a medical
+// database merely because the service restarted after a deployment.
+if (await DatabaseCli.TryRunAsync(args, app.Services))
+    return;
+
 app.UseStaticFiles();
 
 if (app.Environment.IsDevelopment())
@@ -91,8 +115,22 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseAuthentication();
+
+if (jwtConfigured)
+    app.UseAuthentication();
+
 app.UseAuthorization();
 
+app.MapGet("/health/live", () => Results.Ok(new { status = "live" }))
+    .AllowAnonymous();
+
+app.MapGet("/health/ready", async (AppDbContext db, CancellationToken cancellationToken) =>
+{
+    var canConnect = await db.Database.CanConnectAsync(cancellationToken);
+    return canConnect
+        ? Results.Ok(new { status = "ready", provider = databaseProvider })
+        : Results.Problem("Database connection failed.", statusCode: StatusCodes.Status503ServiceUnavailable);
+}).AllowAnonymous();
+
 app.MapControllers();
-app.Run();
+await app.RunAsync();
