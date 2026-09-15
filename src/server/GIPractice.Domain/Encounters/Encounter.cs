@@ -1,13 +1,5 @@
 namespace GIPractice.Domain.Encounters;
 
-public enum EncounterKind
-{
-    Visit = 1,
-    Endoscopy = 2,
-    ClinicalExam = 3,
-    Infai = 4
-}
-
 public enum EncounterStatus
 {
     Underway = 1,
@@ -20,20 +12,20 @@ public sealed class Encounter
     public EncounterId Id { get; }
     public PatientId PatientId { get; }
     public AppointmentId? AppointmentId { get; }
-    public EncounterKind Kind { get; }
     public DateTimeOffset StartedAtUtc { get; }
     public DateTimeOffset? EndedAtUtc { get; private set; }
     public EncounterStatus Status { get; private set; }
+    public bool RequiresExclusiveSlot { get; }
     public bool IsUrgent { get; private set; }
     public string? Notes { get; private set; }
 
-    public bool OccupiesActiveSlot => Kind != EncounterKind.Infai && Status == EncounterStatus.Underway;
+    public bool OccupiesActiveSlot => RequiresExclusiveSlot && Status == EncounterStatus.Underway;
 
     public Encounter(
         EncounterId id,
         PatientId patientId,
-        EncounterKind kind,
         DateTimeOffset startedAtUtc,
+        bool requiresExclusiveSlot,
         AppointmentId? appointmentId = null,
         bool isUrgent = false,
         string? notes = null)
@@ -41,8 +33,8 @@ public sealed class Encounter
         Id = id;
         PatientId = patientId;
         AppointmentId = appointmentId;
-        Kind = kind;
         StartedAtUtc = startedAtUtc.ToUniversalTime();
+        RequiresExclusiveSlot = requiresExclusiveSlot;
         IsUrgent = isUrgent;
         Notes = NormalizeNotes(notes);
         Status = EncounterStatus.Underway;
