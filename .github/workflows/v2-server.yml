@@ -1,0 +1,32 @@
+name: v2 server
+
+on:
+  push:
+    branches: [v2-clean-architecture]
+    paths:
+      - 'src/server/**'
+      - 'tests/GIPractice.Application.Tests/**'
+      - 'tests/Directory.Packages.props'
+      - '.github/workflows/v2-server.yml'
+  pull_request:
+    paths:
+      - 'src/server/**'
+      - 'tests/GIPractice.Application.Tests/**'
+      - 'tests/Directory.Packages.props'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore infrastructure
+        run: dotnet restore src/server/GIPractice.Infrastructure/GIPractice.Infrastructure.csproj
+      - name: Build infrastructure
+        run: dotnet build src/server/GIPractice.Infrastructure/GIPractice.Infrastructure.csproj --no-restore --configuration Release
+      - name: Restore application tests
+        run: dotnet restore tests/GIPractice.Application.Tests/GIPractice.Application.Tests.csproj
+      - name: Run application tests
+        run: dotnet run --project tests/GIPractice.Application.Tests/GIPractice.Application.Tests.csproj --configuration Release

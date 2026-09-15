@@ -1,5 +1,10 @@
 namespace GIPractice.Domain.Encounters;
 
+public interface IEncounterDetail
+{
+    EncounterId EncounterId { get; }
+}
+
 public enum VisitKind
 {
     Consultation = 1,
@@ -9,7 +14,7 @@ public enum VisitKind
     Other = 99
 }
 
-public sealed class Visit
+public sealed class Visit : IEncounterDetail
 {
     public EncounterId EncounterId { get; }
     public VisitKind Kind { get; private set; }
@@ -32,7 +37,7 @@ public enum EndoscopyType
     Other = 99
 }
 
-public sealed class Endoscopy
+public sealed class Endoscopy : IEncounterDetail
 {
     public EncounterId EncounterId { get; }
     public EndoscopyType Type { get; private set; }
@@ -48,7 +53,7 @@ public sealed class Endoscopy
     public void SetReportDocument(string? json) => ReportDocumentJson = string.IsNullOrWhiteSpace(json) ? null : json;
 }
 
-public sealed class ClinicalExam
+public sealed class ClinicalExam : IEncounterDetail
 {
     public EncounterId EncounterId { get; }
     public bool HasSeriousFindings { get; private set; }
@@ -85,7 +90,7 @@ public enum InfaiResult
     Indeterminate = 3
 }
 
-public sealed class InfaiTest
+public sealed class InfaiTest : IEncounterDetail
 {
     public EncounterId EncounterId { get; }
     public InfaiResult Result { get; private set; }

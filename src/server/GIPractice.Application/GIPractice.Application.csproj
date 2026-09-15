@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../GIPractice.Domain/GIPractice.Domain.csproj" />
+  </ItemGroup>
+</Project>

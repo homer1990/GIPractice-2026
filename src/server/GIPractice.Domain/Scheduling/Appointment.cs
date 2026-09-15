@@ -51,8 +51,10 @@ public sealed class Appointment
 
     public void Reschedule(DateTimeOffset scheduledStartUtc, int durationMinutes)
     {
-        EnsureMutable();
+        if (Status != AppointmentStatus.Scheduled)
+            throw new DomainRuleViolationException($"Only a scheduled appointment can be rescheduled; current status is {Status}.");
         if (durationMinutes <= 0) throw new ArgumentOutOfRangeException(nameof(durationMinutes));
+
         ScheduledStartUtc = scheduledStartUtc.ToUniversalTime();
         DurationMinutes = durationMinutes;
     }
@@ -88,12 +90,6 @@ public sealed class Appointment
 
     public void SetUrgent(bool value) => IsUrgent = value;
     public void SetNotes(string? notes) => Notes = NormalizeNotes(notes);
-
-    private void EnsureMutable()
-    {
-        if (Status is AppointmentStatus.Resolved or AppointmentStatus.Cancelled or AppointmentStatus.NoShow)
-            throw new DomainRuleViolationException($"Appointment in status {Status} cannot be rescheduled.");
-    }
 
     private static string? NormalizeNotes(string? notes)
     {
