@@ -83,54 +83,23 @@ internal sealed class LinqToDbSchedulingSession(DataConnection db) : IScheduling
 
     public async Task InsertEncounterAsync(
         Encounter encounter,
-        IEncounterDetail detail,
+        IReadOnlyCollection<IEncounterDetail> details,
         CancellationToken cancellationToken)
     {
-        if (detail.EncounterId != encounter.Id)
-            throw new InvalidOperationException("Encounter detail belongs to a different encounter.");
+        ArgumentNullException.ThrowIfNull(details);
+        if (details.Count == 0)
+            throw new InvalidOperationException("An encounter must contain at least one clinical component.");
+        if (details.Any(detail => detail.EncounterId != encounter.Id))
+            throw new InvalidOperationException("All encounter components must belong to the encounter being inserted.");
 
         var affected = await db.InsertAsync(ToRow(encounter), token: cancellationToken);
         EnsureOneRow(affected, "insert encounter");
 
-        affected = detail switch
+        foreach (var detail in details)
         {
-            Visit visit when encounter.Kind == EncounterKind.Visit =>
-                await db.InsertAsync(new VisitRow
-                {
-                    EncounterId = encounter.Id.ToString(),
-                    Kind = (short)visit.Kind
-                }, token: cancellationToken),
-
-            Endoscopy endoscopy when encounter.Kind == EncounterKind.Endoscopy =>
-                await db.InsertAsync(new EndoscopyRow
-                {
-                    EncounterId = encounter.Id.ToString(),
-                    EndoscopyType = (short)endoscopy.Type,
-                    ReportDocumentJson = endoscopy.ReportDocumentJson
-                }, token: cancellationToken),
-
-            ClinicalExam exam when encounter.Kind == EncounterKind.ClinicalExam =>
-                await db.InsertAsync(new ClinicalExamRow
-                {
-                    EncounterId = encounter.Id.ToString(),
-                    HasSeriousFindings = exam.HasSeriousFindings,
-                    ClinicalNotes = exam.ClinicalNotes
-                }, token: cancellationToken),
-
-            InfaiTest infai when encounter.Kind == EncounterKind.Infai =>
-                await db.InsertAsync(new InfaiTestRow
-                {
-                    EncounterId = encounter.Id.ToString(),
-                    Result = (short)infai.Result,
-                    PatientContacted = infai.PatientContacted,
-                    ReportStorageKey = infai.ReportStorageKey
-                }, token: cancellationToken),
-
-            _ => throw new InvalidOperationException(
-                $"Encounter kind {encounter.Kind} does not match detail type {detail.GetType().Name}.")
-        };
-
-        EnsureOneRow(affected, "insert encounter detail");
+            affected = await InsertDetailAsync(detail, cancellationToken);
+            EnsureOneRow(affected, $"insert {detail.GetType().Name} component");
+        }
     }
 
     public async Task UpdateEncounterAsync(Encounter encounter, CancellationToken cancellationToken)
@@ -184,11 +153,51 @@ internal sealed class LinqToDbSchedulingSession(DataConnection db) : IScheduling
         return affected == 1;
     }
 
+    private async Task<int> InsertDetailAsync(IEncounterDetail detail, CancellationToken cancellationToken) =>
+        detail switch
+        {
+            Visit visit => await db.InsertAsync(new VisitRow
+            {
+                EncounterId = visit.EncounterId.ToString(),
+                Kind = (short)visit.Kind
+            }, token: cancellationToken),
+
+            Endoscopy endoscopy => await db.InsertAsync(new EndoscopyRow
+            {
+                EncounterId = endoscopy.EncounterId.ToString(),
+                EndoscopyType = (short)endoscopy.Type,
+                ReportDocumentJson = endoscopy.ReportDocumentJson
+            }, token: cancellationToken),
+
+            ClinicalExam exam => await db.InsertAsync(new ClinicalExamRow
+            {
+                EncounterId = exam.EncounterId.ToString(),
+                HasSeriousFindings = exam.HasSeriousFindings,
+                ClinicalNotes = exam.ClinicalNotes
+            }, token: cancellationToken),
+
+            Prescription prescription => await db.InsertAsync(new PrescriptionRow
+            {
+                EncounterId = prescription.EncounterId.ToString(),
+                Notes = prescription.Notes
+            }, token: cancellationToken),
+
+            InfaiTest infai => await db.InsertAsync(new InfaiTestRow
+            {
+                EncounterId = infai.EncounterId.ToString(),
+                Result = (short)infai.Result,
+                PatientContacted = infai.PatientContacted,
+                ReportStorageKey = infai.ReportStorageKey
+            }, token: cancellationToken),
+
+            _ => throw new InvalidOperationException($"Unknown encounter component {detail.GetType().Name}.")
+        };
+
     private static AppointmentRow ToRow(Appointment appointment) => new()
     {
         Id = appointment.Id.ToString(),
         PatientId = appointment.PatientId.ToString(),
-        Kind = (short)appointment.Kind,
+        AppointmentType = (short)appointment.Type,
         ScheduledStartUtc = appointment.ScheduledStartUtc.UtcDateTime,
         DurationMinutes = appointment.DurationMinutes,
         Status = (short)appointment.Status,
@@ -201,7 +210,7 @@ internal sealed class LinqToDbSchedulingSession(DataConnection db) : IScheduling
         var appointment = new Appointment(
             new AppointmentId(Guid.Parse(row.Id)),
             new PatientId(Guid.Parse(row.PatientId)),
-            (AppointmentKind)row.Kind,
+            (AppointmentType)row.AppointmentType,
             AsUtc(row.ScheduledStartUtc),
             row.DurationMinutes,
             row.IsUrgent,
@@ -234,10 +243,10 @@ internal sealed class LinqToDbSchedulingSession(DataConnection db) : IScheduling
     {
         Id = encounter.Id.ToString(),
         PatientId = encounter.PatientId.ToString(),
-        Kind = (short)encounter.Kind,
         StartedAtUtc = encounter.StartedAtUtc.UtcDateTime,
         EndedAtUtc = encounter.EndedAtUtc?.UtcDateTime,
         Status = (short)encounter.Status,
+        RequiresExclusiveSlot = encounter.RequiresExclusiveSlot,
         IsUrgent = encounter.IsUrgent,
         Notes = encounter.Notes
     };
@@ -247,8 +256,8 @@ internal sealed class LinqToDbSchedulingSession(DataConnection db) : IScheduling
         var encounter = new Encounter(
             new EncounterId(Guid.Parse(row.Id)),
             new PatientId(Guid.Parse(row.PatientId)),
-            (EncounterKind)row.Kind,
             AsUtc(row.StartedAtUtc),
+            row.RequiresExclusiveSlot,
             appointmentId is null ? null : new AppointmentId(Guid.Parse(appointmentId)),
             row.IsUrgent,
             row.Notes);
