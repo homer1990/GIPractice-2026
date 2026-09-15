@@ -1,6 +1,11 @@
-@GIPractice.Api_HostAddress = http://localhost:5079
+@GIPractice.Api_HostAddress = https://localhost:7028
 
-GET {{GIPractice.Api_HostAddress}}/weatherforecast/
+GET {{GIPractice.Api_HostAddress}}/health/live
+Accept: application/json
+
+###
+
+GET {{GIPractice.Api_HostAddress}}/health/ready
 Accept: application/json
 
 ###
