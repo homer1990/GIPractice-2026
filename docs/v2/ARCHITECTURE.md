@@ -52,55 +52,96 @@ Dependencies point inward only:
 
 `Infrastructure -> Domain + Application`
 
+## Planning truth vs clinical reality
+
+Appointment and Encounter deliberately model different facts.
+
+An Appointment records the plan. Its **AppointmentType is immutable** once the appointment is created. The scheduled time and duration remain operational scheduling data and may still change after the patient has arrived when real workflow requires it (for example, delay after drinking water or because the patient is running late).
+
+An Encounter records what actually happened. AppointmentType does not constrain Encounter contents.
+
+Walk-ins have no appointment at all.
+
 ## Encounter model
 
-`Encounter` is the prime clinical-event record.
+`Encounter` is the prime clinical-session record, but it has no mutually-exclusive clinical kind.
 
 Common state lives only on Encounter:
 
 - EncounterId
 - PatientId
 - optional AppointmentId
-- Kind
 - StartUtc
 - EndUtc
 - Status
+- RequiresExclusiveSlot
 - IsUrgent
 - Notes
 - audit/concurrency metadata
 
-Encounter-specific tables use `EncounterId` as both primary key and foreign key:
+Clinical components use `EncounterId` as both primary key and foreign key:
 
 - `Visits`
 - `Endoscopies`
 - `ClinicalExams`
+- `Prescriptions`
 - `InfaiTests`
 
-This is intentionally one-to-one extension-table composition, not inheritance and not a Visit -> Endoscopy hierarchy.
+Different component tables may coexist for the same EncounterId. Examples:
+
+- Endoscopy + ClinicalExam + Prescription
+- walk-in Endoscopy + ClinicalExam (for example a HEINE/orthoscopy workflow)
+- Visit + Prescription
+- INFAI only
+
+This is composition, not inheritance and not a Visit -> Endoscopy hierarchy.
+
+A single component type occurs at most once per encounter in the initial model. If a future workflow genuinely requires repeated same-type components, that component will receive its own child identity rather than weakening Encounter semantics globally.
 
 Consequences:
 
-- no duplicated PatientId on Endoscopy/Visit/Exam/INFAI;
+- no duplicated PatientId on Endoscopy/Visit/Exam/Prescription/INFAI;
 - no duplicated appointment link;
 - no duplicated performed/start date;
 - no possibility for an Endoscopy to claim a different patient than its Encounter;
-- one timeline query can combine every clinical event cheaply.
+- a single real clinical session can contain all work actually performed;
+- one timeline query can combine every clinical session cheaply.
+
+### Exclusive clinical slot
+
+The existing practice-wide concurrency rule is represented as an operational property of the encounter, not as an EncounterKind.
+
+- INFAI-only encounters do not require the exclusive slot.
+- An encounter containing any non-INFAI component requires the exclusive slot.
+- A composite encounter still claims only one slot regardless of how many components it contains.
+
+The slot is claimed transactionally through `practice_state.active_encounter_id`.
 
 ## Appointment model
 
 Appointments represent planned work, not clinical truth.
 
+An Appointment has:
+
+- immutable AppointmentType;
+- scheduled start and duration, which may be changed while Scheduled or Arrived;
+- lifecycle status;
+- urgency and notes.
+
 An Appointment can be:
 
 - scheduled;
 - arrived;
+- moved while still arrived;
 - cancelled;
 - resolved into an Encounter;
-- no-show/reschedule as later workflow states.
+- no-show.
 
 Walk-in encounters have no AppointmentId.
 
-Resolving an appointment is one transaction: validate current state, create Encounter + extension row, then transition Appointment.
+Resolving an appointment is one transaction: validate current state, create Encounter + all actual component rows, link the Appointment, then transition the Appointment to Resolved.
+
+The eventual Encounter may contain more, fewer, or different clinical components than were implied by AppointmentType. The appointment type remains unchanged as historical planning truth.
 
 ## IDs
 
