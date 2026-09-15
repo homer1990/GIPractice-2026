@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   build:
-    name: Build solution
+    name: Build and test solution
     runs-on: windows-latest
     timeout-minutes: 20
 
@@ -32,3 +32,6 @@ jobs:
 
       - name: Build
         run: dotnet build GIPractice.sln --configuration Release --no-restore -warnaserror
+
+      - name: Test
+        run: dotnet test GIPractice.sln --configuration Release --no-build --no-restore
