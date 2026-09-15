@@ -8,7 +8,7 @@ public sealed class SchedulingService(ISchedulingSessionFactory sessions)
 {
     public Task<AppointmentId> ScheduleAppointmentAsync(
         PatientId patientId,
-        AppointmentKind kind,
+        AppointmentType type,
         DateTimeOffset scheduledStartUtc,
         int durationMinutes,
         bool isUrgent = false,
@@ -21,7 +21,7 @@ public sealed class SchedulingService(ISchedulingSessionFactory sessions)
             var appointment = new Appointment(
                 AppointmentId.New(),
                 patientId,
-                kind,
+                type,
                 scheduledStartUtc,
                 durationMinutes,
                 isUrgent,
@@ -83,16 +83,11 @@ public sealed class SchedulingService(ISchedulingSessionFactory sessions)
             if (await session.IsAppointmentLinkedAsync(appointment.Id, token))
                 throw new SchedulingConflictException("Appointment already has an encounter.");
 
-            var expectedKind = ToEncounterKind(appointment.Kind);
-            if (plan.Kind != expectedKind)
-                throw new DomainRuleViolationException(
-                    $"Appointment kind {appointment.Kind} cannot create encounter kind {plan.Kind}.");
-
             var encounter = new Encounter(
                 EncounterId.New(),
                 appointment.PatientId,
-                plan.Kind,
                 startedAtUtc,
+                plan.RequiresExclusiveSlot,
                 appointment.Id,
                 appointment.IsUrgent,
                 notes);
@@ -121,8 +116,8 @@ public sealed class SchedulingService(ISchedulingSessionFactory sessions)
             var encounter = new Encounter(
                 EncounterId.New(),
                 patientId,
-                plan.Kind,
                 startedAtUtc,
+                plan.RequiresExclusiveSlot,
                 appointmentId: null,
                 isUrgent,
                 notes);
@@ -174,14 +169,14 @@ public sealed class SchedulingService(ISchedulingSessionFactory sessions)
         EncounterPlan plan,
         CancellationToken cancellationToken)
     {
-        var detail = plan.CreateDetail(encounter.Id);
-        await session.InsertEncounterAsync(encounter, detail, cancellationToken);
+        var details = plan.CreateDetails(encounter.Id);
+        await session.InsertEncounterAsync(encounter, details, cancellationToken);
 
         if (encounter.OccupiesActiveSlot &&
             !await session.TryClaimActiveEncounterAsync(encounter.Id, cancellationToken))
         {
             throw new SchedulingConflictException(
-                "Another non-INFAI encounter is already underway. Complete or abort it before starting this encounter.");
+                "Another exclusive clinical encounter is already underway. Complete or abort it before starting this encounter.");
         }
     }
 
@@ -200,13 +195,4 @@ public sealed class SchedulingService(ISchedulingSessionFactory sessions)
         CancellationToken cancellationToken) =>
         await session.GetAppointmentAsync(appointmentId, cancellationToken)
         ?? throw new EntityNotFoundException($"Appointment {appointmentId} was not found.");
-
-    private static EncounterKind ToEncounterKind(AppointmentKind kind) => kind switch
-    {
-        AppointmentKind.Visit => EncounterKind.Visit,
-        AppointmentKind.Endoscopy => EncounterKind.Endoscopy,
-        AppointmentKind.ClinicalExam => EncounterKind.ClinicalExam,
-        AppointmentKind.Infai => EncounterKind.Infai,
-        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
-    };
 }
