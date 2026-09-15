@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=GIPractice
+Comment=Gastroenterology practice management client
+Exec=gipractice-client
+Icon=medical-symbolic
+Terminal=false
+Categories=Office;MedicalSoftware;
+StartupNotify=true
+X-KDE-FormFactor=desktop
