@@ -2,6 +2,11 @@
 
 Branch: `v3-simple-clinical-core`
 
+Current checkpoints:
+
+- `2bce4015716570286332c213ec02c5715fc8ab36` — clean-tree restart with one server project and no legacy projects in this branch.
+- `621752dd9b58969f6e1c6853d31480238601e6c6` — hidden clinical-session workflow service; no user-facing Encounter operations.
+
 ## Why this branch exists
 
 The previous implementation and the first v2 rewrite both accumulated abstractions faster than the actual practice workflows justified. This branch restarts from the minimum model that fits the real clinic.
@@ -44,14 +49,31 @@ Feature folders, not architectural projects:
 
 Dependencies are kept obvious by code organization and tests instead of assembly proliferation.
 
+## Clinical workflow shape
+
+The application code currently exposes concrete clinical operations rather than Encounter operations:
+
+- `StartEndoscopyAsync`
+- `StartExamAsync`
+- `AddExamAsync`
+- `AddPrescriptionAsync`
+- `AddVisitAsync`
+- `StartInfaiAsync`
+
+`ClinicalSessionKey` is internal infrastructure/application context only. It exists so related clinical records can share the same hidden Encounter row. It must not become a QML model or a user-editable object.
+
 ## Client shape
 
 Qt 6 + KDE Frameworks 6 + Kirigami. The C++ client service layer may carry internal clinical-session identifiers, but QML/UI never presents Encounter as a domain object.
 
 ## Next slice
 
-1. Define the minimal relational schema and row mappings.
-2. Implement Appointment corrections without artificial immutability.
-3. Implement Endoscopy/Exam/Prescription/Visit/INFAI creation with automatic hidden Encounter creation/reuse.
+1. Add the minimal relational schema and LINQ to DB row mappings.
+2. Persist Appointment corrections without artificial immutability.
+3. Persist Endoscopy/Exam/Prescription/Visit/INFAI creation with automatic hidden Encounter creation/reuse.
 4. Add focused SQLite tests for those workflows.
 5. Only then add HTTP endpoints and the Schedule UI.
+
+## Validation
+
+The branch has not yet received a real .NET compiler/test run in this environment. Do not report the build or tests as passing until an actual run is observed.
