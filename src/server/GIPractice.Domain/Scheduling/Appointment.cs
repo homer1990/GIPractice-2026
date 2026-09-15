@@ -1,6 +1,6 @@
 namespace GIPractice.Domain.Scheduling;
 
-public enum AppointmentKind
+public enum AppointmentType
 {
     Visit = 1,
     Endoscopy = 2,
@@ -21,7 +21,7 @@ public sealed class Appointment
 {
     public AppointmentId Id { get; }
     public PatientId PatientId { get; }
-    public AppointmentKind Kind { get; private set; }
+    public AppointmentType Type { get; }
     public DateTimeOffset ScheduledStartUtc { get; private set; }
     public int DurationMinutes { get; private set; }
     public AppointmentStatus Status { get; private set; }
@@ -31,7 +31,7 @@ public sealed class Appointment
     public Appointment(
         AppointmentId id,
         PatientId patientId,
-        AppointmentKind kind,
+        AppointmentType type,
         DateTimeOffset scheduledStartUtc,
         int durationMinutes,
         bool isUrgent = false,
@@ -41,7 +41,7 @@ public sealed class Appointment
 
         Id = id;
         PatientId = patientId;
-        Kind = kind;
+        Type = type;
         ScheduledStartUtc = scheduledStartUtc.ToUniversalTime();
         DurationMinutes = durationMinutes;
         IsUrgent = isUrgent;
@@ -51,8 +51,8 @@ public sealed class Appointment
 
     public void Reschedule(DateTimeOffset scheduledStartUtc, int durationMinutes)
     {
-        if (Status != AppointmentStatus.Scheduled)
-            throw new DomainRuleViolationException($"Only a scheduled appointment can be rescheduled; current status is {Status}.");
+        if (Status is not (AppointmentStatus.Scheduled or AppointmentStatus.Arrived))
+            throw new DomainRuleViolationException($"Appointment in status {Status} cannot be rescheduled.");
         if (durationMinutes <= 0) throw new ArgumentOutOfRangeException(nameof(durationMinutes));
 
         ScheduledStartUtc = scheduledStartUtc.ToUniversalTime();
