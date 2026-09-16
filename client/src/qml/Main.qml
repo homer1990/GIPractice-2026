@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
 Kirigami.ApplicationWindow {
@@ -12,12 +13,28 @@ Kirigami.ApplicationWindow {
     pageStack.initialPage: Kirigami.Page {
         title: i18n("GIPractice")
 
-        Kirigami.PlaceholderMessage {
+        ColumnLayout {
             anchors.centerIn: parent
             width: Math.min(parent.width - Kirigami.Units.gridUnit * 4,
-                            Kirigami.Units.gridUnit * 32)
-            text: i18n("Client shell is running")
-            explanation: i18n("Clinical screens will be added after the first server and persistence contracts are stable.")
+                            Kirigami.Units.gridUnit * 34)
+            spacing: Kirigami.Units.largeSpacing
+
+            Kirigami.Heading {
+                Layout.fillWidth: true
+                level: 2
+                text: i18n("Δοκιμή ανατομικού λεξιλογίου")
+            }
+
+            Kirigami.Label {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                text: i18n("Δοκίμασε: άντρο, αντρο, corpus, GEJ, D2 ή sigmoid. Η επιλογή εμφανίζεται στα ελληνικά, ενώ ο εσωτερικός κωδικός παραμένει κρυφός.")
+            }
+
+            AnatomyAutocompleteField {
+                Layout.fillWidth: true
+                suggestionModel: anatomySuggestions
+            }
         }
     }
 }
