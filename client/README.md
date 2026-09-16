@@ -19,7 +19,7 @@ Canonical anatomy is represented by language-neutral codes such as:
 
 Localized names and aliases are presentation/input metadata. Greek (`el-GR`) is the primary authored/reference vocabulary for this installation; English is a supported fallback and future public installations may add other locales without changing stored clinical relationships.
 
-`src/clinical/AnatomyVocabulary` is the first client-side lookup abstraction. It deliberately has no HTTP, SQL or QML dependency. A later data source can populate it from the server/database while the lookup rules remain unchanged.
+`src/clinical/AnatomyVocabulary` is the client-side lookup abstraction. It deliberately has no HTTP, SQL or QML dependency. A later data source can populate it from the server/database while the lookup rules remain unchanged.
 
 Current behavior:
 
@@ -30,7 +30,31 @@ Current behavior:
 - punctuation/separator normalization for recognition;
 - hierarchy access through `childrenOf(parentCode)`.
 
-The lookup layer returns canonical codes. It does not itself mutate clinical data or silently accept semantic parser suggestions. QML/parser integration comes later.
+The lookup layer returns canonical codes. It does not itself mutate clinical data or silently accept semantic parser suggestions.
+
+## QML suggestion adapter
+
+`src/clinical/AnatomySuggestionModel` is a thin `QAbstractListModel` over `AnatomyVocabulary`.
+
+QML-facing roles are presentation-only:
+
+- `displayName`
+- `matchedText`
+- `matchedLocale`
+- `kind`
+- `exactMatch`
+
+The canonical concept code is deliberately not exposed as a normal model role. When a user accepts a suggestion, QML explicitly calls `codeAt(row)` to obtain the semantic identity that should be sent to the application/service layer.
+
+The model owns its vocabulary entry copy and exposes `setEntries(...)` only to C++ code. This keeps QML from becoming the owner/source of clinical vocabulary data and avoids pointer-lifetime coupling to a future HTTP/SQLite provider.
+
+The model exposes three QML properties:
+
+- `query`
+- `localeName`
+- `limit`
+
+Changing any of them refreshes the suggestions. The default locale is Greek (`el-GR`).
 
 ## Localization layers
 
@@ -40,4 +64,4 @@ Keep these concerns separate:
 2. Clinical vocabulary: locale-aware names/aliases attached to language-neutral concept codes.
 3. User-authored clinical prose: preserved exactly as entered; never internally translated.
 
-Client implementation beyond this vocabulary abstraction starts after the first server read/write contracts and persistence layer are stable.
+Client implementation beyond these vocabulary abstractions starts after the first server read/write contracts and persistence layer are stable.
