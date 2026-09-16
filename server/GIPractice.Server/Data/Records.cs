@@ -9,6 +9,7 @@ internal sealed class EncounterRow
     public Guid? AppointmentId { get; init; }
     public DateTime StartedAtUtc { get; init; }
     public DateTime? EndedAtUtc { get; set; }
+    public string? HistoryText { get; set; }
 }
 
 internal sealed class ClinicalExamRow
@@ -40,6 +41,7 @@ internal sealed class EndoscopyRow
     public DateTime StartedAtUtc { get; init; }
     public DateTime? EndedAtUtc { get; set; }
     public string? Indication { get; set; }
+    public short Priority { get; set; }
     public short Outcome { get; set; }
     public string? ExtentReachedCode { get; set; }
     public short PreparationMode { get; set; }
