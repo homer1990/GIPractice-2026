@@ -1,9 +1,5 @@
 namespace GIPractice.Server.Clinical;
 
-public sealed record Endoscopy(Guid Id, string TypeCode, string? ReportJson = null);
-
-public sealed record ClinicalExam(Guid Id, string TypeCode, string? Findings = null);
-
 public sealed record Prescription(Guid Id, string? Text = null);
 
 public sealed record Visit(Guid Id, string? Notes = null);
