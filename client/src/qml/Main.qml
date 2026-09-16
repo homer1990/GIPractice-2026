@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
@@ -25,7 +26,7 @@ Kirigami.ApplicationWindow {
                 text: i18n("Δοκιμή ανατομικού λεξιλογίου")
             }
 
-            Kirigami.Label {
+            Controls.Label {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 text: i18n("Δοκίμασε: άντρο, αντρο, corpus, GEJ, D2 ή sigmoid. Η επιλογή εμφανίζεται στα ελληνικά, ενώ ο εσωτερικός κωδικός παραμένει κρυφός.")
