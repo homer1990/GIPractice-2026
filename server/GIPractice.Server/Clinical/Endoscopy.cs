@@ -1,5 +1,12 @@
 namespace GIPractice.Server.Clinical;
 
+public enum ProcedurePriority
+{
+    Routine = 0,
+    Urgent = 1,
+    Emergency = 2
+}
+
 public enum EndoscopyOutcome
 {
     InProgress = 0,
@@ -58,6 +65,7 @@ public sealed record Endoscopy(
     string TypeCode,
     DateTimeOffset StartedAtUtc,
     string? Indication = null,
+    ProcedurePriority Priority = ProcedurePriority.Routine,
     EndoscopyOutcome Outcome = EndoscopyOutcome.InProgress,
     DateTimeOffset? EndedAtUtc = null,
     string? ExtentReachedCode = null,
@@ -65,7 +73,28 @@ public sealed record Endoscopy(
     string? PreparationQualityCode = null,
     SedationMode SedationMode = SedationMode.None,
     string? Impression = null,
-    string? Recommendations = null);
+    string? Recommendations = null)
+{
+    public Endoscopy Finish(
+        EndoscopyOutcome outcome,
+        DateTimeOffset endedAtUtc,
+        string? extentReachedCode = null)
+    {
+        if (outcome == EndoscopyOutcome.InProgress)
+            throw new ArgumentException("A finished endoscopy cannot remain in progress.", nameof(outcome));
+
+        var end = endedAtUtc.ToUniversalTime();
+        if (end < StartedAtUtc.ToUniversalTime())
+            throw new ArgumentOutOfRangeException(nameof(endedAtUtc), "End time cannot precede start time.");
+
+        return this with
+        {
+            Outcome = outcome,
+            EndedAtUtc = end,
+            ExtentReachedCode = string.IsNullOrWhiteSpace(extentReachedCode) ? null : extentReachedCode.Trim()
+        };
+    }
+}
 
 public sealed record EndoscopyFinding(
     Guid Id,
