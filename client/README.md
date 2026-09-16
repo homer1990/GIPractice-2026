@@ -14,7 +14,7 @@ Requirements are expressed by CMake and currently include:
 
 - CMake 3.20+
 - Extra CMake Modules (ECM) 6+
-- Qt 6: Core, Gui, Qml, Quick, QuickControls2, Widgets
+- Qt 6: Core, Gui, Network, Qml, Quick, QuickControls2, Widgets
 - KDE Frameworks 6: CoreAddons, I18n, I18nQml, QQC2DesktopStyle
 - Kirigami QML module (`org.kde.kirigami`)
 - C++23 compiler
@@ -34,15 +34,37 @@ With KDE's CMake settings the executable is currently emitted under the build-tr
 
 The application ID / QML URI is `net.gmanthos.gipractice`.
 
-`main.cpp` establishes:
+## First HTTP API client
 
-- `QApplication`;
-- KDE `KAboutData` with GPLv3 license metadata;
-- KI18n application domain (`gipractice`);
-- `KLocalizedQmlContext` for QML translation;
-- KDE desktop Qt Quick Controls style when no style was explicitly selected;
-- QML registration for `AnatomySuggestionModel`;
-- a `QQmlApplicationEngine` loading the `net.gmanthos.gipractice` QML module.
+`src/api/PracticeApiClient.{h,cpp}` is the first transport boundary between the Qt client and ASP.NET server.
+
+It is deliberately plain C++/Qt, not a QML object. It owns:
+
+- server base-URL handling;
+- query-string serialization;
+- `QNetworkAccessManager` requests;
+- JSON parsing into C++ DTOs;
+- HTTP/network/JSON error representation.
+
+The first read contracts consumed are:
+
+```text
+GET /api/patients/search
+GET /api/patients/{id}
+GET /api/appointments?fromUtc=...&toUtc=...&patientId=...
+```
+
+Patient search supports first name, last name, father's name, birth-date range and paging. Appointment listing uses an explicit UTC half-open interval `[fromUtc, toUtc)` with an optional patient filter.
+
+For an end-to-end transport smoke test, set `GIPRACTICE_API_URL` before starting the client. The current startup probe performs an empty paged patient search and logs only the returned count.
+
+Example:
+
+```bash
+GIPRACTICE_API_URL=http://127.0.0.1:5070 ./build/client/bin/gipractice-client
+```
+
+This startup probe is temporary. Real patient/appointment QML models will call `PracticeApiClient` directly in later slices.
 
 ## Clinical vocabulary localization
 
@@ -110,11 +132,9 @@ It currently provides:
 - preservation of the exact raw text the user typed in `sourceText`;
 - no canonical database code in ordinary presentation.
 
-For the current smoke test, `main.cpp` supplies a deliberately small **development-only** vocabulary containing representative entries such as antrum, corpus, GEJ, diaphragmatic impression, D2 and sigmoid colon. This is not a second authoritative vocabulary. It exists only so the control can be exercised before server persistence/API transport exists and must be removed when the real server-provided vocabulary is wired in.
+For the current smoke test, `main.cpp` supplies a deliberately small **development-only** vocabulary containing representative entries such as antrum, corpus, GEJ, diaphragmatic impression, D2 and sigmoid colon. This is not a second authoritative vocabulary. It must disappear when the real server-provided vocabulary is wired in.
 
-`Main.qml` currently hosts this control as a test surface. Example inputs include `άντρο`, `αντρο`, `corpus`, `GEJ`, `D2` and `sigmoid`.
-
-The first control resolves one concept at a time. Compound input such as `άντρο-σώμα` -> two canonical sites is a later parser/multi-selection slice; it is not silently guessed by this component.
+`Main.qml` currently hosts this control as a test surface. The first control resolves one concept at a time; compound input is intentionally deferred while the client/API spine is built.
 
 ## Localization layers
 
@@ -124,4 +144,4 @@ Keep these concerns separate:
 2. Clinical vocabulary: locale-aware names/aliases attached to language-neutral concept codes.
 3. User-authored clinical prose/raw collection text: preserved exactly as entered; never internally translated.
 
-HTTP/persistence integration and free-text parser/NLP remain separate later slices.
+The next client work is real patient and appointment presentation over `PracticeApiClient`, followed by write operations. SQLite persistence and the extensive anatomy vocabulary remain later slices.
