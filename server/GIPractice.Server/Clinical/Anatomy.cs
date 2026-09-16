@@ -1,5 +1,11 @@
 namespace GIPractice.Server.Clinical;
 
+public static class ClinicalLocales
+{
+    public const string GreekGreece = "el-GR";
+    public const string English = "en";
+}
+
 public enum AnatomicalSiteKind
 {
     Organ = 1,
@@ -8,22 +14,29 @@ public enum AnatomicalSiteKind
     Other = 99
 }
 
-// Small GI-focused controlled vocabulary. Code is a stable application code such as
-// STOMACH_ANTRUM or GEJ. ParentId provides hierarchy so a query for STOMACH can include
-// its child regions without text matching.
+// Stable, language-neutral clinical concept. Code is the semantic identity used by
+// relationships and research queries. Human-readable names live in AnatomicalSiteName.
 public sealed record AnatomicalSite(
     Guid Id,
     string Code,
-    string DisplayName,
     AnatomicalSiteKind Kind,
     Guid? ParentId = null,
     int SortOrder = 0);
 
-// Human input is matched against aliases; stored clinical relations point to the
-// canonical AnatomicalSite instead of preserving spelling variants as semantics.
+// One localized preferred display name for an anatomical concept. Persistence should
+// enforce at most one preferred name per (AnatomicalSiteId, Locale).
+public sealed record AnatomicalSiteName(
+    Guid Id,
+    Guid AnatomicalSiteId,
+    string Locale,
+    string DisplayName);
+
+// Localized spelling, abbreviation and real-world clinician variants used by
+// autocomplete/parser recognition. Aliases are never the semantic identity themselves.
 public sealed record AnatomicalSiteAlias(
     Guid Id,
     Guid AnatomicalSiteId,
+    string Locale,
     string Alias);
 
 public enum AnatomicalReferencePoint
