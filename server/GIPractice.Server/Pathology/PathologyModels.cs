@@ -28,6 +28,24 @@ public enum PathologyReportKind
     Addendum = 2
 }
 
+public enum PathologyReportAnnotationKind
+{
+    TissueType = 1,
+    Diagnosis = 2,
+    Finding = 3,
+    Organism = 4,
+    Anatomy = 5,
+    Other = 99
+}
+
+public enum PathologyDocumentAssetRole
+{
+    Signature = 1,
+    HeaderImage = 2,
+    EmbeddedImage = 3,
+    Other = 99
+}
+
 public sealed record Pathologist(
     Guid Id,
     string DisplayName,
@@ -35,8 +53,6 @@ public sealed record Pathologist(
 
 // One pathology case belongs to one Endoscopy and groups the practice-managed biopsy
 // workflow, reports, later assays and billing that originated from that endoscopy.
-// Routing is intentionally NOT stored here: individual containers may be released
-// externally instead of entering the practice's pathology workflow.
 public sealed record PathologyCase(
     Guid Id,
     Guid EndoscopyId,
@@ -45,16 +61,15 @@ public sealed record PathologyCase(
     bool ReceiptRequested = false,
     PathologyFeeWaiverReason FeeWaiverReason = PathologyFeeWaiverReason.None);
 
-// The physical tracking unit. LabelCode is human-readable and globally unique,
-// while Id remains the database identity. A container released directly to the patient
-// or another external destination remains documented here, but it does not enter Parcel,
-// Pathologist, PathologyReport or practice billing workflow.
+// The physical tracking unit. CollectionSiteText preserves exactly what the user typed
+// for labels/display (for example "antrum-corpus"). Searchable meaning lives in one or
+// more BiopsyContainerSite rows pointing to the controlled anatomy vocabulary.
 public sealed record BiopsyContainer(
     Guid Id,
     Guid PathologyCaseId,
     string LabelCode,
     int Ordinal,
-    string AnatomicalSiteCode,
+    string CollectionSiteText,
     DateTimeOffset CollectedAtUtc,
     string? Description = null,
     DateTimeOffset? ExternalReleasedAtUtc = null,
@@ -62,6 +77,10 @@ public sealed record BiopsyContainer(
 {
     public bool IsExternallyReleased => ExternalReleasedAtUtc is not null;
 }
+
+public sealed record BiopsyContainerSite(
+    Guid BiopsyContainerId,
+    Guid AnatomicalSiteId);
 
 // One courier shipment. The courier cost belongs to the shipment itself and is
 // deliberately separate from pathology fees charged for biopsy work.
@@ -77,15 +96,12 @@ public sealed record Parcel(
     string Currency = "EUR");
 
 // Physical membership of practice-managed biopsy containers in a courier parcel.
-// The initial biopsy fee is calculated from the number of containers from one
-// PathologyCase that are members of the parcel, not from every container collected
-// during that Endoscopy.
+// Initial biopsy pricing counts only containers from the same PathologyCase that are
+// actually members of that Parcel.
 public sealed record ParcelContainer(
     Guid ParcelId,
     Guid BiopsyContainerId);
 
-// A later assay may refer to one specific practice-managed container or to the
-// pathology case as a whole.
 public sealed record PathologyAssay(
     Guid Id,
     Guid PathologyCaseId,
@@ -95,9 +111,7 @@ public sealed record PathologyAssay(
     Guid? BiopsyContainerId = null,
     string? Description = null);
 
-// Financial ledger entry. A charge can be created now and billed in a later parcel.
-// CalculatedAmount preserves what the pricing rules produced; ChargedAmount preserves
-// what was actually charged after waivers/adjustments.
+// Financial ledger entry. Historical calculated and charged amounts are snapshots.
 public sealed record PathologyCharge(
     Guid Id,
     Guid PathologyCaseId,
@@ -114,22 +128,65 @@ public sealed record PathologyCharge(
     Guid? BilledInParcelId = null,
     string? Description = null);
 
-// Reports here are reports received through the practice-managed pathology workflow.
-// Outside reports from containers released externally are recorded in the patient's
-// longitudinal history instead of creating a parallel external-pathology subsystem.
-// Report coverage is explicit because a case can contain more containers than were
-// actually submitted to this pathologist.
+// Content-addressed asset extracted from source documents. Identical signatures/images
+// can resolve to one asset by SHA-256 in the derived representation.
+public sealed record PathologyDocumentAsset(
+    Guid Id,
+    string Sha256,
+    string MimeType,
+    string StorageKey,
+    long ByteLength);
+
+// Optional reusable presentation metadata for one pathologist. It is never used to
+// reconstruct or replace the exact original report file.
+public sealed record PathologyReportTemplate(
+    Guid Id,
+    Guid PathologistId,
+    string Name,
+    string? HeaderText = null,
+    Guid? SignatureAssetId = null);
+
+// Practice-managed pathology reports retain the exact source document and a parsed,
+// searchable representation. OriginalStorageKey + OriginalSha256 preserve provenance;
+// ExtractedText is what the application searches/annotates.
 public sealed record PathologyReport(
     Guid Id,
     Guid PathologyCaseId,
     PathologyReportKind Kind,
     DateTimeOffset ReceivedAtUtc,
-    string StorageKey,
+    string OriginalStorageKey,
+    string OriginalSha256,
+    string OriginalFileName,
+    string OriginalMimeType,
+    string ExtractedText,
     string? ExternalReportNumber = null,
     Guid? PathologistId = null,
+    Guid? TemplateId = null,
     Guid? RelatedAssayId = null,
     string? Notes = null);
 
 public sealed record PathologyReportContainer(
     Guid PathologyReportId,
     Guid BiopsyContainerId);
+
+public sealed record PathologyReportAsset(
+    Guid PathologyReportId,
+    Guid AssetId,
+    PathologyDocumentAssetRole Role,
+    string? OriginalName = null);
+
+// Parser-derived semantics over ExtractedText. As with clinical-exam annotations,
+// suggestions are not treated as confirmed facts until accepted by a user.
+public sealed record PathologyReportAnnotation(
+    Guid Id,
+    Guid PathologyReportId,
+    int Start,
+    int Length,
+    PathologyReportAnnotationKind Kind,
+    string? CodeSystem = null,
+    string? Code = null,
+    Guid? AnatomicalSiteId = null,
+    bool ConfirmedByUser = false)
+{
+    public int End => Start + Length;
+}
