@@ -15,6 +15,7 @@ Current checkpoints:
 - `8ca0d9b5c22c905cb0216bab5475e7b2d5949189` — client anatomy vocabulary lookup/fallback abstraction.
 - `4cd6a60c09a44572413822803df55655692c0bc4` — QML-facing anatomy suggestion model.
 - `74b01bbd4e28150e4684e6d64cbd4fb58e42624d` — first real Qt/KF6/Kirigami client build skeleton.
+- `c9ab937cb2e1ceb28e0a33b2790391520a45b890` — first local compiler-feedback fixes: Qt no-keywords, QML inheritance and current KI18n QML setup.
 
 ## Fixed principles
 
@@ -86,11 +87,15 @@ Fallback order is requested locale -> same language -> Greek -> English -> canon
 
 `client/src/clinical/AnatomySuggestionModel.{h,cpp}` is the thin `QAbstractListModel` adapter for QML. Presentation roles are localized; the canonical code is retrieved explicitly through `codeAt(row)` only when a suggestion is accepted.
 
+Because KDE builds define `QT_NO_KEYWORDS`, Qt meta-object code uses `Q_SIGNALS` and `Q_EMIT` rather than the disabled `signals` / `emit` keywords.
+
+`AnatomySuggestionModel` is intentionally not `final`: `qmlRegisterType<T>()` internally creates a QML wrapper subclass.
+
 Neither layer mutates clinical data or silently accepts parser suggestions.
 
 ## Qt/KF6 client build skeleton
 
-The client is now a real CMake target rather than documentation-only.
+The client is a real CMake target.
 
 Top-level client CMake requires:
 
@@ -101,19 +106,13 @@ Top-level client CMake requires:
 - Kirigami QML module;
 - C++23.
 
-`client/src/CMakeLists.txt` builds `gipractice-client`, includes the anatomy vocabulary/model sources, and creates QML module `net.gmanthos.gipractice`.
+`client/src/CMakeLists.txt` builds `gipractice-client`, includes the anatomy vocabulary/model sources, creates QML module `net.gmanthos.gipractice`, defines translation domain `gipractice`, and links both `KF6::I18n` and `KF6::I18nQml`.
 
-`client/src/main.cpp` sets up:
+`client/src/main.cpp` sets up QApplication, KDE desktop Quick Controls style, GPLv3 KAboutData, KI18n application domain, QML registration and `KLocalization::setupLocalizedContext(&engine)` before loading the QML module.
 
-- `QApplication`;
-- KDE desktop Quick Controls style unless overridden;
-- `KAboutData` with GPLv3 metadata;
-- KI18n application domain `gipractice`;
-- QML registration of `AnatomySuggestionModel`;
-- `KLocalizedContext`;
-- `QQmlApplicationEngine::loadFromModule(...)`.
+The obsolete `KLocalizedContext` setup was removed after the first local build warned that KF 6.8+ should use `KLocalization::setupLocalizedContext()` / `KF6::I18nQml`.
 
-`client/src/qml/Main.qml` is intentionally only a minimal Kirigami application window. No clinical UI is being built before this target compiles.
+`client/src/qml/Main.qml` remains a minimal Kirigami application window until compilation is clean.
 
 Local validation command:
 
@@ -135,9 +134,9 @@ Practice-managed pathology reports retain the exact source DOCX outside SQL with
 
 ## Next exact development slice
 
-First compile the client skeleton locally and correct any actual CMake/compiler errors.
+Re-run the local Qt/KF6 build after commit `c9ab937cb2e1ceb28e0a33b2790391520a45b890` and fix any remaining real compiler/link/QML startup error first.
 
-Once it builds, the next small client slice is the first anatomy autocomplete QML control wired to `AnatomySuggestionModel`.
+Once the shell builds and starts, the next small client slice is the first anatomy autocomplete QML control wired to `AnatomySuggestionModel`.
 
 Persistence remains a separate later slice: SQLite schema/migration + anatomy vocabulary seeding + concrete stores.
 
@@ -145,4 +144,4 @@ Do not implement free-text parser/NLP yet.
 
 ## Validation
 
-The assistant environment has no configured Qt/KDE client build toolchain and no .NET SDK, so no compile/test success is claimed here. Local Qt/KF6 build output is the next source of truth.
+First local build reached C++ compilation and exposed only integration issues in `AnatomySuggestionModel` and KI18n setup; those fixes are committed. A successful rebuild has not yet been observed, so no client compile success is claimed yet. The assistant environment still has no configured Qt/KDE client build toolchain and no .NET SDK.
