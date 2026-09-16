@@ -8,6 +8,7 @@ public enum PatientHistoryKind
     Allergy = 4,
     FamilyHistory = 5,
     SocialHistory = 6,
+    ExternalReport = 7,
     Other = 99
 }
 
