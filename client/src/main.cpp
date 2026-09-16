@@ -1,3 +1,4 @@
+#include "api/PracticeApiClient.h"
 #include "clinical/AnatomySuggestionModel.h"
 
 #include <KAboutData>
@@ -5,11 +6,18 @@
 #include <KLocalizedString>
 
 #include <QApplication>
+#include <QDebug>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickStyle>
 #include <QtQml/qqml.h>
 
+#include <variant>
+
+using GIPractice::Client::Api::ApiError;
+using GIPractice::Client::Api::PatientSearchRequest;
+using GIPractice::Client::Api::PatientSearchResponse;
+using GIPractice::Client::Api::PracticeApiClient;
 using GIPractice::Client::Clinical::AnatomicalSiteEntry;
 using GIPractice::Client::Clinical::AnatomicalSiteKind;
 using GIPractice::Client::Clinical::AnatomicalSiteLocalization;
@@ -131,6 +139,26 @@ QList<AnatomicalSiteEntry> developmentAnatomyEntries()
     };
 }
 
+void startApiSmokeTest(QApplication &app)
+{
+    const auto apiUrlText = qEnvironmentVariable("GIPRACTICE_API_URL").trimmed();
+    if (apiUrlText.isEmpty())
+        return;
+
+    auto *api = new PracticeApiClient(QUrl::fromUserInput(apiUrlText), &app);
+    api->searchPatients(PatientSearchRequest{}, [](auto result) {
+        if (const auto *response = std::get_if<PatientSearchResponse>(&result)) {
+            qInfo() << "GIPractice API connected; patient count:" << response->totalCount;
+            return;
+        }
+
+        const auto &error = std::get<ApiError>(result);
+        qWarning() << "GIPractice API patient search failed:"
+                   << error.httpStatus
+                   << error.message;
+    });
+}
+
 } // namespace
 
 int main(int argc, char *argv[])
@@ -159,6 +187,8 @@ int main(int argc, char *argv[])
 
     AnatomySuggestionModel anatomySuggestions;
     anatomySuggestions.setEntries(developmentAnatomyEntries());
+
+    startApiSmokeTest(app);
 
     QQmlApplicationEngine engine;
 
