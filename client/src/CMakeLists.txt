@@ -18,6 +18,11 @@ ecm_target_qml_sources(gipractice-client
         qml/Main.qml
 )
 
+target_compile_definitions(gipractice-client
+    PRIVATE
+        TRANSLATION_DOMAIN="gipractice"
+)
+
 target_link_libraries(gipractice-client
     PRIVATE
         Qt6::Core
@@ -28,6 +33,7 @@ target_link_libraries(gipractice-client
         Qt6::Widgets
         KF6::CoreAddons
         KF6::I18n
+        KF6::I18nQml
 )
 
 install(TARGETS gipractice-client ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
