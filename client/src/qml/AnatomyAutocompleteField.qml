@@ -34,9 +34,9 @@ Item {
         if (!code)
             return
 
+        sourceText = input.text
         selectedCode = code
         selectedDisplayName = displayName
-        sourceText = input.text
         suggestionModel.query = ""
         suggestionList.currentIndex = -1
         accepted(code, displayName)
@@ -159,7 +159,7 @@ Item {
                     onClicked: root.acceptRow(index, displayName)
                 }
 
-                ScrollBar.vertical: Controls.ScrollBar {}
+                Controls.ScrollBar.vertical: Controls.ScrollBar {}
             }
         }
 
