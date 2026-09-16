@@ -30,9 +30,8 @@ public enum PathologyReportKind
 
 public enum BiopsyTransferKind
 {
-    CourierParcel = 1,
-    HandedToPatient = 2,
-    HandedToThirdParty = 3,
+    HandedToPatient = 1,
+    HandedToThirdParty = 2,
     Other = 99
 }
 
@@ -77,21 +76,20 @@ public sealed record Parcel(
     decimal? CourierCost = null,
     string Currency = "EUR");
 
-// Physical membership of biopsy containers in a courier parcel.
+// Physical membership of biopsy containers in a courier parcel. This is the sole
+// representation of normal courier shipment membership.
 public sealed record ParcelContainer(
     Guid ParcelId,
     Guid BiopsyContainerId);
 
-// A transfer records physical custody when a container leaves the practice by a route
-// other than (or in addition to modelling) a normal courier parcel. This supports cases
-// such as handing an urgent container to the patient for their oncologist while other
-// containers from the same endoscopy remain for the practice's normal pathology flow.
+// Exceptional direct handover outside the normal courier-parcel workflow, for example
+// giving an urgent container to the patient to take to their oncologist. Normal courier
+// movement is represented only by Parcel + ParcelContainer and is not duplicated here.
 public sealed record BiopsyTransfer(
     Guid Id,
     Guid BiopsyContainerId,
     BiopsyTransferKind Kind,
     DateTimeOffset TransferredAtUtc,
-    Guid? ParcelId = null,
     Guid? PathologistId = null,
     string? RecipientName = null,
     string? Notes = null);
