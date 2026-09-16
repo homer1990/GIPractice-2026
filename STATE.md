@@ -12,6 +12,7 @@ Current checkpoints:
 - `ba5cc88b6ef6d8cc0969eceb7dbf90d0875fbd43` — parcel-based pricing and simplified external-release workflow.
 - `91230b0368c84e3a40b2a39bb70bb4ce4576e32f` — controlled GI anatomy + searchable/source-preserving pathology report model.
 - `21a98fa88136304594547c3841529194e72dee22` — language-neutral anatomy concepts with Greek-first localized vocabulary.
+- `8ca0d9b5c22c905cb0216bab5475e7b2d5949189` — client anatomy vocabulary lookup/fallback abstraction documented.
 
 ## Fixed principles
 
@@ -62,45 +63,43 @@ Each Endoscopy keeps independent anatomy, findings, completion state, media and 
 
 ## Controlled GI anatomy and localization
 
-`AnatomicalSite` is the language-neutral canonical research concept. It contains:
+`AnatomicalSite` is the language-neutral canonical research concept. It contains UUID identity, stable code, kind, optional parent and sort order. Human-readable text is deliberately not stored on the canonical concept.
 
-- UUID identity;
-- stable code;
-- kind: organ / region / landmark;
-- optional parent;
-- sort order.
-
-Human-readable text is deliberately not stored on the canonical concept.
-
-`AnatomicalSiteName` stores the preferred display name for an anatomical concept and locale.
-
-`AnatomicalSiteAlias` stores the anatomical concept, locale and spelling/abbreviation/common-name variant used for recognition/autocomplete. Aliases are input aids, not semantic identity.
+`AnatomicalSiteName` stores localized preferred display names. `AnatomicalSiteAlias` stores locale-aware spelling/abbreviation/common-name variants for recognition/autocomplete, never as semantic identity.
 
 `GiAnatomyVocabulary` is Greek-first:
 
 - `el-GR` is the primary/reference authored locale;
 - English is bundled as a second localization;
 - stable codes such as `STOMACH_ANTRUM`, `GEJ`, `DUODENUM_D2` and `SIGMOID_COLON` do not change by language;
-- Greek aliases intentionally include clinically common mixed-language forms such as `GEJ`, `D2`, `corpus`, `antrum` and `TI` where useful.
+- Greek aliases intentionally include clinically common mixed-language forms such as `GEJ`, `D2`, `corpus`, `antrum` and `TI`.
 
-The initial practical seed set covers:
-
-- esophagus + upper/middle/distal regions;
-- GEJ, Z-line, diaphragmatic impression;
-- stomach/cardias/fundus/corpus/incisura/antrum/pylorus;
-- duodenum/bulb/D2;
-- terminal ileum;
-- colon segments, flexures, ileocecal valve and rectum.
-
-Localization is split into three layers:
-
-1. Qt/KDE UI text — application chrome such as buttons/errors/menus.
-2. Clinical vocabulary localization — names/aliases for canonical concepts.
-3. User-authored clinical prose — preserved exactly as entered and never internally translated merely to fit the model.
-
-`ObservedLandmark` stores measured source observations such as GEJ and diaphragmatic-impression positions relative to incisors/anal verge. Derivable distances are calculated from those observations rather than stored as the only fact.
+The initial seed set covers practical upper/lower GI anatomy and landmarks. `ObservedLandmark` stores measured source facts; derivable distances are calculated from observations.
 
 See `docs/ANATOMY_MODEL.md`.
+
+## Client anatomy vocabulary abstraction
+
+`client/src/clinical/AnatomyVocabulary.{h,cpp}` is a QtCore-only in-memory lookup layer with no HTTP, SQL or QML dependency.
+
+It accepts canonical anatomy entries plus localized names/aliases and provides:
+
+- `displayName(code, locale)`;
+- `resolveExact(text, locale)`;
+- `suggest(text, locale, limit)`;
+- `childrenOf(parentCode)`.
+
+Display fallback order is:
+
+1. requested locale;
+2. same language;
+3. Greek (`el-GR`);
+4. English (`en`);
+5. canonical code.
+
+Recognition is case-insensitive, accent-insensitive and punctuation/separator-normalized. Suggestions rank exact matches before prefix/substring matches and favor terms in the requested locale. Canonical codes remain the returned semantic identity.
+
+This layer deliberately does not mutate clinical data or silently accept parser suggestions. A later QML-facing model can wrap it without exposing language-neutral codes as user-facing labels.
 
 ## Endoscopy
 
@@ -110,66 +109,21 @@ No snare-polypectomy/ablation/clip/interventional framework is planned for this 
 
 ## Pathology / biopsy tracking
 
-### PathologyCase
-
 One `PathologyCase` belongs to one Endoscopy and groups pathology/billing facts originating from that Endoscopy. It stores urgency, receipt request and fee-waiver reason; it does not own one assigned pathologist.
 
-### BiopsyContainer
+Each `BiopsyContainer` has UUIDv7 identity, globally unique label code, case-relative ordinal, exact collection-site text, collection time, optional description and optional external-release timestamp/note. Researchable anatomy is represented by `BiopsyContainerSite` links to canonical sites.
 
-Each physical tube has:
+Practice-managed containers enter Parcel/ParcelContainer, handover, billing and managed pathology-report workflow. Externally released tubes do not create a parallel external pathology subsystem and do not contribute to our Parcel billing. Outside reports that later reach the practice are Patient history (`ExternalReport`).
 
-- UUIDv7 database ID;
-- globally unique human-readable `LabelCode`;
-- case-relative ordinal;
-- exact `CollectionSiteText` entered by the user;
-- collection time;
-- optional description;
-- optional external-release timestamp/note.
-
-Researchable anatomy is represented by `BiopsyContainerSite` links to one or more canonical `AnatomicalSite` rows. Example: `άντρο-corpus` remains the display text while semantics are `STOMACH_ANTRUM` + `STOMACH_CORPUS`.
-
-### Practice-managed versus external release
-
-Practice-managed containers enter Parcel/ParcelContainer, handover, billing and managed pathology-report workflow. Externally released tubes do not create a parallel external pathology subsystem and do not contribute to our Parcel billing.
-
-Outside reports that later reach the practice are Patient history (`ExternalReport`).
-
-### Parcel / charges / pricing
-
-A Parcel is one physical courier shipment to one Pathologist. `PathologyCharge` is a historical financial ledger.
-
-Initial biopsy processing is calculated **per Endoscopy from only the containers from that Endoscopy physically present in the Parcel being billed**.
-
-Example policy:
-
-- EUR 10 base;
-- first 2 billable containers included;
-- if >2, +EUR 10;
-- +EUR 5 for each billable container above 2.
-
-Thus 5 billable containers => EUR 35; 5 collected but only 3 parcelled => EUR 25.
-
-A double procedure is priced independently per Endoscopy/PathologyCase. Doctor waiver retains normal calculated amount but charges zero.
+Initial biopsy processing is calculated **per Endoscopy from only the containers from that Endoscopy physically present in the Parcel being billed**. Under the example policy, 5 billable containers => EUR 35; 5 collected but only 3 parcelled => EUR 25.
 
 Additional assays create separate charges that can be billed in a later Parcel without re-shipping the original container in the data model.
 
 ### Pathology reports / DOCX ingestion
 
-`PathologyReport` is only for practice-managed reports.
+Practice-managed reports retain the exact source document outside SQL with storage key, SHA-256 and original filename/MIME, while extracted text is stored for searching/display/future annotations.
 
-The exact source document is retained outside SQL with:
-
-- `OriginalStorageKey`;
-- `OriginalSha256`;
-- original filename/MIME type.
-
-The importer also stores `ExtractedText` for searching, display and future annotations.
-
-`PathologyReportAnnotation` supports parser-derived tissue type, diagnosis, finding, organism and anatomy concepts. Suggestions remain unconfirmed until accepted by a user.
-
-Repeated embedded assets are content-addressed as `PathologyDocumentAsset` by SHA-256. `PathologyReportAsset` links reports to deduplicated signature/header/embedded-image assets. `PathologyReportTemplate` may retain reusable pathologist header text + canonical signature asset for normalized presentation, but never replaces the exact original DOCX.
-
-`PathologyReportContainer` explicitly states which submitted containers each managed report covers.
+Repeated embedded assets are content-addressed/deduplicated by SHA-256. Parser-derived pathology annotations remain distinguishable as suggested vs confirmed.
 
 See `docs/PATHOLOGY_MODEL.md`.
 
@@ -184,16 +138,16 @@ See `docs/PATHOLOGY_MODEL.md`.
 
 ## Next exact development slice
 
-Proceed piecemeal rather than changing client, persistence and vocabulary simultaneously.
+Continue piecemeal.
 
-Next small slice:
+Next small client slice, if desired:
 
-1. define how the Qt/KDE client requests localized clinical-vocabulary names/aliases and how fallback locale resolution works;
-2. keep QML free of language-neutral database-code presentation details;
-3. do not implement parser/NLP yet.
+1. add a thin QAbstractListModel/QML adapter around `AnatomyVocabulary` for autocomplete suggestions;
+2. expose localized display text + canonical code internally while keeping the code out of ordinary UI presentation;
+3. still do not implement free-text parser/NLP.
 
-After that, continue to the SQLite schema/migration and vocabulary seeding.
+After that, continue to the SQLite schema/migration and anatomy-vocabulary seeding.
 
 ## Validation
 
-Assistant environment still has no .NET SDK; no compiler/test success is claimed here. User has Rider/.NET locally and can provide real build feedback.
+The assistant environment has no configured Qt/KDE client build toolchain and no .NET SDK. No compiler/test success is claimed for these changes yet. The user has Rider/.NET locally for server validation; client compilation will need the Qt/KDE toolchain once the client build skeleton is added.
