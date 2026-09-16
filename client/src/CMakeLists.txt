@@ -16,6 +16,7 @@ ecm_add_qml_module(gipractice-client
 ecm_target_qml_sources(gipractice-client
     SOURCES
         qml/Main.qml
+        qml/AnatomyAutocompleteField.qml
 )
 
 target_compile_definitions(gipractice-client
