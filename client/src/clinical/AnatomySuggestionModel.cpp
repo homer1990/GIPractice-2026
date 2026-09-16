@@ -65,7 +65,7 @@ void AnatomySuggestionModel::setQuery(const QString &query)
         return;
 
     m_query = query;
-    emit queryChanged();
+    Q_EMIT queryChanged();
     refresh();
 }
 
@@ -81,7 +81,7 @@ void AnatomySuggestionModel::setLocaleName(const QString &localeName)
         return;
 
     m_locale = requested;
-    emit localeNameChanged();
+    Q_EMIT localeNameChanged();
     refresh();
 }
 
@@ -97,7 +97,7 @@ void AnatomySuggestionModel::setLimit(const int limit)
         return;
 
     m_limit = normalized;
-    emit limitChanged();
+    Q_EMIT limitChanged();
     refresh();
 }
 
