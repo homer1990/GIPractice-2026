@@ -9,6 +9,7 @@ Item {
     required property var suggestionModel
 
     property alias text: input.text
+    property string sourceText: ""
     property string selectedCode: ""
     property string selectedDisplayName: ""
     property string placeholderText: i18n("Ανατομική θέση")
@@ -21,6 +22,7 @@ Item {
     function clearSelection() {
         selectedCode = ""
         selectedDisplayName = ""
+        sourceText = ""
         input.clear()
         suggestionModel.query = ""
         suggestionList.currentIndex = -1
@@ -34,7 +36,7 @@ Item {
 
         selectedCode = code
         selectedDisplayName = displayName
-        input.text = displayName
+        sourceText = input.text
         suggestionModel.query = ""
         suggestionList.currentIndex = -1
         accepted(code, displayName)
@@ -54,7 +56,9 @@ Item {
             selectByMouse: true
 
             onTextEdited: {
-                if (root.selectedCode && text !== root.selectedDisplayName) {
+                root.sourceText = text
+
+                if (root.selectedCode) {
                     root.selectedCode = ""
                     root.selectedDisplayName = ""
                 }
