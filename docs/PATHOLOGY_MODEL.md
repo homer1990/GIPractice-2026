@@ -11,7 +11,33 @@ Do not conflate:
 3. the pathology case for one endoscopy;
 4. the pathology/billing charge.
 
-They usually travel together, but they are not the same thing. Keeping them separate is what allows later assays to be charged in a future parcel without pretending the original biopsy container was shipped again.
+They usually travel together, but they are not the same thing. Keeping them separate is what allows split routing and later assays to be charged in a future parcel without pretending the original biopsy container was shipped again.
+
+## Clinical-session relationship
+
+A real clinical session may contain more than one Endoscopy.
+
+A common example is a double procedure:
+
+```text
+Appointment
+  |
+  +-- hidden Encounter / clinical session
+         |
+         +-- Colonoscopy
+         |      |
+         |      +-- PathologyCase A
+         |             +-- containers...
+         |
+         +-- Gastroscopy
+                |
+                +-- PathologyCase B
+                       +-- containers...
+```
+
+Colonoscopy and gastroscopy remain two independent Endoscopy records because their anatomy, findings, completion state, biopsies and pathology charges are independent. They simply share the same hidden clinical session and optional Appointment.
+
+The old human convention such as `XXXA` / `XXXB` may still be useful in labels/reports, but it is presentation only. Database identity uses UUIDv7 and does not depend on that numbering scheme.
 
 ## Relationships
 
@@ -20,12 +46,17 @@ Patient
   |
   +-- hidden Encounter
          |
-         +-- Endoscopy
+         +-- Endoscopy (1..n per session)
                 |
-                +-- PathologyCase (0..1 initially)
+                +-- PathologyCase (0..1 per Endoscopy initially)
                        |
                        +-- BiopsyContainer (1..n)
+                       |      |
+                       |      +-- ParcelContainer / BiopsyTransfer
+                       |
                        +-- PathologyReport (0..n)
+                       |      +-- PathologyReportContainer (explicit coverage)
+                       |
                        +-- PathologyAssay (0..n)
                        +-- PathologyCharge (0..n)
 
@@ -41,17 +72,23 @@ A `Pathologist` replaces the Excel-tab separation. The client can show one tab/f
 
 ## PathologyCase
 
-One case groups the pathology work originating from one Endoscopy.
+One case groups pathology work originating from one Endoscopy.
 
-It stores workflow facts that belong to the endoscopy's biopsy set as a whole:
+It stores workflow facts that belong to that endoscopy's biopsy set as a whole:
 
 - EndoscopyId;
 - urgent pathology flag;
 - receipt requested;
-- pathology-fee waiver reason (for example `Doctor`);
-- assigned pathologist when known.
+- pathology-fee waiver reason (for example `Doctor`).
 
-The case is the level at which the initial biopsy-processing price is calculated because the pricing rule is based on the number of containers belonging to one endoscopy.
+It deliberately does **not** own one assigned pathologist. Containers from the same Endoscopy may be split between destinations.
+
+Example:
+
+- urgent gastric container handed to the patient for their oncologist;
+- routine colonic/gastrointestinal containers remain with the practice and later go to the normal pathologist.
+
+Routing therefore belongs to physical containers/transfers, not to PathologyCase.
 
 ## BiopsyContainer
 
@@ -68,6 +105,18 @@ Each physical tube/container gets:
 
 A future human-readable format could be something like `BC-26-000123`, but the exact printed-label scheme should be chosen together with the label-printer workflow rather than hard-coded into the domain now.
 
+## Split routing / custody
+
+`ParcelContainer` records normal physical membership in a courier parcel.
+
+`BiopsyTransfer` records custody when a container leaves by another route, for example:
+
+- handed to the patient;
+- handed to another doctor/oncologist;
+- delivered to another pathology destination.
+
+This means one PathologyCase can have containers with different destinations without duplicating the Endoscopy or inventing separate cases for administrative reasons.
+
 ## Parcel
 
 A Parcel is the actual courier packet/shipment sent to one pathologist.
@@ -81,7 +130,7 @@ It stores:
 - courier cost;
 - currency.
 
-Courier cost is a property of the shipment itself. It is separate from pathology fees calculated per Endoscopy.
+Courier cost is a property of the shipment itself. It is separate from pathology fees calculated for biopsy work.
 
 `ParcelContainer` records which physical biopsy containers were inside the parcel.
 
@@ -125,6 +174,17 @@ Therefore 5 containers produce:
 
 The code implements this as configurable `BiopsyPricingPolicy`, not as a permanent hard-coded business constant.
 
+For a double procedure, the two Endoscopy records are priced independently because each has its own PathologyCase and container count.
+
+Example:
+
+```text
+Colonoscopy: 5 containers -> its own calculated charge
+Gastroscopy: 2 containers -> its own calculated charge
+```
+
+Whether a split-routing case is priced from all containers in the Endoscopy or only the containers actually processed by a particular pathologist is intentionally left to the pricing policy. Do not hard-code that until the real billing rule is confirmed.
+
 If the pathology case is waived because the patient is a doctor, both facts are retained:
 
 - `CalculatedAmount = 35.00`
@@ -141,35 +201,20 @@ It creates its own `PathologyCharge`.
 
 Crucially, that charge starts with no `BilledInParcelId`. When the next parcel is prepared, the outstanding charge can be attached financially to that parcel without adding the old container to `ParcelContainer`.
 
-This gives us the real workflow:
-
-```text
-Parcel 100
-  physically contains BC-001, BC-002
-  bills initial Case A charge
-
-weeks later: additional assay requested on BC-001
-  creates Assay X
-  creates outstanding Charge X
-
-Parcel 101
-  physically contains unrelated new containers
-  bills their normal charges
-  ALSO bills Charge X from old Case A
-  does NOT claim BC-001 is physically in Parcel 101
-```
-
 ## Pathology reports
 
-Reports belong to the `PathologyCase`, not to the Parcel.
+Reports belong to the originating `PathologyCase`, not to the Parcel.
+
+Because containers from one case may go to different destinations, report coverage is explicit through `PathologyReportContainer`. A report is therefore linked only to the containers it actually describes.
 
 Multiple reports are allowed:
 
 - initial pathology report;
+- report from another destination/pathologist;
 - addendum after an additional assay;
 - later corrected/supplemental report if needed.
 
-A report may optionally reference the assay that caused the addendum.
+A report may optionally identify the pathologist and the assay that caused an addendum.
 
 ## Biopsy handover protocol
 
@@ -184,7 +229,9 @@ Group the physical `ParcelContainer` records by PathologyCase/Endoscopy and show
 - whether the case is urgent;
 - whether a receipt is requested;
 - whether pathology fees are waived because the patient is a doctor;
-- calculated amount and actually charged amount for the initial biopsy work.
+- calculated amount and actually charged amount for the relevant biopsy work.
+
+For a double procedure, colonoscopy and gastroscopy appear as separate Endoscopy/pathology lines even though they came from the same appointment/session.
 
 ### B. Additional charges carried forward
 
@@ -195,10 +242,13 @@ This keeps the handover document financially complete without corrupting physica
 ## Why this replaces Excel cleanly
 
 - Every tube has one globally unique identity.
-- Every tube remains traceable back to one Endoscopy.
+- Every tube remains traceable back to one specific Endoscopy.
+- One appointment/session may contain multiple independent Endoscopies.
+- Containers from one Endoscopy may be routed independently.
+- Reports explicitly identify which containers they cover.
 - Every physical shipment is independently traceable.
 - Pathologists are data, not spreadsheet tabs.
-- Initial pricing can depend on container count per Endoscopy.
+- Initial pricing can be calculated independently for each Endoscopy.
 - Professional-courtesy/free cases remain auditable.
 - Receipt requests remain attached to the relevant pathology case.
 - Additional assays can be billed later without moving the original sample in the data model.
