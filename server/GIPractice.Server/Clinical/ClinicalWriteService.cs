@@ -15,6 +15,7 @@ internal interface IClinicalWriteStore
     Task AddEndoscopyFindingAsync(Guid endoscopyId, EndoscopyFinding finding, CancellationToken cancellationToken);
     Task AddEndoscopyTerminationReasonAsync(Guid endoscopyId, EndoscopyTerminationReason reason, CancellationToken cancellationToken);
     Task AddEndoscopyEventAsync(Guid endoscopyId, EndoscopyEvent timelineEvent, CancellationToken cancellationToken);
+    Task AddBiopsyContainerAsync(Guid endoscopyId, GIPractice.Server.Pathology.BiopsyContainer container, CancellationToken cancellationToken);
 
     Task AddExamAsync(Guid sessionId, ClinicalExam exam, CancellationToken cancellationToken);
     Task AddPrescriptionAsync(Guid sessionId, Prescription prescription, CancellationToken cancellationToken);
@@ -40,15 +41,28 @@ internal sealed class ClinicalWriteService(IClinicalWriteStore store)
         CancellationToken cancellationToken = default)
     {
         var session = await CreateSessionAsync(patientId, appointmentId, startedAtUtc, cancellationToken);
-        var item = new Endoscopy(
-            Guid.CreateVersion7(),
-            RequiredCode(typeCode),
-            startedAtUtc.ToUniversalTime(),
-            NormalizeText(indication),
-            priority);
+        var item = CreateEndoscopy(typeCode, startedAtUtc, indication, priority);
 
         await store.AddEndoscopyAsync(session.Value, item, cancellationToken);
         return new(item, session);
+    }
+
+    // Used when a second procedure (for example gastroscopy + colonoscopy) occurs in the
+    // same real clinical session. Both Endoscopy records remain independent but share the
+    // same hidden Encounter/session, patient and optional Appointment.
+    public async Task<Endoscopy> AddEndoscopyAsync(
+        ClinicalSessionKey session,
+        string typeCode,
+        DateTimeOffset startedAtUtc,
+        string? indication = null,
+        ProcedurePriority priority = ProcedurePriority.Routine,
+        CancellationToken cancellationToken = default)
+    {
+        if (session.Value == Guid.Empty) throw new ArgumentException("Clinical session is required.", nameof(session));
+
+        var item = CreateEndoscopy(typeCode, startedAtUtc, indication, priority);
+        await store.AddEndoscopyAsync(session.Value, item, cancellationToken);
+        return item;
     }
 
     public async Task<EndoscopyFinding> AddEndoscopyFindingAsync(
@@ -192,6 +206,18 @@ internal sealed class ClinicalWriteService(IClinicalWriteStore store)
         await store.AddInfaiAsync(session.Value, item, cancellationToken);
         return new(item, session);
     }
+
+    private static Endoscopy CreateEndoscopy(
+        string typeCode,
+        DateTimeOffset startedAtUtc,
+        string? indication,
+        ProcedurePriority priority) =>
+        new(
+            Guid.CreateVersion7(),
+            RequiredCode(typeCode),
+            startedAtUtc.ToUniversalTime(),
+            NormalizeText(indication),
+            priority);
 
     private async Task<ClinicalSessionKey> CreateSessionAsync(
         Guid patientId,
