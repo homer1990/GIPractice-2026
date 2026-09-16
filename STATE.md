@@ -9,19 +9,21 @@ Current checkpoints:
 - `09c9bca6a3cc2ee7fab64de1ddb2dcf08d752597` — clinical documentation/endoscopy/media decisions locked.
 - `8b58a075008e141aa170548aa0e55ab0dc0a8f54` — biopsy-container / parcel / pathology billing model.
 - `a177d2e7667253fac592983e33959652d3760e33` — double-endoscopy and split-container model.
-- `ba5cc88b6ef6d8cc0969eceb7dbf90d0875fbd43` — confirmed parcel-based pricing and simplified external-release workflow.
+- `ba5cc88b6ef6d8cc0969eceb7dbf90d0875fbd43` — parcel-based pricing and simplified external-release workflow.
+- `91230b0368c84e3a40b2a39bb70bb4ce4576e32f` — controlled GI anatomy + searchable/source-preserving pathology report model.
 
 ## Fixed principles
 
 1. Encounter is internal relational/session glue only; the UI never exposes Encounter CRUD.
 2. One real clinical session may contain multiple Endoscopy records.
-3. A double procedure is two independent Endoscopies (for example colonoscopy + gastroscopy) sharing one hidden session/Appointment.
+3. A double procedure is two independent Endoscopies sharing one hidden session/Appointment.
 4. Appointment planning data may be corrected; corrections do not silently rewrite completed clinical work.
-5. Free text is first-class where clinicians naturally think in prose; structure is added only where it improves retrieval/research/workflow.
+5. Free text is first-class where clinicians naturally think in prose; structure is added where it improves retrieval/research/workflow.
 6. Automated text recognition may suggest codes/links but must not silently assert clinical meaning.
 7. Clinical children have their own identities and may repeat within a session where the real workflow permits it.
-8. Media bytes live outside SQL; SQL stores relationships/metadata/hash.
+8. Media/document source files live outside SQL; SQL stores relationships/metadata/hash/searchable derivatives.
 9. No generic repository/mapping framework/CQRS/event bus or generic hospital-EHR abstraction.
+10. Researchable anatomy uses canonical concepts/relationships, not brute-force label-text searching.
 
 ## Server shape
 
@@ -41,17 +43,8 @@ Feature folders:
 
 `ClinicalWriteService` supports:
 
-- `StartEndoscopyAsync(...)` — creates a hidden clinical session and its first Endoscopy.
-- `AddEndoscopyAsync(session, ...)` — adds another independent Endoscopy to the same session.
-
-Thus a double procedure is:
-
-```text
-Appointment
-  -> hidden Encounter/session
-       -> Colonoscopy
-       -> Gastroscopy
-```
+- `StartEndoscopyAsync(...)` — creates a hidden clinical session and first Endoscopy.
+- `AddEndoscopyAsync(session, ...)` — adds another Endoscopy to the same session.
 
 Each Endoscopy keeps independent anatomy, findings, completion state, media and pathology.
 
@@ -64,20 +57,36 @@ Each Endoscopy keeps independent anatomy, findings, completion state, media and 
 - `ClinicalTextAnnotation` may carry suggested/confirmed diagnosis, finding, symptom, medication, anatomy or patient-reference semantics.
 - Parser/NLP is not implemented yet.
 
+## Controlled GI anatomy
+
+`AnatomicalSite` is the canonical research concept. It has:
+
+- UUID identity;
+- stable code;
+- display name;
+- kind: organ / region / landmark;
+- optional parent;
+- sort order.
+
+`AnatomicalSiteAlias` stores spelling/language/common-name variants used for recognition/autocomplete, not as clinical semantics.
+
+`GiAnatomyVocabulary` provides the initial practical seed set for:
+
+- esophagus + upper/middle/distal regions;
+- GEJ, Z-line, diaphragmatic impression;
+- stomach/cardias/fundus/corpus/incisura/antrum/pylorus;
+- duodenum/bulb/D2;
+- terminal ileum;
+- colon segments, flexures, ileocecal valve and rectum;
+- English/Greek/common aliases.
+
+`ObservedLandmark` stores measured source observations such as GEJ and diaphragmatic-impression positions relative to incisors/anal verge. Derivable distances are calculated from those observations rather than stored as the only fact.
+
+See `docs/ANATOMY_MODEL.md`.
+
 ## Endoscopy
 
-Structured data includes:
-
-- procedure type/indication/priority;
-- start/end;
-- preparation/sedation;
-- completed/limited/aborted outcome;
-- maximal extent reached;
-- anatomical findings;
-- termination reasons;
-- lightweight timeline;
-- impression/recommendations;
-- linked media.
+Structured data includes procedure type/indication/priority, start/end, preparation/sedation, outcome, maximal extent, anatomical findings, termination reasons, timeline, impression/recommendations and linked media.
 
 No snare-polypectomy/ablation/clip/interventional framework is planned for this practice.
 
@@ -85,17 +94,7 @@ No snare-polypectomy/ablation/clip/interventional framework is planned for this 
 
 ### PathologyCase
 
-One `PathologyCase` belongs to one Endoscopy and groups pathology/billing facts originating from that Endoscopy.
-
-It stores:
-
-- EndoscopyId;
-- creation time;
-- urgent-pathology flag;
-- receipt-requested flag;
-- fee-waiver reason (`Doctor`, etc.).
-
-It does not own an assigned pathologist.
+One `PathologyCase` belongs to one Endoscopy and groups pathology/billing facts originating from that Endoscopy. It stores urgency, receipt request and fee-waiver reason; it does not own one assigned pathologist.
 
 ### BiopsyContainer
 
@@ -104,84 +103,55 @@ Each physical tube has:
 - UUIDv7 database ID;
 - globally unique human-readable `LabelCode`;
 - case-relative ordinal;
-- anatomical site;
+- exact `CollectionSiteText` entered by the user;
 - collection time;
 - optional description;
-- optional `ExternalReleasedAtUtc` / `ExternalReleaseNote`.
+- optional external-release timestamp/note.
 
-The printed label is not derived from Endoscopy ID. Old `XXXA` / `XXXB` numbering may remain as presentation only.
+Researchable anatomy is represented by `BiopsyContainerSite` links to one or more canonical `AnatomicalSite` rows. Example: `antrum-corpus` remains the display text while semantics are `STOMACH_ANTRUM` + `STOMACH_CORPUS`.
 
 ### Practice-managed versus external release
 
-Practice-managed containers enter the normal:
+Practice-managed containers enter Parcel/ParcelContainer, handover, billing and managed pathology-report workflow. Externally released tubes do not create a parallel external pathology subsystem and do not contribute to our Parcel billing.
 
-- `Parcel`
-- `ParcelContainer`
-- handover protocol
-- pathology billing/report workflow.
+Outside reports that later reach the practice are Patient history (`ExternalReport`).
 
-Containers handed to a patient/oncologist/outside destination do **not** create a parallel external pathology subsystem. They simply record that they were released externally and do not enter our Parcel or billing calculation.
+### Parcel / charges / pricing
 
-If an outside report later comes back, it is entered as `PatientHistoryKind.ExternalReport` rather than `PathologyReport`.
+A Parcel is one physical courier shipment to one Pathologist. `PathologyCharge` is a historical financial ledger.
 
-The earlier `BiopsyTransfer` abstraction is discarded.
+Initial biopsy processing is calculated **per Endoscopy from only the containers from that Endoscopy physically present in the Parcel being billed**.
 
-### Reports
-
-`PathologyReport` is only for practice-managed pathology reports. `PathologyReportContainer` explicitly states which submitted containers the report covers.
-
-### Parcel
-
-A Parcel is one physical courier packet to one Pathologist and stores:
-
-- parcel number;
-- recipient Pathologist;
-- created/sent timestamps;
-- courier/tracking information;
-- courier cost/currency.
-
-### Charges and confirmed pricing rule
-
-`PathologyCharge` is a historical financial ledger. Initial biopsy processing is calculated **per Endoscopy from only the containers from that Endoscopy physically present in the Parcel being billed**.
-
-Example:
-
-```text
-5 containers collected
-2 released externally
-3 sent to our pathologist
-=> pricing count = 3
-```
-
-For the described policy:
+Example policy:
 
 - EUR 10 base;
 - first 2 billable containers included;
-- if >2 billable containers, +EUR 10;
-- +EUR 5 for every billable container above 2.
+- if >2, +EUR 10;
+- +EUR 5 for each billable container above 2.
 
-Therefore:
+Thus 5 billable containers => EUR 35; 5 collected but only 3 parcelled => EUR 25.
 
-- 5 billable containers => EUR 35;
-- 3 billable containers => EUR 25.
+A double procedure is priced independently per Endoscopy/PathologyCase. Doctor waiver retains normal calculated amount but charges zero.
 
-`BiopsyPricingPolicy.Calculate(...)` now explicitly accepts `billableContainerCount`, and `ToInitialCharge(...)` requires the Parcel ID whose physical membership produced that count.
+Additional assays create separate charges that can be billed in a later Parcel without re-shipping the original container in the data model.
 
-A double procedure is priced independently per Endoscopy/PathologyCase even though both Endoscopies share the same Appointment/session.
+### Pathology reports / DOCX ingestion
 
-Doctor/professional-courtesy waiver retains the normal calculated amount but sets charged amount to zero.
+`PathologyReport` is only for practice-managed reports.
 
-### Additional assays
+The exact source document is retained outside SQL with:
 
-A later assay belongs to the original PathologyCase and may refer to a specific practice-managed BiopsyContainer.
+- `OriginalStorageKey`;
+- `OriginalSha256`;
+- original filename/MIME type.
 
-It creates a separate outstanding PathologyCharge. That charge can be billed in a later Parcel without adding the old container to that Parcel's physical membership.
+The importer also stores `ExtractedText` for searching, display and future annotations.
 
-### Handover protocol
+`PathologyReportAnnotation` supports parser-derived tissue type, diagnosis, finding, organism and anatomy concepts. Suggestions remain unconfirmed until accepted by a user.
 
-Generated from Parcel data, not maintained separately.
+Repeated embedded assets are content-addressed as `PathologyDocumentAsset` by SHA-256. `PathologyReportAsset` links reports to deduplicated signature/header/embedded-image assets. `PathologyReportTemplate` may retain reusable pathologist header text + canonical signature asset for normalized presentation, but never replaces the exact original DOCX.
 
-It shows physical containers grouped by Endoscopy/PathologyCase plus urgency, doctor/free status, receipt request and calculated/charged amounts for the containers actually in that Parcel. Additional carried-forward assay charges appear separately so physical custody and billing remain distinct.
+`PathologyReportContainer` explicitly states which submitted containers each managed report covers.
 
 See `docs/PATHOLOGY_MODEL.md`.
 
@@ -196,23 +166,26 @@ See `docs/PATHOLOGY_MODEL.md`.
 
 ## Next exact development slice
 
-1. Add real SQLite schema/migration for Patient, history, Appointment, hidden Encounter, ClinicalExam/annotations, Endoscopy/findings/termination/events/media, pathology models, Prescription, Visit and INFAI.
-2. Add concrete SQLite stores.
-3. Add tests proving:
+1. Add the real SQLite schema/migration, including anatomy vocabulary/aliases, landmark observations, biopsy-container site links and pathology-document source/asset/annotation tables.
+2. Seed the initial `GiAnatomyVocabulary` into SQLite with stable unique codes/aliases.
+3. Add concrete SQLite stores.
+4. Add tests proving:
    - one hidden session can contain both colonoscopy and gastroscopy;
-   - each Endoscopy has an independent PathologyCase and price calculation;
+   - each Endoscopy has independent PathologyCase/pricing;
+   - `antrum-corpus` can preserve raw text while storing two canonical site links;
+   - parent-site queries can find child-region biopsy sites without text search;
+   - observed GEJ/diaphragmatic positions preserve source facts for derived measurements;
    - containers have globally unique IDs/labels;
-   - externally released containers are excluded from Parcel membership and billing;
-   - 5 collected / 3 parcelled => pricing count 3 => EUR 25 under the example policy;
-   - five parcelled containers => EUR 35;
+   - external-release containers are excluded from Parcel billing;
+   - 5 collected / 3 parcelled => EUR 25 under the example policy;
    - doctor waiver preserves calculated amount but charges zero;
-   - practice-managed reports cover explicit submitted containers;
-   - outside reports are represented as Patient history rather than external pathology workflow;
+   - managed report retains original DOCX identity/hash plus extracted text;
+   - identical signature assets can be deduplicated by SHA-256;
+   - report annotations remain distinguishable as suggested vs confirmed;
    - later assay charge can be billed in a later Parcel without re-shipping its container;
-   - urgent/receipt flags survive into handover query data;
    - media derivative linkage/hash persists.
-4. Add Appointment correction persistence.
-5. Only after tests pass, expose HTTP endpoints and begin client screens.
+5. Add Appointment correction persistence.
+6. Only after tests pass, expose HTTP endpoints and begin client screens/autocomplete/parser UX.
 
 ## Validation
 
