@@ -6,6 +6,8 @@ Current checkpoints:
 
 - `2bce4015716570286332c213ec02c5715fc8ab36` — clean-tree restart with one server project and no legacy projects in this branch.
 - `621752dd9b58969f6e1c6853d31480238601e6c6` — hidden clinical-session workflow service; no user-facing Encounter operations.
+- `09c9bca6a3cc2ee7fab64de1ddb2dcf08d752597` — clinical documentation/endoscopy/media decisions locked in `docs/CLINICAL_MODEL.md`.
+- `64e1c29f2da6ba2b0bf6800a71bd1223022c7de2` — current clinical model/persistence-record checkpoint.
 
 ## Why this branch exists
 
@@ -23,16 +25,8 @@ The previous implementation and the first v2 rewrite both accumulated abstractio
 8. Correcting an Appointment does not silently rewrite clinical records that already happened.
 9. Encounter holds the patient identity for the clinical session, so child clinical rows do not duplicate PatientId.
 10. Corrections to finalized clinical data will eventually be revision/audit operations rather than hidden overwrites.
-
-## Deliberately not designed yet
-
-- generic mapping framework
-- generic repository
-- event bus / CQRS framework
-- Encounter CRUD/API/UI
-- hard global active-Encounter singleton
-- medication-order subsystem
-- pathology/media/report internals beyond the requirements needed by the next feature slice
+11. Free text remains first-class where clinicians naturally think in prose; structure is added only where it improves retrieval/research/workflow without making documentation slower.
+12. Automated text recognition may suggest codes/links but must not silently assert clinical meaning.
 
 ## Server shape
 
@@ -47,33 +41,91 @@ Feature folders, not architectural projects:
 - `Configuration`
 - `Api`
 
-Dependencies are kept obvious by code organization and tests instead of assembly proliferation.
+No generic repository, generic mapping framework, CQRS/event-bus framework or Encounter CRUD/API/UI.
 
-## Clinical workflow shape
+## History model
 
-The application code currently exposes concrete clinical operations rather than Encounter operations:
+History is split into two concepts.
 
-- `StartEndoscopyAsync`
-- `StartExamAsync`
-- `AddExamAsync`
-- `AddPrescriptionAsync`
-- `AddVisitAsync`
-- `StartInfaiAsync`
+- `PatientHistoryEntry` is longitudinal patient history: diagnosis, surgery, medication, allergy, family history, social history or other durable facts. Entries are text-first and may optionally carry code-system/code metadata.
+- Current symptoms/history of present illness belongs to the hidden clinical session (`EncounterRow.HistoryText`) and is not automatically merged into permanent patient history.
 
-`ClinicalSessionKey` is internal infrastructure/application context only. It exists so related clinical records can share the same hidden Encounter row. It must not become a QML model or a user-editable object.
+## Clinical examination
+
+`ClinicalExam` is currently:
+
+- UUIDv7 ID;
+- text-first `ClinicalDocument`;
+- optional assessment.
+
+`ClinicalDocument` can carry `ClinicalTextAnnotation` entries for diagnosis, finding, symptom, medication, anatomy, patient reference or other semantic marks.
+
+Annotations may carry a code system/code and/or a referenced PatientId. `ConfirmedByUser` distinguishes accepted meaning from parser suggestions.
+
+The parser itself is deliberately not implemented yet.
+
+## Endoscopy model
+
+Endoscopy now carries structured procedure data rather than an opaque `ReportJson` blob:
+
+- type code;
+- indication;
+- procedure priority: routine / urgent / emergency;
+- start/end;
+- preparation mode and quality code;
+- sedation mode;
+- outcome: in progress / completed / limited / aborted;
+- maximal extent reached;
+- impression;
+- recommendations.
+
+Child records:
+
+- `EndoscopyFinding`: anatomical site + narrative description + optional finding/severity code and size;
+- `EndoscopyTerminationReason`: why the procedure was limited/aborted, optionally linked to a finding;
+- `EndoscopyEvent`: lightweight preparation/sedation/procedure/recovery/debrief timeline;
+- `EndoscopySpecimen`: anatomical source + routine/urgent pathology priority + reason, optionally linked to a finding;
+- `ClinicalMedia`: media metadata/linkage.
+
+There is intentionally no snare-polypectomy/ablation/clip/interventional-endoscopy framework. The practice does not perform those procedures. Biopsy is represented by the specimen it produces; rare actions can initially be recorded in the timeline/narrative.
+
+The write service now has concrete operations to start an endoscopy, add findings, termination reasons, timeline events and specimens, and finish the endoscopy as completed/limited/aborted.
+
+## Media policy
+
+- Media bytes live outside SQL.
+- SQL stores identity, endoscopy/finding relationship, storage key, MIME/container/codec metadata and SHA-256.
+- Default video codec target: AV1.
+- Default display-still format: AVIF.
+- Preserve the canonical/source-faithful original when available; display/thumbnail derivatives may be generated from it.
+- Media may link to the overall Endoscopy or to a specific finding.
+
+## Report policy
+
+The printable endoscopy report is generated from structured findings plus their narrative descriptions, procedure timeline/outcome, specimens, impression and recommendations. It is not the sole source of truth stored as one opaque report document.
 
 ## Client shape
 
 Qt 6 + KDE Frameworks 6 + Kirigami. The C++ client service layer may carry internal clinical-session identifiers, but QML/UI never presents Encounter as a domain object.
 
-## Next slice
+The intended UX rule is: prose first where humans think in prose, structure where it naturally helps. Client-side recognition may underline/suggest ICD/SNOMED-like concepts or Patient links, but acceptance belongs to the user.
 
-1. Add the minimal relational schema and LINQ to DB row mappings.
-2. Persist Appointment corrections without artificial immutability.
-3. Persist Endoscopy/Exam/Prescription/Visit/INFAI creation with automatic hidden Encounter creation/reuse.
-4. Add focused SQLite tests for those workflows.
-5. Only then add HTTP endpoints and the Schedule UI.
+## Next exact development slice
+
+1. Add the first real SQL schema/migration for Patient, PatientHistoryEntry, Appointment, hidden Encounter, ClinicalExam/annotations, Endoscopy/findings/termination/events/specimens/media, Prescription, Visit and INFAI.
+2. Add a concrete SQLite-backed `IClinicalWriteStore` first.
+3. Add focused tests proving:
+   - an Endoscopy creates a hidden Encounter automatically;
+   - a ClinicalExam and Prescription can reuse the same hidden session;
+   - findings are stored by anatomical site;
+   - limited/aborted procedures retain extent + termination reason;
+   - urgent specimen priority is independent from procedure priority;
+   - media derivatives can reference a canonical original and retain SHA-256 metadata.
+4. Add Appointment correction persistence.
+5. Only after those tests pass, expose the first HTTP endpoints and begin the Schedule/Endoscopy client screens.
 
 ## Validation
 
-The branch has not yet received a real .NET compiler/test run in this environment. Do not report the build or tests as passing until an actual run is observed.
+The available assistant execution environment still has no .NET SDK, so this branch has not been compiler/test validated there.
+
+The user now has Rider/.NET locally and can provide the first real build feedback. Do not report the branch as passing until an actual build/test run is observed.
