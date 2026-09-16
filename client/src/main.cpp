@@ -1,11 +1,12 @@
 #include "clinical/AnatomySuggestionModel.h"
 
 #include <KAboutData>
-#include <KLocalization>
+#include <KLocalizedQmlContext>
 #include <KLocalizedString>
 
 #include <QApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include <QQuickStyle>
 #include <QtQml/qqml.h>
 
@@ -36,7 +37,11 @@ int main(int argc, char *argv[])
         "AnatomySuggestionModel");
 
     QQmlApplicationEngine engine;
-    KLocalization::setupLocalizedContext(&engine);
+
+    auto *localizedContext = new KLocalizedQmlContext(&engine);
+    localizedContext->setTranslationDomain(QStringLiteral("gipractice"));
+    engine.rootContext()->setContextObject(localizedContext);
+
     engine.loadFromModule(QStringLiteral("net.gmanthos.gipractice"), QStringLiteral("Main"));
 
     if (engine.rootObjects().isEmpty())
