@@ -13,6 +13,7 @@ Current checkpoints:
 - `91230b0368c84e3a40b2a39bb70bb4ce4576e32f` — controlled GI anatomy + searchable/source-preserving pathology report model.
 - `21a98fa88136304594547c3841529194e72dee22` — language-neutral anatomy concepts with Greek-first localized vocabulary.
 - `8ca0d9b5c22c905cb0216bab5475e7b2d5949189` — client anatomy vocabulary lookup/fallback abstraction documented.
+- `4cd6a60c09a44572413822803df55655692c0bc4` — QML-facing anatomy suggestion model documented.
 
 ## Fixed principles
 
@@ -99,7 +100,17 @@ Display fallback order is:
 
 Recognition is case-insensitive, accent-insensitive and punctuation/separator-normalized. Suggestions rank exact matches before prefix/substring matches and favor terms in the requested locale. Canonical codes remain the returned semantic identity.
 
-This layer deliberately does not mutate clinical data or silently accept parser suggestions. A later QML-facing model can wrap it without exposing language-neutral codes as user-facing labels.
+`client/src/clinical/AnatomySuggestionModel.{h,cpp}` is the thin `QAbstractListModel` adapter intended for QML autocomplete. It exposes localized presentation roles only:
+
+- `displayName`;
+- `matchedText`;
+- `matchedLocale`;
+- `kind`;
+- `exactMatch`.
+
+The canonical code is intentionally not a normal display role. QML explicitly calls `codeAt(row)` when the user accepts a suggestion. The adapter owns a copy of vocabulary entries, accepts updates only from C++ through `setEntries(...)`, and exposes QML properties for query, locale and suggestion limit. Default locale is Greek.
+
+Neither vocabulary layer mutates clinical data or silently accepts parser suggestions.
 
 ## Endoscopy
 
@@ -140,13 +151,14 @@ See `docs/PATHOLOGY_MODEL.md`.
 
 Continue piecemeal.
 
-Next small client slice, if desired:
+The anatomy lookup and QML model boundary now exist. The next small slice should be the real client build skeleton (CMake + Qt/KF6 target) so these C++ files can actually be compiled before adding QML controls or HTTP integration.
 
-1. add a thin QAbstractListModel/QML adapter around `AnatomyVocabulary` for autocomplete suggestions;
-2. expose localized display text + canonical code internally while keeping the code out of ordinary UI presentation;
-3. still do not implement free-text parser/NLP.
+After client compilation is established, continue with either:
 
-After that, continue to the SQLite schema/migration and anatomy-vocabulary seeding.
+1. the first small anatomy autocomplete QML control; or
+2. the SQLite schema/migration and anatomy-vocabulary seed.
+
+Do not implement free-text parser/NLP yet.
 
 ## Validation
 
