@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QByteArray>
 #include <QDate>
 #include <QDateTime>
 #include <QList>
@@ -74,8 +75,6 @@ using ApiResult = std::variant<T, ApiError>;
 
 class PracticeApiClient final : public QObject
 {
-    Q_OBJECT
-
 public:
     explicit PracticeApiClient(QUrl baseUrl, QObject *parent = nullptr);
 
