@@ -101,6 +101,11 @@ void AnatomySuggestionModel::setLimit(const int limit)
     refresh();
 }
 
+int AnatomySuggestionModel::count() const noexcept
+{
+    return m_suggestions.size();
+}
+
 void AnatomySuggestionModel::setEntries(QList<AnatomicalSiteEntry> entries)
 {
     m_vocabulary.setEntries(std::move(entries));
@@ -120,9 +125,14 @@ void AnatomySuggestionModel::refresh()
     if (!m_query.trimmed().isEmpty())
         next = m_vocabulary.suggest(m_query, m_locale, m_limit);
 
+    const auto previousCount = m_suggestions.size();
+
     beginResetModel();
     m_suggestions = std::move(next);
     endResetModel();
+
+    if (previousCount != m_suggestions.size())
+        Q_EMIT countChanged();
 }
 
 } // namespace GIPractice::Client::Clinical
