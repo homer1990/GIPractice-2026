@@ -29,10 +29,16 @@ internal sealed class ClinicalWriteService(IClinicalWriteStore store)
         Guid? appointmentId,
         string typeCode,
         DateTimeOffset startedAtUtc,
+        string? indication = null,
         CancellationToken cancellationToken = default)
     {
         var session = await CreateSessionAsync(patientId, appointmentId, startedAtUtc, cancellationToken);
-        var item = new Endoscopy(Guid.CreateVersion7(), RequiredCode(typeCode));
+        var item = new Endoscopy(
+            Guid.CreateVersion7(),
+            RequiredCode(typeCode),
+            startedAtUtc.ToUniversalTime(),
+            NormalizeText(indication));
+
         await store.AddEndoscopyAsync(session.Value, item, cancellationToken);
         return new(item, session);
     }
@@ -40,24 +46,24 @@ internal sealed class ClinicalWriteService(IClinicalWriteStore store)
     public async Task<StartedClinicalItem<ClinicalExam>> StartExamAsync(
         Guid patientId,
         Guid? appointmentId,
-        string typeCode,
         DateTimeOffset startedAtUtc,
-        string? findings = null,
+        string? examinationText = null,
+        string? assessment = null,
         CancellationToken cancellationToken = default)
     {
         var session = await CreateSessionAsync(patientId, appointmentId, startedAtUtc, cancellationToken);
-        var item = new ClinicalExam(Guid.CreateVersion7(), RequiredCode(typeCode), NormalizeText(findings));
+        var item = ClinicalExam.Create(examinationText, assessment);
         await store.AddExamAsync(session.Value, item, cancellationToken);
         return new(item, session);
     }
 
     public async Task<ClinicalExam> AddExamAsync(
         ClinicalSessionKey session,
-        string typeCode,
-        string? findings = null,
+        string? examinationText = null,
+        string? assessment = null,
         CancellationToken cancellationToken = default)
     {
-        var item = new ClinicalExam(Guid.CreateVersion7(), RequiredCode(typeCode), NormalizeText(findings));
+        var item = ClinicalExam.Create(examinationText, assessment);
         await store.AddExamAsync(session.Value, item, cancellationToken);
         return item;
     }
