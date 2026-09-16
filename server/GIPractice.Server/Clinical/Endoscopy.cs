@@ -54,12 +54,6 @@ public enum TerminationReasonKind
     Other = 99
 }
 
-public enum SpecimenPriority
-{
-    Routine = 0,
-    Urgent = 1
-}
-
 public sealed record Endoscopy(
     Guid Id,
     string TypeCode,
@@ -116,11 +110,3 @@ public sealed record EndoscopyEvent(
     EndoscopyPhase Phase,
     string EventCode,
     string? Description = null);
-
-public sealed record EndoscopySpecimen(
-    Guid Id,
-    string AnatomicalSiteCode,
-    SpecimenPriority Priority = SpecimenPriority.Routine,
-    string? Description = null,
-    string? PriorityReason = null,
-    Guid? RelatedFindingId = null);
