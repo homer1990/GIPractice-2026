@@ -15,95 +15,60 @@ They usually travel together, but they are not the same thing. Keeping them sepa
 
 ## Clinical-session relationship
 
-A real clinical session may contain more than one Endoscopy.
-
-A common example is a double procedure:
+A real clinical session may contain more than one Endoscopy. A double procedure is modeled as two independent Endoscopy records sharing one hidden clinical session/Appointment.
 
 ```text
 Appointment
   |
   +-- hidden Encounter / clinical session
          |
-         +-- Colonoscopy
-         |      |
-         |      +-- PathologyCase A
-         |             +-- containers...
-         |
-         +-- Gastroscopy
-                |
-                +-- PathologyCase B
-                       +-- containers...
+         +-- Colonoscopy -> PathologyCase A -> containers...
+         +-- Gastroscopy -> PathologyCase B -> containers...
 ```
 
-Colonoscopy and gastroscopy remain two independent Endoscopy records because their anatomy, findings, completion state, biopsies and pathology charges are independent. They simply share the same hidden clinical session and optional Appointment.
-
-The old human convention such as `XXXA` / `XXXB` may still be useful in labels/reports, but it is presentation only. Database identity uses UUIDv7 and does not depend on that numbering scheme.
-
-## Relationships
-
-```text
-Patient
-  |
-  +-- hidden Encounter
-         |
-         +-- Endoscopy (1..n per session)
-                |
-                +-- PathologyCase (0..1 per Endoscopy initially)
-                       |
-                       +-- BiopsyContainer (1..n)
-                       |      |
-                       |      +-- ParcelContainer -> Parcel   (practice-managed)
-                       |      +-- external release fields     (outside workflow)
-                       |
-                       +-- PathologyReport (0..n, practice-managed only)
-                       |      +-- PathologyReportContainer
-                       |
-                       +-- PathologyAssay (0..n)
-                       +-- PathologyCharge (0..n)
-
-Pathologist
-  |
-  +-- Parcel (0..n)
-         |
-         +-- ParcelContainer -> BiopsyContainer
-         +-- PathologyCharge.BilledInParcelId
-```
-
-A `Pathologist` replaces the Excel-tab separation. The client can show one tab/filter/view per pathologist without partitioning the data into different tables.
+The old human convention such as `XXXA` / `XXXB` may remain useful in labels/reports, but it is presentation only. Database identity uses UUIDv7.
 
 ## PathologyCase
 
-One case groups pathology work originating from one Endoscopy.
-
-It stores workflow facts that belong to that endoscopy's biopsy set as a whole:
+One case groups pathology work originating from one Endoscopy. It stores:
 
 - EndoscopyId;
 - urgent pathology flag;
 - receipt requested;
 - pathology-fee waiver reason (for example `Doctor`).
 
-It deliberately does **not** own one assigned pathologist.
+It deliberately does not own one assigned pathologist.
 
 ## BiopsyContainer
 
 Each physical tube/container gets:
 
 - its own UUIDv7 database ID;
-- a globally unique human-readable `LabelCode` suitable for a tube label;
-- an ordinal within its pathology case for convenient ordering;
-- anatomical site;
+- a globally unique human-readable `LabelCode`;
+- an ordinal within its pathology case;
+- `CollectionSiteText`, preserving exactly what the user entered for the label/display;
 - collection timestamp;
-- optional description.
+- optional description;
+- optional external-release timestamp/note.
 
-`LabelCode` must **not** be derived from the Endoscopy ID. The database will enforce uniqueness.
+Researchable anatomy is **not** derived later by brute-force text search. `BiopsyContainerSite` links one container to one or more canonical `AnatomicalSite` rows.
 
-A future human-readable format could be something like `BC-26-000123`, but the exact printed-label scheme should be chosen together with the label-printer workflow rather than hard-coded into the domain now.
+Example:
+
+```text
+CollectionSiteText: "antrum-corpus"
+
+BiopsyContainerSite -> STOMACH_ANTRUM
+BiopsyContainerSite -> STOMACH_CORPUS
+```
+
+The original text remains visible, while research queries use canonical relationships.
+
+See `docs/ANATOMY_MODEL.md` for the controlled GI anatomy vocabulary and landmark model.
 
 ## Practice-managed versus external release
 
 A BiopsyContainer always exists if the practice actually collected tissue into a physical tube.
-
-There are then two paths.
 
 ### Practice-managed pathology
 
@@ -117,24 +82,13 @@ The container enters the normal workflow:
 
 ### Released externally
 
-Sometimes a container is handed to the patient or another outside destination, for example an urgent biopsy the patient takes to their oncologist.
+If a tube is handed to the patient/oncologist/another outside destination, the container records `ExternalReleasedAtUtc` and an optional note. GIPractice does not create a parallel external pathology workflow.
 
-This does **not** create a second external pathology workflow in GIPractice.
-
-The container simply records:
-
-- `ExternalReleasedAtUtc`;
-- optional `ExternalReleaseNote`.
-
-It is not placed in our Parcel, does not contribute to our pathology charge and does not create an external Pathologist/Parcel/report hierarchy.
-
-If an outside pathology report later comes back in a documented way, it is entered in the patient's longitudinal history as `PatientHistoryKind.ExternalReport`. In many real cases no structured result ever returns to the practice, and the model does not invent one.
+If an outside report later comes back, it is recorded in longitudinal Patient history as `ExternalReport` rather than modeled as if the practice tracked that laboratory process.
 
 ## Parcel
 
-A Parcel is the actual courier packet/shipment sent to one pathologist.
-
-It stores:
+A Parcel is the actual courier packet/shipment sent to one pathologist. It stores:
 
 - parcel number;
 - pathologist;
@@ -143,9 +97,7 @@ It stores:
 - courier cost;
 - currency.
 
-Courier cost is a property of the shipment itself. It is separate from pathology fees calculated for biopsy work.
-
-`ParcelContainer` records which physical biopsy containers were inside the parcel.
+`ParcelContainer` records physical membership of containers in the shipment.
 
 ## Charges are a ledger
 
@@ -153,19 +105,18 @@ Courier cost is a property of the shipment itself. It is separate from pathology
 
 A charge records:
 
-- the PathologyCase it belongs to;
-- type (`InitialBiopsy`, `AdditionalAssay`, adjustment);
-- calculated amount according to the pricing rules;
-- actually charged amount after waiver/adjustment;
+- PathologyCase;
+- charge kind;
+- calculated amount;
+- actually charged amount;
 - currency;
 - waiver reason;
 - pricing-policy code/version;
-- billable-container-count snapshot where applicable;
-- optional related container;
-- optional related assay;
-- the Parcel in which the charge was billed (`BilledInParcelId`).
+- billable-container-count snapshot;
+- optional related container/assay;
+- Parcel in which the charge was billed.
 
-This is deliberately a historical snapshot. Opening an old parcel must never recalculate it using today's prices.
+Old charges are historical snapshots and never recalculate using future prices.
 
 ## Initial biopsy pricing rule
 
@@ -175,108 +126,103 @@ The confirmed billing unit is:
 
 Containers released externally are excluded.
 
-For the currently described example policy:
+For the example policy:
 
-- base charge: EUR 10;
-- up to 2 billable containers included;
-- if there are more than 2 billable containers, add EUR 10;
-- then add EUR 5 for every billable container above 2.
+- EUR 10 base;
+- first 2 billable containers included;
+- if >2, +EUR 10;
+- +EUR 5 for every billable container above 2.
 
-Therefore five billable containers produce:
+Five billable containers = EUR 35. If five were collected but only three enter our Parcel, the calculation uses three and produces EUR 25.
 
-```text
-10 base
-+ 10 >2-container surcharge
-+ 3 x 5 additional containers
-= 35 EUR
-```
+For a double procedure, colonoscopy and gastroscopy are priced independently because each is a separate Endoscopy/PathologyCase.
 
-But if five containers were collected and only three are sent through our Pathologist while two are released externally, the calculation uses **3 containers**:
-
-```text
-10 base
-+ 10 >2-container surcharge
-+ 1 x 5 additional container
-= 25 EUR
-```
-
-The code implements this as configurable `BiopsyPricingPolicy`; the count passed to it explicitly means the billable containers from one PathologyCase/Endoscopy in one Parcel.
-
-For a double procedure, the two Endoscopy records are priced independently because each has its own PathologyCase.
-
-Example:
-
-```text
-Colonoscopy: 5 billable containers -> its own charge
-Gastroscopy: 2 billable containers -> its own charge
-```
-
-If the pathology case is waived because the patient is a doctor, both facts are retained:
-
-- normal `CalculatedAmount`;
-- `ChargedAmount = 0.00`;
-- `WaiverReason = Doctor`.
-
-That preserves the actual price calculation while making the professional courtesy explicit.
+For waived cases (for example patient is a doctor), normal `CalculatedAmount` is retained, `ChargedAmount` becomes zero and the waiver reason is explicit.
 
 ## Additional assays
 
-A later assay (for example a histochemical test) belongs to the original `PathologyCase` and may optionally identify the specific practice-managed `BiopsyContainer` used.
-
-It creates its own `PathologyCharge`.
-
-Crucially, that charge starts with no `BilledInParcelId`. When the next parcel is prepared, the outstanding charge can be attached financially to that parcel without adding the old container to `ParcelContainer`.
+A later assay belongs to the original PathologyCase and may reference a specific practice-managed BiopsyContainer. It creates a separate charge which may be billed in a later Parcel without pretending the original tube was physically shipped again.
 
 ## Pathology reports
 
 `PathologyReport` is only for reports received through the practice-managed pathology workflow.
 
-Because a case may contain externally released containers as well as practice-managed containers, report coverage is explicit through `PathologyReportContainer`. A report links only to containers it actually describes.
+### Preserve the exact source
 
-Multiple managed reports are allowed:
+The exact file received from the pathologist is retained outside SQL and referenced by:
 
-- initial pathology report;
-- addendum after an additional assay;
-- later corrected/supplemental report if needed.
+- `OriginalStorageKey`;
+- `OriginalSha256`;
+- original filename;
+- original MIME type.
 
-Outside reports are not modeled here. If one later reaches the practice, it is recorded in patient history as an external report.
+For the current pathologist this will normally be the `.docx` attachment received by email. The source document is not reconstructed from extracted pieces and is not discarded after parsing.
+
+### Searchable derived representation
+
+The importer also extracts the report text into `ExtractedText`. This is what the client displays for fast search/annotation and what future research/NLP operates on.
+
+`PathologyReportAnnotation` can later mark tissue type, diagnosis, finding, organism and anatomy. As with clinical-exam annotations, parser suggestions are not accepted clinical meaning until confirmed by a user.
+
+Histological facts therefore belong to the pathology result, not to the biopsy-container collection metadata.
+
+### Deduplicate repeated document assets
+
+Embedded document assets are content-addressed by SHA-256 as `PathologyDocumentAsset`. Identical signature JPEGs or header images can therefore exist once in the derived asset store even if thousands of source DOCX files contain the same bytes.
+
+`PathologyReportAsset` links a report to those extracted assets and records their role (signature/header image/embedded image/etc.).
+
+`PathologyReportTemplate` may store reusable pathologist presentation metadata such as header text and the canonical signature asset. This is a convenience for normalized display/reporting only; it never replaces the original source document.
+
+This intentionally permits both:
+
+```text
+exact original DOCX       retained verbatim
+searchable extracted text stored separately
+repeated signature/image  deduplicated in derived asset storage
+```
+
+### Report coverage
+
+Because one case may contain externally released containers as well as practice-managed containers, report coverage is explicit through `PathologyReportContainer`. A managed report links only to the containers it actually describes.
+
+Multiple managed reports are allowed: initial report, addendum after an assay, corrected/supplemental report, etc.
 
 ## Biopsy handover protocol
 
-The protocol should be generated from a Parcel and contain two logical sections.
+The protocol is generated from Parcel data rather than maintained separately.
 
 ### A. Physical handover
 
-Group the physical `ParcelContainer` records by PathologyCase/Endoscopy and show:
+Group `ParcelContainer` rows by PathologyCase/Endoscopy and show:
 
-- endoscopy/patient identification needed by the existing protocol;
-- all container label codes and anatomical sites;
-- whether the case is urgent;
-- whether a receipt is requested;
-- whether pathology fees are waived because the patient is a doctor;
-- calculated amount and actually charged amount for the **containers in this Parcel**.
+- patient/endoscopy identification required by the protocol;
+- container label codes and canonical/display anatomical sites;
+- urgency;
+- receipt requested;
+- doctor/free status;
+- calculated and charged amount for containers in this Parcel.
 
 Externally released containers are absent because they are not part of this handover.
 
-For a double procedure, colonoscopy and gastroscopy appear as separate Endoscopy/pathology lines even though they came from the same appointment/session.
-
 ### B. Additional charges carried forward
 
-List `PathologyCharge` records billed in this Parcel whose originating containers/case were sent previously, for example additional assays.
+List charges billed in this Parcel whose original case/container was sent previously, such as later histochemical assays.
 
-This keeps the handover document financially complete without corrupting physical chain-of-custody.
+This keeps billing complete without corrupting physical chain-of-custody.
 
 ## Why this replaces Excel cleanly
 
 - Every tube has one globally unique identity.
-- Every tube remains traceable back to one specific Endoscopy.
+- Every tube remains traceable to one specific Endoscopy.
 - One appointment/session may contain multiple independent Endoscopies.
-- Practice-managed and externally released containers can coexist under the same Endoscopy without creating parallel external-lab infrastructure.
-- Every physical practice-managed shipment is independently traceable.
+- Anatomy is researchable through canonical site relationships rather than label-text searches.
+- Practice-managed and externally released containers can coexist without fake external-lab infrastructure.
+- Every physical shipment is independently traceable.
 - Pathologists are data, not spreadsheet tabs.
-- Initial pricing uses exactly the containers from that Endoscopy that our pathologist is receiving in that Parcel.
-- Professional-courtesy/free cases remain auditable.
-- Receipt requests remain attached to the relevant pathology case.
-- Additional assays can be billed later without moving the original sample in the data model.
+- Pricing uses exactly the containers from that Endoscopy that our pathologist receives in that Parcel.
+- Free/doctor cases and receipt requests remain explicit.
+- Later assays can be billed later without re-shipping samples in the data model.
+- Source pathology DOCX files remain preserved while extracted text becomes searchable.
+- Repeated signatures/assets can be deduplicated in the derived representation.
 - Historical prices remain historical.
-- External reports, when they happen to return, fit naturally into Patient history instead of forcing incomplete outside workflows into the pathology subsystem.
