@@ -13,7 +13,10 @@ namespace GIPractice::Client::Clinical {
 // QML receives localized presentation fields only. The canonical concept code is not a
 // display role; codeAt() is used explicitly when the user accepts a suggestion and the
 // client needs to persist the semantic selection.
-class AnatomySuggestionModel final : public QAbstractListModel
+//
+// This class must not be final: qmlRegisterType<T>() creates an internal QQmlElement<T>
+// subclass when QML instantiates the type.
+class AnatomySuggestionModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(QString query READ query WRITE setQuery NOTIFY queryChanged)
@@ -53,7 +56,7 @@ public:
     // ordinary display data in every delegate.
     Q_INVOKABLE [[nodiscard]] QString codeAt(int row) const;
 
-signals:
+Q_SIGNALS:
     void queryChanged();
     void localeNameChanged();
     void limitChanged();
