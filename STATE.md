@@ -11,6 +11,7 @@ Current checkpoints:
 - `a177d2e7667253fac592983e33959652d3760e33` — double-endoscopy and split-container model.
 - `ba5cc88b6ef6d8cc0969eceb7dbf90d0875fbd43` — parcel-based pricing and simplified external-release workflow.
 - `91230b0368c84e3a40b2a39bb70bb4ce4576e32f` — controlled GI anatomy + searchable/source-preserving pathology report model.
+- `21a98fa88136304594547c3841529194e72dee22` — language-neutral anatomy concepts with Greek-first localized vocabulary.
 
 ## Fixed principles
 
@@ -24,6 +25,8 @@ Current checkpoints:
 8. Media/document source files live outside SQL; SQL stores relationships/metadata/hash/searchable derivatives.
 9. No generic repository/mapping framework/CQRS/event bus or generic hospital-EHR abstraction.
 10. Researchable anatomy uses canonical concepts/relationships, not brute-force label-text searching.
+11. Clinical concept codes are language-neutral. Greek (`el-GR`) is the primary authored clinical vocabulary for this installation, not an English model with Greek bolted on later.
+12. UI translation, clinical-vocabulary localization and user-authored clinical prose are separate concerns.
 
 ## Server shape
 
@@ -57,28 +60,43 @@ Each Endoscopy keeps independent anatomy, findings, completion state, media and 
 - `ClinicalTextAnnotation` may carry suggested/confirmed diagnosis, finding, symptom, medication, anatomy or patient-reference semantics.
 - Parser/NLP is not implemented yet.
 
-## Controlled GI anatomy
+## Controlled GI anatomy and localization
 
-`AnatomicalSite` is the canonical research concept. It has:
+`AnatomicalSite` is the language-neutral canonical research concept. It contains:
 
 - UUID identity;
 - stable code;
-- display name;
 - kind: organ / region / landmark;
 - optional parent;
 - sort order.
 
-`AnatomicalSiteAlias` stores spelling/language/common-name variants used for recognition/autocomplete, not as clinical semantics.
+Human-readable text is deliberately not stored on the canonical concept.
 
-`GiAnatomyVocabulary` provides the initial practical seed set for:
+`AnatomicalSiteName` stores the preferred display name for an anatomical concept and locale.
+
+`AnatomicalSiteAlias` stores the anatomical concept, locale and spelling/abbreviation/common-name variant used for recognition/autocomplete. Aliases are input aids, not semantic identity.
+
+`GiAnatomyVocabulary` is Greek-first:
+
+- `el-GR` is the primary/reference authored locale;
+- English is bundled as a second localization;
+- stable codes such as `STOMACH_ANTRUM`, `GEJ`, `DUODENUM_D2` and `SIGMOID_COLON` do not change by language;
+- Greek aliases intentionally include clinically common mixed-language forms such as `GEJ`, `D2`, `corpus`, `antrum` and `TI` where useful.
+
+The initial practical seed set covers:
 
 - esophagus + upper/middle/distal regions;
 - GEJ, Z-line, diaphragmatic impression;
 - stomach/cardias/fundus/corpus/incisura/antrum/pylorus;
 - duodenum/bulb/D2;
 - terminal ileum;
-- colon segments, flexures, ileocecal valve and rectum;
-- English/Greek/common aliases.
+- colon segments, flexures, ileocecal valve and rectum.
+
+Localization is split into three layers:
+
+1. Qt/KDE UI text — application chrome such as buttons/errors/menus.
+2. Clinical vocabulary localization — names/aliases for canonical concepts.
+3. User-authored clinical prose — preserved exactly as entered and never internally translated merely to fit the model.
 
 `ObservedLandmark` stores measured source observations such as GEJ and diaphragmatic-impression positions relative to incisors/anal verge. Derivable distances are calculated from those observations rather than stored as the only fact.
 
@@ -108,7 +126,7 @@ Each physical tube has:
 - optional description;
 - optional external-release timestamp/note.
 
-Researchable anatomy is represented by `BiopsyContainerSite` links to one or more canonical `AnatomicalSite` rows. Example: `antrum-corpus` remains the display text while semantics are `STOMACH_ANTRUM` + `STOMACH_CORPUS`.
+Researchable anatomy is represented by `BiopsyContainerSite` links to one or more canonical `AnatomicalSite` rows. Example: `άντρο-corpus` remains the display text while semantics are `STOMACH_ANTRUM` + `STOMACH_CORPUS`.
 
 ### Practice-managed versus external release
 
@@ -166,26 +184,15 @@ See `docs/PATHOLOGY_MODEL.md`.
 
 ## Next exact development slice
 
-1. Add the real SQLite schema/migration, including anatomy vocabulary/aliases, landmark observations, biopsy-container site links and pathology-document source/asset/annotation tables.
-2. Seed the initial `GiAnatomyVocabulary` into SQLite with stable unique codes/aliases.
-3. Add concrete SQLite stores.
-4. Add tests proving:
-   - one hidden session can contain both colonoscopy and gastroscopy;
-   - each Endoscopy has independent PathologyCase/pricing;
-   - `antrum-corpus` can preserve raw text while storing two canonical site links;
-   - parent-site queries can find child-region biopsy sites without text search;
-   - observed GEJ/diaphragmatic positions preserve source facts for derived measurements;
-   - containers have globally unique IDs/labels;
-   - external-release containers are excluded from Parcel billing;
-   - 5 collected / 3 parcelled => EUR 25 under the example policy;
-   - doctor waiver preserves calculated amount but charges zero;
-   - managed report retains original DOCX identity/hash plus extracted text;
-   - identical signature assets can be deduplicated by SHA-256;
-   - report annotations remain distinguishable as suggested vs confirmed;
-   - later assay charge can be billed in a later Parcel without re-shipping its container;
-   - media derivative linkage/hash persists.
-5. Add Appointment correction persistence.
-6. Only after tests pass, expose HTTP endpoints and begin client screens/autocomplete/parser UX.
+Proceed piecemeal rather than changing client, persistence and vocabulary simultaneously.
+
+Next small slice:
+
+1. define how the Qt/KDE client requests localized clinical-vocabulary names/aliases and how fallback locale resolution works;
+2. keep QML free of language-neutral database-code presentation details;
+3. do not implement parser/NLP yet.
+
+After that, continue to the SQLite schema/migration and vocabulary seeding.
 
 ## Validation
 
