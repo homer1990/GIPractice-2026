@@ -8,8 +8,11 @@ public sealed record BiopsyPricingPolicy(
     decimal AdditionalContainerPrice,
     string Currency = "EUR")
 {
+    // billableContainerCount means the containers from ONE PathologyCase/Endoscopy
+    // that are physically included in the Parcel being billed. Containers released
+    // externally do not contribute to this count.
     public BiopsyChargeCalculation Calculate(
-        int containerCount,
+        int billableContainerCount,
         PathologyFeeWaiverReason waiverReason = PathologyFeeWaiverReason.None)
     {
         if (string.IsNullOrWhiteSpace(Code))
@@ -18,9 +21,9 @@ public sealed record BiopsyPricingPolicy(
         if (IncludedContainers < 1) throw new ArgumentOutOfRangeException(nameof(IncludedContainers));
         if (AboveIncludedSurcharge < 0) throw new ArgumentOutOfRangeException(nameof(AboveIncludedSurcharge));
         if (AdditionalContainerPrice < 0) throw new ArgumentOutOfRangeException(nameof(AdditionalContainerPrice));
-        if (containerCount < 1) throw new ArgumentOutOfRangeException(nameof(containerCount));
+        if (billableContainerCount < 1) throw new ArgumentOutOfRangeException(nameof(billableContainerCount));
 
-        var additionalContainers = Math.Max(0, containerCount - IncludedContainers);
+        var additionalContainers = Math.Max(0, billableContainerCount - IncludedContainers);
         var surcharge = additionalContainers > 0 ? AboveIncludedSurcharge : 0m;
         var additionalAmount = additionalContainers * AdditionalContainerPrice;
         var calculated = BasePrice + surcharge + additionalAmount;
@@ -28,7 +31,7 @@ public sealed record BiopsyPricingPolicy(
 
         return new BiopsyChargeCalculation(
             Code.Trim(),
-            containerCount,
+            billableContainerCount,
             BasePrice,
             surcharge,
             additionalContainers,
@@ -42,7 +45,7 @@ public sealed record BiopsyPricingPolicy(
 
 public sealed record BiopsyChargeCalculation(
     string PricingPolicyCode,
-    int ContainerCount,
+    int BillableContainerCount,
     decimal BaseAmount,
     decimal SurchargeAmount,
     int AdditionalContainerCount,
@@ -52,7 +55,12 @@ public sealed record BiopsyChargeCalculation(
     string Currency,
     PathologyFeeWaiverReason WaiverReason)
 {
-    public PathologyCharge ToCharge(Guid pathologyCaseId, DateTimeOffset createdAtUtc) =>
+    // Initial biopsy processing is billed in the Parcel whose physical membership
+    // produced BillableContainerCount. Later assay charges use separate ledger entries.
+    public PathologyCharge ToInitialCharge(
+        Guid pathologyCaseId,
+        Guid parcelId,
+        DateTimeOffset createdAtUtc) =>
         new(
             Guid.CreateVersion7(),
             pathologyCaseId,
@@ -62,12 +70,13 @@ public sealed record BiopsyChargeCalculation(
             ChargedAmount,
             Currency,
             WaiverReason,
-            ContainerCount,
+            BillableContainerCount,
             PricingPolicyCode,
+            BilledInParcelId: parcelId,
             Description: BuildDescription());
 
     private string BuildDescription() =>
         AdditionalContainerCount == 0
-            ? $"Biopsy processing: {ContainerCount} container(s), base {BaseAmount:0.00} {Currency}."
-            : $"Biopsy processing: {ContainerCount} container(s), base {BaseAmount:0.00} + surcharge {SurchargeAmount:0.00} + {AdditionalContainerCount} × {AdditionalContainerUnitPrice:0.00} {Currency}.";
+            ? $"Biopsy processing: {BillableContainerCount} parcel container(s), base {BaseAmount:0.00} {Currency}."
+            : $"Biopsy processing: {BillableContainerCount} parcel container(s), base {BaseAmount:0.00} + surcharge {SurchargeAmount:0.00} + {AdditionalContainerCount} × {AdditionalContainerUnitPrice:0.00} {Currency}.";
 }
