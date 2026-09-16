@@ -1,10 +1,49 @@
 # Qt/KDE client
 
-The desktop client will use Qt 6, Qt Quick/QML, KDE Frameworks 6 and Kirigami.
+The desktop client uses Qt 6, Qt Quick/QML, KDE Frameworks 6 and Kirigami.
 
 The UI works with Patients, Appointments, Endoscopies, Exams, Prescriptions, Visits and INFAI.
 
 Encounter is intentionally absent from the presentation model. A C++ service may keep an opaque internal clinical-session key while an editor/workflow is open, but QML must not expose Encounter as a screen, command, list item or editable object.
+
+## Build skeleton
+
+The first real client build target now exists.
+
+Requirements are expressed by CMake and currently include:
+
+- CMake 3.20+
+- Extra CMake Modules (ECM) 6+
+- Qt 6: Core, Gui, Qml, Quick, QuickControls2, Widgets
+- KDE Frameworks 6: CoreAddons, I18n, QQC2DesktopStyle
+- Kirigami QML module (`org.kde.kirigami`)
+- C++23 compiler
+
+Configure and build from the repository root:
+
+```bash
+cmake -S client -B build/client -G Ninja
+cmake --build build/client
+```
+
+The executable is expected at:
+
+```bash
+./build/client/src/gipractice-client
+```
+
+The application ID / QML URI is `net.gmanthos.gipractice`.
+
+`main.cpp` currently establishes only the minimum shell:
+
+- `QApplication`;
+- KDE `KAboutData` with GPLv3 license metadata;
+- KI18n application domain (`gipractice`);
+- KDE desktop Qt Quick Controls style when no style was explicitly selected;
+- QML registration for `AnatomySuggestionModel`;
+- a `QQmlApplicationEngine` loading the `net.gmanthos.gipractice` QML module.
+
+`qml/Main.qml` is intentionally only a minimal Kirigami window. Real clinical screens come after this target compiles successfully.
 
 ## Clinical vocabulary localization
 
@@ -60,8 +99,8 @@ Changing any of them refreshes the suggestions. The default locale is Greek (`el
 
 Keep these concerns separate:
 
-1. UI strings: translated through KDE/Qt localization (`KI18n` / `.po` catalogs when the client shell is implemented).
+1. UI strings: translated through KDE/Qt localization (`KI18n` / `.po` catalogs).
 2. Clinical vocabulary: locale-aware names/aliases attached to language-neutral concept codes.
 3. User-authored clinical prose: preserved exactly as entered; never internally translated.
 
-Client implementation beyond these vocabulary abstractions starts after the first server read/write contracts and persistence layer are stable.
+The next client step after a successful local build is a small anatomy-autocomplete QML control. HTTP/persistence integration remains separate.
