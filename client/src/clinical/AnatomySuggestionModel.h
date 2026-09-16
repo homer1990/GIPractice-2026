@@ -13,15 +13,13 @@ namespace GIPractice::Client::Clinical {
 // QML receives localized presentation fields only. The canonical concept code is not a
 // display role; codeAt() is used explicitly when the user accepts a suggestion and the
 // client needs to persist the semantic selection.
-//
-// This class must not be final: qmlRegisterType<T>() creates an internal QQmlElement<T>
-// subclass when QML instantiates the type.
 class AnatomySuggestionModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(QString query READ query WRITE setQuery NOTIFY queryChanged)
     Q_PROPERTY(QString localeName READ localeName WRITE setLocaleName NOTIFY localeNameChanged)
     Q_PROPERTY(int limit READ limit WRITE setLimit NOTIFY limitChanged)
+    Q_PROPERTY(int count READ count NOTIFY countChanged)
 
 public:
     enum Role {
@@ -48,6 +46,8 @@ public:
     [[nodiscard]] int limit() const noexcept;
     void setLimit(int limit);
 
+    [[nodiscard]] int count() const noexcept;
+
     // Called by C++ service/API code when vocabulary data has been loaded or refreshed.
     // It is deliberately not Q_INVOKABLE: QML consumes the vocabulary; it does not own it.
     void setEntries(QList<AnatomicalSiteEntry> entries);
@@ -60,6 +60,7 @@ Q_SIGNALS:
     void queryChanged();
     void localeNameChanged();
     void limitChanged();
+    void countChanged();
 
 private:
     AnatomyVocabulary m_vocabulary;
