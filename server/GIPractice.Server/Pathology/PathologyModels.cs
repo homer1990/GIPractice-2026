@@ -28,22 +28,15 @@ public enum PathologyReportKind
     Addendum = 2
 }
 
-public enum BiopsyTransferKind
-{
-    HandedToPatient = 1,
-    HandedToThirdParty = 2,
-    Other = 99
-}
-
 public sealed record Pathologist(
     Guid Id,
     string DisplayName,
     string? Notes = null);
 
-// One pathology case belongs to one Endoscopy and groups the biopsy containers,
-// reports, later assays and billing that originated from that endoscopy.
-// Routing is intentionally NOT stored here: containers from one case may go to
-// different destinations.
+// One pathology case belongs to one Endoscopy and groups the practice-managed biopsy
+// workflow, reports, later assays and billing that originated from that endoscopy.
+// Routing is intentionally NOT stored here: individual containers may be released
+// externally instead of entering the practice's pathology workflow.
 public sealed record PathologyCase(
     Guid Id,
     Guid EndoscopyId,
@@ -53,7 +46,9 @@ public sealed record PathologyCase(
     PathologyFeeWaiverReason FeeWaiverReason = PathologyFeeWaiverReason.None);
 
 // The physical tracking unit. LabelCode is human-readable and globally unique,
-// while Id remains the database identity.
+// while Id remains the database identity. A container released directly to the patient
+// or another external destination remains documented here, but it does not enter Parcel,
+// Pathologist, PathologyReport or practice billing workflow.
 public sealed record BiopsyContainer(
     Guid Id,
     Guid PathologyCaseId,
@@ -61,7 +56,12 @@ public sealed record BiopsyContainer(
     int Ordinal,
     string AnatomicalSiteCode,
     DateTimeOffset CollectedAtUtc,
-    string? Description = null);
+    string? Description = null,
+    DateTimeOffset? ExternalReleasedAtUtc = null,
+    string? ExternalReleaseNote = null)
+{
+    public bool IsExternallyReleased => ExternalReleasedAtUtc is not null;
+}
 
 // One courier shipment. The courier cost belongs to the shipment itself and is
 // deliberately separate from pathology fees charged for biopsy work.
@@ -76,25 +76,16 @@ public sealed record Parcel(
     decimal? CourierCost = null,
     string Currency = "EUR");
 
-// Physical membership of biopsy containers in a courier parcel. This is the sole
-// representation of normal courier shipment membership.
+// Physical membership of practice-managed biopsy containers in a courier parcel.
+// The initial biopsy fee is calculated from the number of containers from one
+// PathologyCase that are members of the parcel, not from every container collected
+// during that Endoscopy.
 public sealed record ParcelContainer(
     Guid ParcelId,
     Guid BiopsyContainerId);
 
-// Exceptional direct handover outside the normal courier-parcel workflow, for example
-// giving an urgent container to the patient to take to their oncologist. Normal courier
-// movement is represented only by Parcel + ParcelContainer and is not duplicated here.
-public sealed record BiopsyTransfer(
-    Guid Id,
-    Guid BiopsyContainerId,
-    BiopsyTransferKind Kind,
-    DateTimeOffset TransferredAtUtc,
-    Guid? PathologistId = null,
-    string? RecipientName = null,
-    string? Notes = null);
-
-// A later assay may refer to one specific container or to the pathology case as a whole.
+// A later assay may refer to one specific practice-managed container or to the
+// pathology case as a whole.
 public sealed record PathologyAssay(
     Guid Id,
     Guid PathologyCaseId,
@@ -123,9 +114,11 @@ public sealed record PathologyCharge(
     Guid? BilledInParcelId = null,
     string? Description = null);
 
-// Reports belong to the originating pathology case, not to a parcel. Because containers
-// from one endoscopy may be split between destinations, report coverage is explicit via
-// PathologyReportContainer rather than assuming that a report covers the whole case.
+// Reports here are reports received through the practice-managed pathology workflow.
+// Outside reports from containers released externally are recorded in the patient's
+// longitudinal history instead of creating a parallel external-pathology subsystem.
+// Report coverage is explicit because a case can contain more containers than were
+// actually submitted to this pathologist.
 public sealed record PathologyReport(
     Guid Id,
     Guid PathologyCaseId,
