@@ -15,7 +15,6 @@ internal interface IClinicalWriteStore
     Task AddEndoscopyFindingAsync(Guid endoscopyId, EndoscopyFinding finding, CancellationToken cancellationToken);
     Task AddEndoscopyTerminationReasonAsync(Guid endoscopyId, EndoscopyTerminationReason reason, CancellationToken cancellationToken);
     Task AddEndoscopyEventAsync(Guid endoscopyId, EndoscopyEvent timelineEvent, CancellationToken cancellationToken);
-    Task AddEndoscopySpecimenAsync(Guid endoscopyId, EndoscopySpecimen specimen, CancellationToken cancellationToken);
 
     Task AddExamAsync(Guid sessionId, ClinicalExam exam, CancellationToken cancellationToken);
     Task AddPrescriptionAsync(Guid sessionId, Prescription prescription, CancellationToken cancellationToken);
@@ -115,30 +114,6 @@ internal sealed class ClinicalWriteService(IClinicalWriteStore store)
 
         await store.AddEndoscopyEventAsync(endoscopyId, timelineEvent, cancellationToken);
         return timelineEvent;
-    }
-
-    public async Task<EndoscopySpecimen> AddEndoscopySpecimenAsync(
-        Guid endoscopyId,
-        string anatomicalSiteCode,
-        SpecimenPriority priority = SpecimenPriority.Routine,
-        string? description = null,
-        string? priorityReason = null,
-        Guid? relatedFindingId = null,
-        CancellationToken cancellationToken = default)
-    {
-        RequireId(endoscopyId, nameof(endoscopyId));
-        if (relatedFindingId == Guid.Empty) relatedFindingId = null;
-
-        var specimen = new EndoscopySpecimen(
-            Guid.CreateVersion7(),
-            RequiredCode(anatomicalSiteCode),
-            priority,
-            NormalizeText(description),
-            NormalizeText(priorityReason),
-            relatedFindingId);
-
-        await store.AddEndoscopySpecimenAsync(endoscopyId, specimen, cancellationToken);
-        return specimen;
     }
 
     public async Task<Endoscopy> FinishEndoscopyAsync(
