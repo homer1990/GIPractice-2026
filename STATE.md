@@ -8,15 +8,16 @@ Current checkpoints:
 - `621752dd9b58969f6e1c6853d31480238601e6c6` — hidden clinical-session workflow; no user-facing Encounter.
 - `09c9bca6a3cc2ee7fab64de1ddb2dcf08d752597` — clinical documentation/endoscopy/media decisions locked.
 - `8b58a075008e141aa170548aa0e55ab0dc0a8f54` — biopsy-container / parcel / pathology billing model.
-- `4b8f35cd2186e5dce29ef7291581ca7eddcb6e65` — split biopsy routing + double-endoscopy support.
+- `a177d2e7667253fac592983e33959652d3760e33` — double-endoscopy and split-container model.
+- `ba5cc88b6ef6d8cc0969eceb7dbf90d0875fbd43` — confirmed parcel-based pricing and simplified external-release workflow.
 
 ## Fixed principles
 
 1. Encounter is internal relational/session glue only; the UI never exposes Encounter CRUD.
 2. One real clinical session may contain multiple Endoscopy records.
-3. A double procedure is modeled as two Endoscopies (for example colonoscopy + gastroscopy) sharing one hidden session/Appointment, not as one special combined Endoscopy.
+3. A double procedure is two independent Endoscopies (for example colonoscopy + gastroscopy) sharing one hidden session/Appointment.
 4. Appointment planning data may be corrected; corrections do not silently rewrite completed clinical work.
-5. Free text is first-class where clinicians naturally think in prose; structured data is added where it improves retrieval/research/workflow.
+5. Free text is first-class where clinicians naturally think in prose; structure is added only where it improves retrieval/research/workflow.
 6. Automated text recognition may suggest codes/links but must not silently assert clinical meaning.
 7. Clinical children have their own identities and may repeat within a session where the real workflow permits it.
 8. Media bytes live outside SQL; SQL stores relationships/metadata/hash.
@@ -38,12 +39,12 @@ Feature folders:
 
 ## Clinical session / double endoscopy
 
-`ClinicalWriteService` now supports both:
+`ClinicalWriteService` supports:
 
 - `StartEndoscopyAsync(...)` — creates a hidden clinical session and its first Endoscopy.
 - `AddEndoscopyAsync(session, ...)` — adds another independent Endoscopy to the same session.
 
-This supports a double procedure cleanly:
+Thus a double procedure is:
 
 ```text
 Appointment
@@ -57,6 +58,7 @@ Each Endoscopy keeps independent anatomy, findings, completion state, media and 
 ## History / clinical text
 
 - `PatientHistoryEntry` stores longitudinal history.
+- `PatientHistoryKind.ExternalReport` is used for outside reports that later reach the practice.
 - Current symptoms/HPI stay on the hidden clinical session.
 - `ClinicalExam` is text-first with optional assessment.
 - `ClinicalTextAnnotation` may carry suggested/confirmed diagnosis, finding, symptom, medication, anatomy or patient-reference semantics.
@@ -64,7 +66,7 @@ Each Endoscopy keeps independent anatomy, findings, completion state, media and 
 
 ## Endoscopy
 
-Structured data currently includes:
+Structured data includes:
 
 - procedure type/indication/priority;
 - start/end;
@@ -83,7 +85,7 @@ No snare-polypectomy/ablation/clip/interventional framework is planned for this 
 
 ### PathologyCase
 
-One `PathologyCase` belongs to one Endoscopy and groups pathology work originating from that Endoscopy.
+One `PathologyCase` belongs to one Endoscopy and groups pathology/billing facts originating from that Endoscopy.
 
 It stores:
 
@@ -93,7 +95,7 @@ It stores:
 - receipt-requested flag;
 - fee-waiver reason (`Doctor`, etc.).
 
-It deliberately does **not** own an assigned pathologist. Containers from one Endoscopy may be routed to different destinations.
+It does not own an assigned pathologist.
 
 ### BiopsyContainer
 
@@ -104,29 +106,29 @@ Each physical tube has:
 - case-relative ordinal;
 - anatomical site;
 - collection time;
-- optional description.
+- optional description;
+- optional `ExternalReleasedAtUtc` / `ExternalReleaseNote`.
 
-The printed label is not derived from Endoscopy ID. Old `XXXA` / `XXXB` style numbering may still be presented for convenience, but it is not identity.
+The printed label is not derived from Endoscopy ID. Old `XXXA` / `XXXB` numbering may remain as presentation only.
 
-### Split routing
+### Practice-managed versus external release
 
-Normal courier shipment is represented only by:
+Practice-managed containers enter the normal:
 
 - `Parcel`
 - `ParcelContainer`
+- handover protocol
+- pathology billing/report workflow.
 
-Exceptional direct handover is represented by `BiopsyTransfer`, for example:
+Containers handed to a patient/oncologist/outside destination do **not** create a parallel external pathology subsystem. They simply record that they were released externally and do not enter our Parcel or billing calculation.
 
-- urgent tube handed to the patient for their oncologist;
-- tube handed directly to another doctor/third party.
+If an outside report later comes back, it is entered as `PatientHistoryKind.ExternalReport` rather than `PathologyReport`.
 
-This allows one Endoscopy's containers to split between destinations without splitting or duplicating the Endoscopy itself.
+The earlier `BiopsyTransfer` abstraction is discarded.
 
 ### Reports
 
-`PathologyReport` belongs to the originating PathologyCase, but because one case may split between destinations, report coverage is explicit through `PathologyReportContainer`.
-
-A report therefore states exactly which containers it covers and may identify its Pathologist.
+`PathologyReport` is only for practice-managed pathology reports. `PathologyReportContainer` explicitly states which submitted containers the report covers.
 
 ### Parcel
 
@@ -138,29 +140,48 @@ A Parcel is one physical courier packet to one Pathologist and stores:
 - courier/tracking information;
 - courier cost/currency.
 
-### Charges
+### Charges and confirmed pricing rule
 
-`PathologyCharge` is a financial ledger independent of physical shipment.
+`PathologyCharge` is a historical financial ledger. Initial biopsy processing is calculated **per Endoscopy from only the containers from that Endoscopy physically present in the Parcel being billed**.
 
-It stores historical calculated/charged amounts, waiver, pricing policy/version, container-count snapshot, optional assay/container and optional `BilledInParcelId`.
+Example:
 
-A later assay can therefore be billed in the next Parcel without pretending the original container was shipped again.
+```text
+5 containers collected
+2 released externally
+3 sent to our pathologist
+=> pricing count = 3
+```
 
-### Pricing and doubles
+For the described policy:
 
-`BiopsyPricingPolicy` is configurable and snapshots its result in the charge.
+- EUR 10 base;
+- first 2 billable containers included;
+- if >2 billable containers, +EUR 10;
+- +EUR 5 for every billable container above 2.
 
-For the described example policy, five containers calculate to EUR 35.
+Therefore:
 
-In a double procedure, colonoscopy and gastroscopy are priced independently because each is a separate Endoscopy with its own PathologyCase/container count.
+- 5 billable containers => EUR 35;
+- 3 billable containers => EUR 25.
 
-If containers from one Endoscopy are split across destinations, the exact billing count rule (all containers vs only those processed by a given pathologist) is intentionally **not hard-coded yet**. The charge model supports either policy; confirm the real billing rule before SQL/tests freeze it.
+`BiopsyPricingPolicy.Calculate(...)` now explicitly accepts `billableContainerCount`, and `ToInitialCharge(...)` requires the Parcel ID whose physical membership produced that count.
+
+A double procedure is priced independently per Endoscopy/PathologyCase even though both Endoscopies share the same Appointment/session.
+
+Doctor/professional-courtesy waiver retains the normal calculated amount but sets charged amount to zero.
+
+### Additional assays
+
+A later assay belongs to the original PathologyCase and may refer to a specific practice-managed BiopsyContainer.
+
+It creates a separate outstanding PathologyCharge. That charge can be billed in a later Parcel without adding the old container to that Parcel's physical membership.
 
 ### Handover protocol
 
-The biopsy handover protocol is generated from Parcel data, not maintained separately.
+Generated from Parcel data, not maintained separately.
 
-It will show physical containers grouped by Endoscopy/PathologyCase plus urgency, doctor/free status, receipt request and calculated/charged amounts. Additional carried-forward assay charges appear separately so physical custody and billing remain distinct.
+It shows physical containers grouped by Endoscopy/PathologyCase plus urgency, doctor/free status, receipt request and calculated/charged amounts for the containers actually in that Parcel. Additional carried-forward assay charges appear separately so physical custody and billing remain distinct.
 
 See `docs/PATHOLOGY_MODEL.md`.
 
@@ -179,12 +200,14 @@ See `docs/PATHOLOGY_MODEL.md`.
 2. Add concrete SQLite stores.
 3. Add tests proving:
    - one hidden session can contain both colonoscopy and gastroscopy;
-   - each Endoscopy has an independent PathologyCase and pricing calculation;
+   - each Endoscopy has an independent PathologyCase and price calculation;
    - containers have globally unique IDs/labels;
-   - containers from one case can split between normal Parcel routing and direct handover;
-   - reports can cover explicit subsets of containers;
-   - five-container pricing example = EUR 35;
+   - externally released containers are excluded from Parcel membership and billing;
+   - 5 collected / 3 parcelled => pricing count 3 => EUR 25 under the example policy;
+   - five parcelled containers => EUR 35;
    - doctor waiver preserves calculated amount but charges zero;
+   - practice-managed reports cover explicit submitted containers;
+   - outside reports are represented as Patient history rather than external pathology workflow;
    - later assay charge can be billed in a later Parcel without re-shipping its container;
    - urgent/receipt flags survive into handover query data;
    - media derivative linkage/hash persists.
