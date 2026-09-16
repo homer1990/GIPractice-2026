@@ -8,14 +8,14 @@ Encounter is intentionally absent from the presentation model. A C++ service may
 
 ## Build skeleton
 
-The first real client build target now exists.
+The first real client build target exists and has been compiled/launched locally.
 
 Requirements are expressed by CMake and currently include:
 
 - CMake 3.20+
 - Extra CMake Modules (ECM) 6+
 - Qt 6: Core, Gui, Qml, Quick, QuickControls2, Widgets
-- KDE Frameworks 6: CoreAddons, I18n, QQC2DesktopStyle
+- KDE Frameworks 6: CoreAddons, I18n, I18nQml, QQC2DesktopStyle
 - Kirigami QML module (`org.kde.kirigami`)
 - C++23 compiler
 
@@ -26,24 +26,23 @@ cmake -S client -B build/client -G Ninja
 cmake --build build/client
 ```
 
-The executable is expected at:
+With KDE's CMake settings the executable is currently emitted under the build-tree `bin` directory:
 
 ```bash
-./build/client/src/gipractice-client
+./build/client/bin/gipractice-client
 ```
 
 The application ID / QML URI is `net.gmanthos.gipractice`.
 
-`main.cpp` currently establishes only the minimum shell:
+`main.cpp` establishes:
 
 - `QApplication`;
 - KDE `KAboutData` with GPLv3 license metadata;
 - KI18n application domain (`gipractice`);
+- `KLocalizedQmlContext` for QML translation;
 - KDE desktop Qt Quick Controls style when no style was explicitly selected;
 - QML registration for `AnatomySuggestionModel`;
 - a `QQmlApplicationEngine` loading the `net.gmanthos.gipractice` QML module.
-
-`qml/Main.qml` is intentionally only a minimal Kirigami window. Real clinical screens come after this target compiles successfully.
 
 ## Clinical vocabulary localization
 
@@ -87,13 +86,35 @@ The canonical concept code is deliberately not exposed as a normal model role. W
 
 The model owns its vocabulary entry copy and exposes `setEntries(...)` only to C++ code. This keeps QML from becoming the owner/source of clinical vocabulary data and avoids pointer-lifetime coupling to a future HTTP/SQLite provider.
 
-The model exposes three QML properties:
+The model exposes QML properties for:
 
 - `query`
 - `localeName`
 - `limit`
+- read-only suggestion `count`
 
-Changing any of them refreshes the suggestions. The default locale is Greek (`el-GR`).
+Changing query/locale/limit refreshes suggestions. The default locale is Greek (`el-GR`).
+
+## First anatomy autocomplete control
+
+`src/qml/AnatomyAutocompleteField.qml` is the first reusable clinical input control.
+
+It currently provides:
+
+- localized anatomy suggestions while typing;
+- keyboard navigation with Up/Down and Return/Enter;
+- mouse selection;
+- alias-match hint text;
+- explicit acceptance of one canonical concept through `codeAt(row)`;
+- a removable chip showing the localized preferred concept name;
+- preservation of the exact raw text the user typed in `sourceText`;
+- no canonical database code in ordinary presentation.
+
+For the current smoke test, `main.cpp` supplies a deliberately small **development-only** vocabulary containing representative entries such as antrum, corpus, GEJ, diaphragmatic impression, D2 and sigmoid colon. This is not a second authoritative vocabulary. It exists only so the control can be exercised before server persistence/API transport exists and must be removed when the real server-provided vocabulary is wired in.
+
+`Main.qml` currently hosts this control as a test surface. Example inputs include `άντρο`, `αντρο`, `corpus`, `GEJ`, `D2` and `sigmoid`.
+
+The first control resolves one concept at a time. Compound input such as `άντρο-σώμα` -> two canonical sites is a later parser/multi-selection slice; it is not silently guessed by this component.
 
 ## Localization layers
 
@@ -101,6 +122,6 @@ Keep these concerns separate:
 
 1. UI strings: translated through KDE/Qt localization (`KI18n` / `.po` catalogs).
 2. Clinical vocabulary: locale-aware names/aliases attached to language-neutral concept codes.
-3. User-authored clinical prose: preserved exactly as entered; never internally translated.
+3. User-authored clinical prose/raw collection text: preserved exactly as entered; never internally translated.
 
-The next client step after a successful local build is a small anatomy-autocomplete QML control. HTTP/persistence integration remains separate.
+HTTP/persistence integration and free-text parser/NLP remain separate later slices.
