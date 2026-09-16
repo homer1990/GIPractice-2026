@@ -12,8 +12,9 @@ Current checkpoints:
 - `ba5cc88b6ef6d8cc0969eceb7dbf90d0875fbd43` — parcel-based pricing and simplified external-release workflow.
 - `91230b0368c84e3a40b2a39bb70bb4ce4576e32f` — controlled GI anatomy + searchable/source-preserving pathology report model.
 - `21a98fa88136304594547c3841529194e72dee22` — language-neutral anatomy concepts with Greek-first localized vocabulary.
-- `8ca0d9b5c22c905cb0216bab5475e7b2d5949189` — client anatomy vocabulary lookup/fallback abstraction documented.
-- `4cd6a60c09a44572413822803df55655692c0bc4` — QML-facing anatomy suggestion model documented.
+- `8ca0d9b5c22c905cb0216bab5475e7b2d5949189` — client anatomy vocabulary lookup/fallback abstraction.
+- `4cd6a60c09a44572413822803df55655692c0bc4` — QML-facing anatomy suggestion model.
+- `74b01bbd4e28150e4684e6d64cbd4fb58e42624d` — first real Qt/KF6/Kirigami client build skeleton.
 
 ## Fixed principles
 
@@ -72,94 +73,76 @@ Each Endoscopy keeps independent anatomy, findings, completion state, media and 
 
 - `el-GR` is the primary/reference authored locale;
 - English is bundled as a second localization;
-- stable codes such as `STOMACH_ANTRUM`, `GEJ`, `DUODENUM_D2` and `SIGMOID_COLON` do not change by language;
+- stable codes do not change by language;
 - Greek aliases intentionally include clinically common mixed-language forms such as `GEJ`, `D2`, `corpus`, `antrum` and `TI`.
 
 The initial seed set covers practical upper/lower GI anatomy and landmarks. `ObservedLandmark` stores measured source facts; derivable distances are calculated from observations.
 
-See `docs/ANATOMY_MODEL.md`.
+## Client anatomy vocabulary
 
-## Client anatomy vocabulary abstraction
+`client/src/clinical/AnatomyVocabulary.{h,cpp}` is a QtCore-only in-memory lookup layer. It provides localized display lookup, exact alias/code resolution, autocomplete suggestions and hierarchy access.
 
-`client/src/clinical/AnatomyVocabulary.{h,cpp}` is a QtCore-only in-memory lookup layer with no HTTP, SQL or QML dependency.
+Fallback order is requested locale -> same language -> Greek -> English -> canonical code. Recognition is case-insensitive, accent-insensitive and punctuation/separator-normalized.
 
-It accepts canonical anatomy entries plus localized names/aliases and provides:
+`client/src/clinical/AnatomySuggestionModel.{h,cpp}` is the thin `QAbstractListModel` adapter for QML. Presentation roles are localized; the canonical code is retrieved explicitly through `codeAt(row)` only when a suggestion is accepted.
 
-- `displayName(code, locale)`;
-- `resolveExact(text, locale)`;
-- `suggest(text, locale, limit)`;
-- `childrenOf(parentCode)`.
+Neither layer mutates clinical data or silently accepts parser suggestions.
 
-Display fallback order is:
+## Qt/KF6 client build skeleton
 
-1. requested locale;
-2. same language;
-3. Greek (`el-GR`);
-4. English (`en`);
-5. canonical code.
+The client is now a real CMake target rather than documentation-only.
 
-Recognition is case-insensitive, accent-insensitive and punctuation/separator-normalized. Suggestions rank exact matches before prefix/substring matches and favor terms in the requested locale. Canonical codes remain the returned semantic identity.
+Top-level client CMake requires:
 
-`client/src/clinical/AnatomySuggestionModel.{h,cpp}` is the thin `QAbstractListModel` adapter intended for QML autocomplete. It exposes localized presentation roles only:
+- CMake 3.20+;
+- ECM 6+;
+- Qt6 Core/Gui/Qml/Quick/QuickControls2/Widgets;
+- KF6 CoreAddons/I18n/QQC2DesktopStyle;
+- Kirigami QML module;
+- C++23.
 
-- `displayName`;
-- `matchedText`;
-- `matchedLocale`;
-- `kind`;
-- `exactMatch`.
+`client/src/CMakeLists.txt` builds `gipractice-client`, includes the anatomy vocabulary/model sources, and creates QML module `net.gmanthos.gipractice`.
 
-The canonical code is intentionally not a normal display role. QML explicitly calls `codeAt(row)` when the user accepts a suggestion. The adapter owns a copy of vocabulary entries, accepts updates only from C++ through `setEntries(...)`, and exposes QML properties for query, locale and suggestion limit. Default locale is Greek.
+`client/src/main.cpp` sets up:
 
-Neither vocabulary layer mutates clinical data or silently accepts parser suggestions.
+- `QApplication`;
+- KDE desktop Quick Controls style unless overridden;
+- `KAboutData` with GPLv3 metadata;
+- KI18n application domain `gipractice`;
+- QML registration of `AnatomySuggestionModel`;
+- `KLocalizedContext`;
+- `QQmlApplicationEngine::loadFromModule(...)`.
 
-## Endoscopy
+`client/src/qml/Main.qml` is intentionally only a minimal Kirigami application window. No clinical UI is being built before this target compiles.
 
-Structured data includes procedure type/indication/priority, start/end, preparation/sedation, outcome, maximal extent, anatomical findings, termination reasons, timeline, impression/recommendations and linked media.
+Local validation command:
 
-No snare-polypectomy/ablation/clip/interventional framework is planned for this practice.
+```bash
+cmake -S client -B build/client -G Ninja
+cmake --build build/client
+./build/client/src/gipractice-client
+```
 
-## Pathology / biopsy tracking
+## Endoscopy / pathology summary
 
-One `PathologyCase` belongs to one Endoscopy and groups pathology/billing facts originating from that Endoscopy. It stores urgency, receipt request and fee-waiver reason; it does not own one assigned pathologist.
+Structured Endoscopy data includes procedure type/indication/priority, preparation/sedation, outcome, extent, findings, termination reasons, timeline, impression/recommendations and media. No interventional snare/ablation/clip framework is planned.
 
-Each `BiopsyContainer` has UUIDv7 identity, globally unique label code, case-relative ordinal, exact collection-site text, collection time, optional description and optional external-release timestamp/note. Researchable anatomy is represented by `BiopsyContainerSite` links to canonical sites.
+Each `BiopsyContainer` has unique identity/label, exact collection-site text, canonical site links and optional external-release metadata. Practice-managed containers enter Parcel/ParcelContainer, handover, billing and managed pathology-report workflow; external-release containers do not.
 
-Practice-managed containers enter Parcel/ParcelContainer, handover, billing and managed pathology-report workflow. Externally released tubes do not create a parallel external pathology subsystem and do not contribute to our Parcel billing. Outside reports that later reach the practice are Patient history (`ExternalReport`).
+Initial biopsy processing is calculated per Endoscopy from only the containers from that Endoscopy physically present in the Parcel being billed. Under the example policy: 5 billable => EUR 35; 3 billable => EUR 25.
 
-Initial biopsy processing is calculated **per Endoscopy from only the containers from that Endoscopy physically present in the Parcel being billed**. Under the example policy, 5 billable containers => EUR 35; 5 collected but only 3 parcelled => EUR 25.
-
-Additional assays create separate charges that can be billed in a later Parcel without re-shipping the original container in the data model.
-
-### Pathology reports / DOCX ingestion
-
-Practice-managed reports retain the exact source document outside SQL with storage key, SHA-256 and original filename/MIME, while extracted text is stored for searching/display/future annotations.
-
-Repeated embedded assets are content-addressed/deduplicated by SHA-256. Parser-derived pathology annotations remain distinguishable as suggested vs confirmed.
-
-See `docs/PATHOLOGY_MODEL.md`.
-
-## Media policy
-
-- AV1 default video codec target;
-- AVIF default display-still format;
-- source-faithful original retained when available;
-- derivatives reference source;
-- SHA-256 stored for integrity;
-- media can link to Endoscopy or finding.
+Practice-managed pathology reports retain the exact source DOCX outside SQL with SHA-256 while extracted text/assets support search, deduplication and future annotations.
 
 ## Next exact development slice
 
-Continue piecemeal.
+First compile the client skeleton locally and correct any actual CMake/compiler errors.
 
-The anatomy lookup and QML model boundary now exist. The next small slice should be the real client build skeleton (CMake + Qt/KF6 target) so these C++ files can actually be compiled before adding QML controls or HTTP integration.
+Once it builds, the next small client slice is the first anatomy autocomplete QML control wired to `AnatomySuggestionModel`.
 
-After client compilation is established, continue with either:
-
-1. the first small anatomy autocomplete QML control; or
-2. the SQLite schema/migration and anatomy-vocabulary seed.
+Persistence remains a separate later slice: SQLite schema/migration + anatomy vocabulary seeding + concrete stores.
 
 Do not implement free-text parser/NLP yet.
 
 ## Validation
 
-The assistant environment has no configured Qt/KDE client build toolchain and no .NET SDK. No compiler/test success is claimed for these changes yet. The user has Rider/.NET locally for server validation; client compilation will need the Qt/KDE toolchain once the client build skeleton is added.
+The assistant environment has no configured Qt/KDE client build toolchain and no .NET SDK, so no compile/test success is claimed here. Local Qt/KF6 build output is the next source of truth.
