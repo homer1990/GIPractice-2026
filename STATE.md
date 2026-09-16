@@ -15,7 +15,8 @@ Current checkpoints:
 - `8ca0d9b5c22c905cb0216bab5475e7b2d5949189` — client anatomy vocabulary lookup/fallback abstraction.
 - `4cd6a60c09a44572413822803df55655692c0bc4` — QML-facing anatomy suggestion model.
 - `74b01bbd4e28150e4684e6d64cbd4fb58e42624d` — first real Qt/KF6/Kirigami client build skeleton.
-- `c9ab937cb2e1ceb28e0a33b2790391520a45b890` — first local compiler-feedback fixes: Qt no-keywords, QML inheritance and current KI18n QML setup.
+- `42768eb5e3e8df9e355c04485bb40838d3ff75db` — compatible direct `KLocalizedQmlContext` setup; local client build subsequently launched successfully.
+- `44a06552c2bbca902c30f4338754af53689df9d0` — first anatomy autocomplete QML control with raw-input preservation.
 
 ## Fixed principles
 
@@ -31,6 +32,7 @@ Current checkpoints:
 10. Researchable anatomy uses canonical concepts/relationships, not brute-force label-text searching.
 11. Clinical concept codes are language-neutral. Greek (`el-GR`) is the primary authored clinical vocabulary for this installation, not an English model with Greek bolted on later.
 12. UI translation, clinical-vocabulary localization and user-authored clinical prose are separate concerns.
+13. Client concept acceptance must not destroy the exact source text the clinician typed; raw text and canonical semantic links are separate data.
 
 ## Server shape
 
@@ -85,7 +87,7 @@ The initial seed set covers practical upper/lower GI anatomy and landmarks. `Obs
 
 Fallback order is requested locale -> same language -> Greek -> English -> canonical code. Recognition is case-insensitive, accent-insensitive and punctuation/separator-normalized.
 
-`client/src/clinical/AnatomySuggestionModel.{h,cpp}` is the thin `QAbstractListModel` adapter for QML. Presentation roles are localized; the canonical code is retrieved explicitly through `codeAt(row)` only when a suggestion is accepted.
+`client/src/clinical/AnatomySuggestionModel.{h,cpp}` is the thin `QAbstractListModel` adapter for QML. Presentation roles are localized; the canonical code is retrieved explicitly through `codeAt(row)` only when a suggestion is accepted. It now also exposes a read-only `count` property for QML dropdown behavior.
 
 Because KDE builds define `QT_NO_KEYWORDS`, Qt meta-object code uses `Q_SIGNALS` and `Q_EMIT` rather than the disabled `signals` / `emit` keywords.
 
@@ -93,34 +95,49 @@ Because KDE builds define `QT_NO_KEYWORDS`, Qt meta-object code uses `Q_SIGNALS`
 
 Neither layer mutates clinical data or silently accepts parser suggestions.
 
-## Qt/KF6 client build skeleton
+## Qt/KF6 client
 
-The client is a real CMake target.
+The client is a real CMake target and has built/launched successfully on the user's KF6 system.
 
 Top-level client CMake requires:
 
 - CMake 3.20+;
 - ECM 6+;
 - Qt6 Core/Gui/Qml/Quick/QuickControls2/Widgets;
-- KF6 CoreAddons/I18n/QQC2DesktopStyle;
+- KF6 CoreAddons/I18n/I18nQml/QQC2DesktopStyle;
 - Kirigami QML module;
 - C++23.
 
 `client/src/CMakeLists.txt` builds `gipractice-client`, includes the anatomy vocabulary/model sources, creates QML module `net.gmanthos.gipractice`, defines translation domain `gipractice`, and links both `KF6::I18n` and `KF6::I18nQml`.
 
-`client/src/main.cpp` sets up QApplication, KDE desktop Quick Controls style, GPLv3 KAboutData, KI18n application domain, QML registration and `KLocalization::setupLocalizedContext(&engine)` before loading the QML module.
+`client/src/main.cpp` sets up QApplication, KDE desktop Quick Controls style, GPLv3 KAboutData, KI18n application domain, QML registration and a direct `KLocalizedQmlContext`. The convenience `KLocalization::setupLocalizedContext()` helper was not available on the installed headers despite the deprecation message, so the direct context class is used for compatibility.
 
-The obsolete `KLocalizedContext` setup was removed after the first local build warned that KF 6.8+ should use `KLocalization::setupLocalizedContext()` / `KF6::I18nQml`.
-
-`client/src/qml/Main.qml` remains a minimal Kirigami application window until compilation is clean.
-
-Local validation command:
+With KDE's CMake settings the executable is emitted at:
 
 ```bash
-cmake -S client -B build/client -G Ninja
-cmake --build build/client
-./build/client/src/gipractice-client
+./build/client/bin/gipractice-client
 ```
+
+## First anatomy autocomplete control
+
+`client/src/qml/AnatomyAutocompleteField.qml` is the first reusable clinical QML control.
+
+It provides:
+
+- Greek-first localized anatomy suggestions;
+- mouse selection;
+- Up/Down keyboard navigation and Return/Enter acceptance;
+- alias-match hint text;
+- explicit canonical concept acceptance via `codeAt(row)`;
+- a removable localized selection chip;
+- `sourceText` preserving exactly what the clinician typed;
+- no canonical code in ordinary UI presentation.
+
+`Main.qml` currently acts as a smoke-test surface for this control.
+
+Until server persistence/API transport exists, `main.cpp` supplies a deliberately small development-only vocabulary containing representative terms such as antrum, corpus, GEJ, diaphragmatic impression, D2 and sigmoid colon. This is temporary test data and must not become a second authoritative vocabulary. The real client must eventually receive the server/database vocabulary.
+
+The current field accepts one canonical concept at a time. Compound input such as `άντρο-σώμα` resolving to multiple sites is a later explicit multi-selection/parser slice, not an implicit behavior of this component.
 
 ## Endoscopy / pathology summary
 
@@ -134,14 +151,14 @@ Practice-managed pathology reports retain the exact source DOCX outside SQL with
 
 ## Next exact development slice
 
-Re-run the local Qt/KF6 build after commit `c9ab937cb2e1ceb28e0a33b2790391520a45b890` and fix any remaining real compiler/link/QML startup error first.
+First locally compile/run the new `AnatomyAutocompleteField` and fix any actual QML/runtime errors.
 
-Once the shell builds and starts, the next small client slice is the first anatomy autocomplete QML control wired to `AnatomySuggestionModel`.
+Once that control is proven, the next conceptual client slice is compound/multi-site input (for example `άντρο-σώμα` -> two accepted canonical sites) without losing the raw source text.
 
-Persistence remains a separate later slice: SQLite schema/migration + anatomy vocabulary seeding + concrete stores.
+Persistence remains separate: SQLite schema/migration + anatomy vocabulary seeding + concrete stores.
 
-Do not implement free-text parser/NLP yet.
+Do not implement broad free-text parser/NLP yet.
 
 ## Validation
 
-First local build reached C++ compilation and exposed only integration issues in `AnatomySuggestionModel` and KI18n setup; those fixes are committed. A successful rebuild has not yet been observed, so no client compile success is claimed yet. The assistant environment still has no configured Qt/KDE client build toolchain and no .NET SDK.
+The Qt/KF6/Kirigami shell has been built and launched successfully on the user's machine. The new autocomplete-control changes have not yet been compiled/run locally, so no success is claimed for that slice yet. The assistant environment still has no configured Qt/KDE client build toolchain and no .NET SDK.
