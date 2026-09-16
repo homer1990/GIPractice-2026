@@ -3,6 +3,8 @@ add_executable(gipractice-client)
 target_sources(gipractice-client
     PRIVATE
         main.cpp
+        api/PracticeApiClient.cpp
+        api/PracticeApiClient.h
         clinical/AnatomyVocabulary.cpp
         clinical/AnatomyVocabulary.h
         clinical/AnatomySuggestionModel.cpp
@@ -28,6 +30,7 @@ target_link_libraries(gipractice-client
     PRIVATE
         Qt6::Core
         Qt6::Gui
+        Qt6::Network
         Qt6::Qml
         Qt6::Quick
         Qt6::QuickControls2
