@@ -1,27 +1,23 @@
 #include "api/PracticeApiClient.h"
 #include "clinical/AnatomySuggestionModel.h"
+#include "patients/PatientSearchModel.h"
 
 #include <KAboutData>
 #include <KLocalizedQmlContext>
 #include <KLocalizedString>
 
 #include <QApplication>
-#include <QDebug>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickStyle>
 #include <QtQml/qqml.h>
 
-#include <variant>
-
-using GIPractice::Client::Api::ApiError;
-using GIPractice::Client::Api::PatientSearchRequest;
-using GIPractice::Client::Api::PatientSearchResponse;
 using GIPractice::Client::Api::PracticeApiClient;
 using GIPractice::Client::Clinical::AnatomicalSiteEntry;
 using GIPractice::Client::Clinical::AnatomicalSiteKind;
 using GIPractice::Client::Clinical::AnatomicalSiteLocalization;
 using GIPractice::Client::Clinical::AnatomySuggestionModel;
+using GIPractice::Client::Patients::PatientSearchModel;
 
 namespace {
 
@@ -139,26 +135,6 @@ QList<AnatomicalSiteEntry> developmentAnatomyEntries()
     };
 }
 
-void startApiSmokeTest(QApplication &app)
-{
-    const auto apiUrlText = qEnvironmentVariable("GIPRACTICE_API_URL").trimmed();
-    if (apiUrlText.isEmpty())
-        return;
-
-    auto *api = new PracticeApiClient(QUrl::fromUserInput(apiUrlText), &app);
-    api->searchPatients(PatientSearchRequest{}, [](auto result) {
-        if (const auto *response = std::get_if<PatientSearchResponse>(&result)) {
-            qInfo() << "GIPractice API connected; patient count:" << response->totalCount;
-            return;
-        }
-
-        const auto &error = std::get<ApiError>(result);
-        qWarning() << "GIPractice API patient search failed:"
-                   << error.httpStatus
-                   << error.message;
-    });
-}
-
 } // namespace
 
 int main(int argc, char *argv[])
@@ -188,7 +164,12 @@ int main(int argc, char *argv[])
     AnatomySuggestionModel anatomySuggestions;
     anatomySuggestions.setEntries(developmentAnatomyEntries());
 
-    startApiSmokeTest(app);
+    PracticeApiClient *apiClient = nullptr;
+    const auto apiUrlText = qEnvironmentVariable("GIPRACTICE_API_URL").trimmed();
+    if (!apiUrlText.isEmpty())
+        apiClient = new PracticeApiClient(QUrl::fromUserInput(apiUrlText), &app);
+
+    PatientSearchModel patientSearchModel(apiClient);
 
     QQmlApplicationEngine engine;
 
@@ -196,6 +177,7 @@ int main(int argc, char *argv[])
     localizedContext->setTranslationDomain(QStringLiteral("gipractice"));
     engine.rootContext()->setContextObject(localizedContext);
     engine.rootContext()->setContextProperty(QStringLiteral("anatomySuggestions"), &anatomySuggestions);
+    engine.rootContext()->setContextProperty(QStringLiteral("patientSearchModel"), &patientSearchModel);
 
     engine.loadFromModule(QStringLiteral("net.gmanthos.gipractice"), QStringLiteral("Main"));
 
