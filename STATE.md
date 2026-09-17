@@ -18,7 +18,9 @@ Current checkpoints:
 - `42768eb5e3e8df9e355c04485bb40838d3ff75db` — compatible direct `KLocalizedQmlContext` setup; local client build subsequently launched successfully.
 - `44a06552c2bbca902c30f4338754af53689df9d0` — first anatomy autocomplete QML control with raw-input preservation.
 - `8a86e82d44ce66258ceee2e5d23579c027be96a7` — autocomplete QML runtime fixes; control subsequently ran successfully locally.
-- `da26277f4d74d234ef254ee0295e3fdd87fc00ca` — first patient/appointment read API plus Qt HTTP transport and gated end-to-end patient-search smoke call.
+- `da26277f4d74d234ef254ee0295e3fdd87fc00ca` — first patient/appointment read API plus Qt HTTP transport.
+- `292312eb781906f69064c8e35e60decc6b61e823` — removed stale duplicate pathology persistence rows; server then built and ran locally.
+- `7cda0f5333d0eb7eafb98e6db76bb33656f448ee` — first real patient-search presentation model and QML page over the HTTP client.
 
 ## Fixed principles
 
@@ -37,23 +39,9 @@ Current checkpoints:
 13. Client concept acceptance must not destroy the exact source text the clinician typed; raw text and canonical semantic links are separate data.
 14. Build the client/API vertical application spine before spending more time expanding frozen subsystems such as anatomy vocabulary breadth or compound parsing.
 
-## Server shape
-
-One .NET 10 project: `server/GIPractice.Server`.
-
-Feature folders:
-
-- `Patients`
-- `Scheduling`
-- `Clinical`
-- `Pathology`
-- `Data`
-- `Api`
-- `Configuration` (planned)
-
 ## First read API contract
 
-The first real HTTP application contract is read-only and intentionally small:
+The first HTTP application contract is:
 
 ```text
 GET /api/patients/search
@@ -61,109 +49,84 @@ GET /api/patients/{id}
 GET /api/appointments?fromUtc=...&toUtc=...&patientId=...
 ```
 
-`GET /api/patients/search` supports current v3 Patient fields only:
+Patient search supports first name, last name, father's name, birth-date range, page and page size. Appointment listing uses explicit UTC half-open bounds `[fromUtc, toUtc)` plus optional patient filtering.
 
-- `firstName`
-- `lastName`
-- `fathersName`
-- `birthDateFrom`
-- `birthDateTo`
-- `page` (default 1)
-- `pageSize` (default 50, maximum 200)
+`Data/InMemoryPracticeReadStore.cs` remains temporary synthetic development scaffolding. It exists only to prove contracts before SQLite.
 
-The response is paged from the beginning because the real dataset is large. Current search matching for names is substring/case-insensitive; no fuzzy/NLP behavior is hidden inside this first contract.
+## Qt HTTP transport
 
-Appointment listing uses explicit UTC bounds with half-open semantics `[fromUtc, toUtc)`, plus optional `patientId`. The client will derive selected-day UTC bounds rather than making the server assume a particular local timezone.
+`client/src/api/PracticeApiClient.{h,cpp}` owns server URL handling, query serialization, `QNetworkAccessManager`, JSON parsing and explicit transport/HTTP/JSON errors. It has no QML dependency.
 
-`server/GIPractice.Server/Api/ReadContracts.cs` defines the HTTP DTOs. `ReadEndpoints.cs` performs validation and maps domain objects to DTOs.
-
-`Data/InMemoryPracticeReadStore.cs` is **temporary synthetic development scaffolding** used only to prove the contract before SQLite exists. It must be replaced, not grown into production persistence.
-
-## First Qt HTTP transport
-
-`client/src/api/PracticeApiClient.{h,cpp}` is the C++ transport boundary. It deliberately has no QML dependency and owns:
-
-- base URL normalization;
-- query serialization;
-- `QNetworkAccessManager` GET requests;
-- JSON parsing into C++ DTOs;
-- network/HTTP/JSON error values.
-
-Qt Network is now an explicit CMake dependency.
-
-The API base URL is not hard-coded. For the temporary end-to-end smoke path, set:
+The API URL is provided through:
 
 ```bash
 GIPRACTICE_API_URL=http://127.0.0.1:5070
 ```
 
-When set, `main.cpp` performs an empty paged patient search at startup and logs only the returned total count. This probe is temporary and will disappear once patient/appointment models own the calls.
+The earlier startup-count smoke probe has now been removed. The real patient-search presentation model owns the first application calls.
+
+## Patient search presentation
+
+`client/src/patients/PatientSearchModel.{h,cpp}` is a QML-facing `QAbstractListModel` over `PracticeApiClient`.
+
+It provides:
+
+- criteria matching the current API: first name, last name, father's name, birth-date from/to;
+- ISO date validation before transport;
+- asynchronous loading/error state;
+- 50-row paging with previous/next;
+- stale-response suppression using a request serial;
+- patient UUID retrieval only through `patientIdAt(row)` when a row is activated;
+- presentation roles for localized UI: display name, first name, last name, father's name, birth date.
+
+`client/src/qml/PatientSearchPage.qml` is now the main application surface. It triggers the initial search on load, shows criteria, loading/errors, results and paging, and emits a selected patient UUID without displaying it.
+
+The next vertical slice is patient details using `GET /api/patients/{id}`.
 
 ## Clinical session / double endoscopy
 
-`ClinicalWriteService` supports:
-
-- `StartEndoscopyAsync(...)` — creates a hidden clinical session and first Endoscopy.
-- `AddEndoscopyAsync(session, ...)` — adds another Endoscopy to the same session.
-
-Each Endoscopy keeps independent anatomy, findings, completion state, media and pathology.
-
-## History / clinical text
-
-- `PatientHistoryEntry` stores longitudinal history.
-- `PatientHistoryKind.ExternalReport` is used for outside reports that later reach the practice.
-- Current symptoms/HPI stay on the hidden clinical session.
-- `ClinicalExam` is text-first with optional assessment.
-- `ClinicalTextAnnotation` may carry suggested/confirmed diagnosis, finding, symptom, medication, anatomy or patient-reference semantics.
-- Parser/NLP is not implemented yet.
+`ClinicalWriteService` supports `StartEndoscopyAsync(...)` and `AddEndoscopyAsync(session, ...)`. Each Endoscopy keeps independent anatomy, findings, completion state, media and pathology while sharing the hidden session when appropriate.
 
 ## Controlled GI anatomy and localization
 
-`AnatomicalSite` is the language-neutral canonical research concept. Human-readable text is localized separately.
+`GiAnatomyVocabulary` is Greek-first (`el-GR`) with English secondary localization and mixed clinical aliases such as `GEJ`, `D2`, `corpus`, `antrum` and `TI`.
 
-`GiAnatomyVocabulary` is Greek-first (`el-GR`) with English as a secondary localization. Stable codes do not change by language and Greek aliases intentionally include clinically common mixed-language forms such as `GEJ`, `D2`, `corpus`, `antrum` and `TI`.
+The vocabulary must eventually become extensive for real GI practice, but breadth expansion remains deferred while the client/API spine is built.
 
-The vocabulary must eventually become extensive for real GI practice, but breadth expansion is deliberately deferred while the client/API spine is built.
-
-## Client anatomy vocabulary and autocomplete
-
-`client/src/clinical/AnatomyVocabulary.{h,cpp}` is a QtCore-only lookup layer with localized display fallback, exact alias/code resolution, autocomplete suggestions and hierarchy access.
-
-`client/src/clinical/AnatomySuggestionModel.{h,cpp}` is the QML-facing list-model adapter. Presentation roles are localized; canonical identity is retrieved explicitly through `codeAt(row)`.
-
-`client/src/qml/AnatomyAutocompleteField.qml` is the first reusable clinical input control. It provides Greek-first suggestions, keyboard/mouse acceptance, alias hints, a removable localized selection chip and exact `sourceText` preservation. The control has run successfully on the user's local KF6 system.
-
-`main.cpp` still supplies a deliberately small development-only anatomy vocabulary. It is temporary and must be removed when the server/database vocabulary endpoint is implemented.
+`client/src/qml/AnatomyAutocompleteField.qml` has already run successfully locally. `main.cpp` still carries a deliberately small development-only anatomy vocabulary until the real vocabulary endpoint exists.
 
 Compound multi-site parsing such as `άντρο-σώμα` is intentionally deferred.
 
 ## Endoscopy / pathology summary
 
-Structured Endoscopy data includes procedure type/indication/priority, preparation/sedation, outcome, extent, findings, termination reasons, timeline, impression/recommendations and media. No interventional snare/ablation/clip framework is planned.
+Structured Endoscopy data includes procedure type/indication/priority, preparation/sedation, outcome, extent, findings, termination reasons, timeline, impression/recommendations and media.
 
 Each `BiopsyContainer` has unique identity/label, exact collection-site text, canonical site links and optional external-release metadata. Practice-managed containers enter Parcel/ParcelContainer, handover, billing and managed pathology-report workflow; external-release containers do not.
 
-Initial biopsy processing is calculated per Endoscopy from only the containers from that Endoscopy physically present in the Parcel being billed. Under the example policy: 5 billable => EUR 35; 3 billable => EUR 25.
-
-Practice-managed pathology reports retain the exact source DOCX outside SQL with SHA-256 while extracted text/assets support search, deduplication and future annotations.
+Practice-managed pathology reports retain exact source DOCX files outside SQL with SHA-256 while extracted text/assets support search and future annotations.
 
 ## Next exact development slice
 
-First compile both sides of the new read-API slice locally and run the gated end-to-end smoke test.
-
-Once that contract is proven, continue the vertical application spine:
-
-1. `PatientSearchModel` / patient-search QML screen over `PracticeApiClient`;
-2. patient details loading;
-3. selected-day appointment model/list using explicit UTC bounds;
-4. then add first write contracts (create/correct Patient and Appointment) before returning to deeper clinical workflows.
-
-After the basic client/API flows are usable, introduce SQLite behind the same server contract, then replace development anatomy data with a server vocabulary endpoint and expand the vocabulary extensively.
+1. Locally compile/run the new `PatientSearchModel` + `PatientSearchPage`.
+2. Fix any concrete C++ or QML errors from that build/run.
+3. Add patient-details loading/selection using the already-existing `GET /api/patients/{id}` contract.
+4. Then add selected-day appointment presentation over the existing appointment read contract.
+5. After the basic read UI works, add create/correct Patient and Appointment writes.
+6. Introduce SQLite behind the same server contracts after those flows are stable.
 
 Do not implement broad free-text parser/NLP yet.
 
 ## Validation
 
-The Qt/KF6/Kirigami shell and anatomy autocomplete control have both been built and run successfully on the user's machine.
+Verified locally by the user:
 
-The new server read endpoints and `PracticeApiClient` transport have **not yet** been locally compiled or exercised together. The assistant environment has no .NET SDK or configured Qt/KDE build toolchain, so no compile/test success is claimed for this new slice.
+- Qt/KF6/Kirigami shell builds and runs;
+- anatomy autocomplete builds and runs;
+- .NET server builds and starts on `127.0.0.1:5070`;
+- Qt client reaches the ASP.NET server and parses the patient-search response successfully (`patient count: 3`).
+
+Not yet verified locally:
+
+- the new `PatientSearchModel` and `PatientSearchPage` slice at checkpoint `7cda0f5333d0eb7eafb98e6db76bb33656f448ee`.
+
+The assistant environment has no configured Qt/KDE client build toolchain or .NET SDK, so no additional compile/test success is claimed.
