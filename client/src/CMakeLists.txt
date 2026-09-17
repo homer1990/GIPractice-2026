@@ -5,6 +5,8 @@ target_sources(gipractice-client
         main.cpp
         api/PracticeApiClient.cpp
         api/PracticeApiClient.h
+        patients/PatientSearchModel.cpp
+        patients/PatientSearchModel.h
         clinical/AnatomyVocabulary.cpp
         clinical/AnatomyVocabulary.h
         clinical/AnatomySuggestionModel.cpp
@@ -18,6 +20,7 @@ ecm_add_qml_module(gipractice-client
 ecm_target_qml_sources(gipractice-client
     SOURCES
         qml/Main.qml
+        qml/PatientSearchPage.qml
         qml/AnatomyAutocompleteField.qml
 )
 
